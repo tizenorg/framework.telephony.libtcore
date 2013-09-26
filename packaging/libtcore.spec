@@ -3,7 +3,7 @@ Summary: Telephony-core library
 Version: 0.1.85
 Release:    1
 Group:      System/Libraries
-License:    Apache
+License:    Apache-2.0
 Source0:    libtcore-%{version}.tar.gz
 Requires(post): /sbin/ldconfig
 Requires(postun): /sbin/ldconfig
@@ -36,12 +36,14 @@ make %{?jobs:-j%jobs}
 
 %install
 %make_install
+mkdir -p %{buildroot}/usr/share/license
+cp LICENSE %{buildroot}/usr/share/license/%{name}
 
 %files
 %manifest libtcore.manifest
 %defattr(-,root,root,-)
 %{_libdir}/libtcore*
-/usr/share/license/libtcore
+/usr/share/license/%{name}
 
 %files devel
 %defattr(-,root,root,-)
