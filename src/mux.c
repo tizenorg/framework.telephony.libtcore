@@ -606,6 +606,7 @@ static void _cmux_process_channel_data(tcore_cmux_object *cmux_obj,
 
 				/* Send CMUX data */
 				ret = _cmux_send_data(cmux_obj->phy_hal, len, send_data);
+                dbg("return %d", ret);
 
 				/* Flush the Channel data */
 				_cmux_flush_channel_data(cmux_obj);
@@ -651,6 +652,9 @@ static void _cmux_process_channel_data(tcore_cmux_object *cmux_obj,
 					channel->channel_state = CMUX_CHANNEL_ESTABLISHED;
 			}
 		break;
+		default:
+			warn("invalid frame_type");
+		break;	
 	}
 
 	dbg("Exit");
@@ -1046,11 +1050,14 @@ static void _cmux_close_channel(tcore_cmux_object *cmux_obj, int channel_id)
 		/* Encoding frame */
 		send_data = _cmux_encode_cmux_frame(cmux_obj, NULL, 0, channel_id,
 						CMUX_COMMAND_DISC, 0x01, 0x01, 0x01, &len);
-		if (len != 0)
+		if (len != 0) {
 			/* Send CMUX data */
 			ret = _cmux_send_data(cmux_obj->phy_hal, len, send_data);
-		else
+            dbg("return %d", ret);
+        }
+		else {
 			err("Failed to encode");
+        }
 	} else
 		/* Channel is already closed */
 		err("Channel is already closed");
@@ -1154,6 +1161,9 @@ DECODE_STATE_CHANGE:
 		case TCORE_CMUX_DECODE_FCS_HUNT:
 			goto FCS_HUNT;
 		break;
+		default:
+			warn("invalid decode_state");
+		break;	
 	}
 
 FLAG_HUNT:
@@ -1307,7 +1317,7 @@ TReturn tcore_cmux_setup_internal_mux(tcore_cmux_mode mode,
 	tcore_cmux_object *cmux_obj;
 	unsigned char *data;
 	int data_len;
-	int index;
+	int temp_index;
 
 	TReturn ret = TCORE_RETURN_FAILURE;
 	dbg("Entry");
@@ -1387,13 +1397,13 @@ TReturn tcore_cmux_setup_internal_mux(tcore_cmux_mode mode,
 
 	/* Initialize all the Channels for the CMUX object */
 	/* Open all Channels */
-	for (index = 0; index < cmux_obj->max_cmux_channels; index++) {
-		dbg("Initializing CMUX Channel [%d]", index);
-		_cmux_channel_init(cmux_obj, index);
+	for (temp_index = 0; temp_index < cmux_obj->max_cmux_channels; temp_index++) {
+		dbg("Initializing CMUX Channel [%d]", temp_index);
+		_cmux_channel_init(cmux_obj, temp_index);
 
-		dbg("Opening Channel ID [%d]", index);
+		dbg("Opening Channel ID [%d]", temp_index);
 		/* Encode CMUX Frame */
-		data = _cmux_encode_cmux_frame(cmux_obj, NULL, 0, index,
+		data = _cmux_encode_cmux_frame(cmux_obj, NULL, 0, temp_index,
 					CMUX_COMMAND_SABM, 0x01, 0x01, 0x01, &data_len);
 		if (data_len == 0) {
 			err("Failed to encode");
@@ -1404,7 +1414,7 @@ TReturn tcore_cmux_setup_internal_mux(tcore_cmux_mode mode,
 		/* Send CMUX data */
 		ret = _cmux_send_data(cmux_obj->phy_hal, data_len, data);
 		if (ret != TCORE_RETURN_SUCCESS) {
-			err("Failed to send CMUX Control Request for Channel ID: [%d]", index);
+			err("Failed to send CMUX Control Request for Channel ID: [%d]", temp_index);
 			goto ERROR;
 		} else
 			dbg("CMUX Control Request sent to CP");

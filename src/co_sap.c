@@ -34,36 +34,6 @@ struct private_object_data {
 	struct tcore_sap_operations *ops;
 };
 
-static void _clone_sap_operations(struct private_object_data *po, struct tcore_sap_operations *sap_ops)
-{
-	if(sap_ops->connect) {
-		po->ops->connect = sap_ops->connect;
-	}
-	if(sap_ops->disconnect) {
-		po->ops->disconnect = sap_ops->disconnect;
-	}
-	if(sap_ops->req_status) {
-		po->ops->req_status = sap_ops->req_status;
-	}
-	if(sap_ops->set_transport_protocol) {
-		po->ops->set_transport_protocol = sap_ops->set_transport_protocol;
-	}
-	if(sap_ops->set_power) {
-		po->ops->set_power = sap_ops->set_power;
-	}
-	if(sap_ops->get_atr) {
-		po->ops->get_atr = sap_ops->get_atr;
-	}
-	if(sap_ops->transfer_apdu) {
-		po->ops->transfer_apdu = sap_ops->transfer_apdu;
-	}
-	if(sap_ops->get_cardreader_status) {
-		po->ops->get_cardreader_status = sap_ops->get_cardreader_status;
-	}
-
-	return;
-}
-
 static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 {
 	enum tcore_request_command command;
@@ -173,26 +143,8 @@ static void _free_hook(CoreObject *o)
 	}
 }
 
-void tcore_sap_override_ops(CoreObject *o, struct tcore_sap_operations *sap_ops)
-{
-	struct private_object_data *po = NULL;
-
-	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_SAP);
-
-	po = (struct private_object_data *)tcore_object_ref_object(o);
-	if (!po) {
-		return;
-	}
-
-	if(sap_ops) {
-		_clone_sap_operations(po, sap_ops);
-	}
-
-	return;
-}
-
-CoreObject *tcore_sap_new(TcorePlugin *p,
-			struct tcore_sap_operations *ops, TcoreHal *hal)
+CoreObject *tcore_sap_new(TcorePlugin *p, const char *name,
+		struct tcore_sap_operations *ops, TcoreHal *hal)
 {
 	CoreObject *o = NULL;
 	struct private_object_data *po = NULL;
@@ -200,7 +152,7 @@ CoreObject *tcore_sap_new(TcorePlugin *p,
 	if (!p)
 		return NULL;
 
-	o = tcore_object_new(p, hal);
+	o = tcore_object_new(p, name, hal);
 	if (!o)
 		return NULL;
 
@@ -223,14 +175,20 @@ CoreObject *tcore_sap_new(TcorePlugin *p,
 
 void tcore_sap_free(CoreObject *o)
 {
+	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_SAP);
+	tcore_object_free(o);
+}
+
+void tcore_sap_set_ops(CoreObject *o, struct tcore_sap_operations *ops)
+{
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_SAP);
 
-	po = tcore_object_ref_object(o);
-	if (!po)
+	po = (struct private_object_data *)tcore_object_ref_object(o);
+	if (!po) {
 		return;
+	}
 
-	free(po);
-	tcore_object_free(o);
+	po->ops = ops;
 }

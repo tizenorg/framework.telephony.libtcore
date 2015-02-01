@@ -166,25 +166,25 @@ gboolean tcore_storage_get_bool(Storage *strg, enum tcore_storage_key key)
 static void tcore_storage_vkey_callback_dispatcher(Storage *strg,
 		enum tcore_storage_key key, void *value)
 {
-	gpointer tmp = NULL;
 	gchar *key_gen = NULL;
+	GSList *cb_data = NULL;
 	struct storage_callback_type *tmp_cb = NULL;
 
 	key_gen = g_strdup_printf("%d", key);
-	tmp = g_hash_table_lookup(strg->callback, key_gen);
+	if (!key_gen)
+		return;
 
-	if (tmp != NULL) {
-		GSList *cb_data = (GSList *)tmp;
+	cb_data = g_hash_table_lookup(strg->callback, key_gen);
+	while (cb_data) {
+		tmp_cb = cb_data->data;
+		if (tmp_cb)
+			if (tmp_cb->cb_fn)
+				tmp_cb->cb_fn(key, value, tmp_cb->user_data);
 
-		do {
-			tmp_cb = cb_data->data;
-			tmp_cb->cb_fn(key, value, tmp_cb->user_data);
-			cb_data = g_slist_next(cb_data);
-		} while (cb_data != NULL);
+		cb_data = g_slist_next(cb_data);
 	}
 
 	g_free(key_gen);
-	return;
 }
 
 gboolean tcore_storage_set_key_callback(Storage *strg,
@@ -207,19 +207,24 @@ gboolean tcore_storage_set_key_callback(Storage *strg,
 	key_gen = g_strdup_printf("%d", key);
 	tmp = g_hash_table_lookup(strg->callback, key_gen);
 	if (tmp != NULL) {
-		GSList *cb_data = (GSList *) tmp;
+		GSList *cb_data = tmp;
 
-		do {
+		while (cb_data) {
 			tmp_cb = cb_data->data;
-			if (tmp_cb->cb_fn == cb) {
-				g_free(key_gen);
-				g_free(strg_cb_data);
-				return FALSE;
+			if (tmp_cb) {
+				if ((tmp_cb->cb_fn == cb)
+						&& (tmp_cb->user_data == user_data)) {
+					g_free(key_gen);
+					g_free(strg_cb_data);
+					return FALSE;
+				}
 			}
 
-		} while ((cb_data = g_slist_next(cb_data)));
+			cb_data = g_slist_next(cb_data);
+		}
 
-		tmp = g_slist_append( (GSList *)tmp, strg_cb_data);
+		tmp = g_slist_append(tmp, strg_cb_data);
+		g_hash_table_replace(strg->callback, g_strdup(key_gen), tmp);
 	}
 	else {
 		GSList *data = NULL;
@@ -235,7 +240,7 @@ gboolean tcore_storage_set_key_callback(Storage *strg,
 gboolean tcore_storage_remove_key_callback(Storage *strg,
 		enum tcore_storage_key key, TcoreStorageKeyCallback cb)
 {
-	gpointer tmp = NULL;
+	GSList *tmp = NULL;
 	gchar *key_gen = NULL;
 	GSList *cb_data = NULL;
 	int cb_cnt = 0;
@@ -247,28 +252,29 @@ gboolean tcore_storage_remove_key_callback(Storage *strg,
 
 	key_gen = g_strdup_printf("%d", key);
 	tmp = g_hash_table_lookup(strg->callback, key_gen);
-
 	if (tmp == NULL){
 		g_free(key_gen);
 		return FALSE;
 	}
 
-	cb_data = (GSList *) tmp;
-
-	do {
+	cb_data = tmp;
+	while (cb_data) {
 		tmp_cb = cb_data->data;
-		if (tmp_cb->cb_fn == cb) {
-			tmp = g_slist_remove((GSList *) tmp, cb_data->data);
-			g_free(cb_data->data);
-			break;
+		if (tmp_cb) {
+			if (tmp_cb->cb_fn == cb) {
+				tmp = g_slist_remove(tmp, tmp_cb);
+				g_free(tmp_cb);
+				break;
+			}
 		}
 
-	} while ((cb_data = g_slist_next(cb_data)));
+		cb_data = g_slist_next(cb_data);
+	}
 
-	cb_cnt = g_slist_length( (GSList *) tmp );
+	cb_cnt = g_slist_length(tmp);
 	dbg("glist cnt (%d)", cb_cnt);
 
-	if(cb_cnt == 0){
+	if (cb_cnt == 0) {
 		g_hash_table_remove(strg->callback, key_gen);
 		strg->ops->remove_key_callback(strg, key);
 	}

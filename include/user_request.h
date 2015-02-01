@@ -23,18 +23,6 @@
 
 __BEGIN_DECLS
 
-struct tcore_user_info {
-	uid_t uid;
-	gid_t gid;
-	pid_t pid;
-
-	char *appname;
-	unsigned int channel_id;
-	unsigned int client_cmd;
-
-	void *user_data;
-};
-
 typedef void (*UserRequestFreeHook)(UserRequest *ur);
 typedef void (*UserRequestResponseHook)(UserRequest *ur,
 		enum tcore_response_command command,
@@ -54,10 +42,8 @@ TReturn       tcore_user_request_set_response_hook(UserRequest *ur,
 Communicator* tcore_user_request_ref_communicator(UserRequest *ur);
 char*         tcore_user_request_get_modem_name(UserRequest *ur);
 
-TReturn       tcore_user_request_set_user_info(UserRequest *ur,
-                  const struct tcore_user_info *ui);
-const struct tcore_user_info*
-              tcore_user_request_ref_user_info(UserRequest *ur);
+TReturn tcore_user_request_set_user_info(UserRequest *ur, void *user_info);
+void *tcore_user_request_ref_user_info(UserRequest *ur);
 
 TReturn       tcore_user_request_send_response(UserRequest *ur,
                   enum tcore_response_command command,

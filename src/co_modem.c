@@ -68,39 +68,6 @@ static void _clone_hook(CoreObject *src, CoreObject *dest)
 	tcore_object_link_object(dest, dest_po);
 }
 
-static void _clone_modem_operations(struct private_object_data *po, struct tcore_modem_operations *modem_ops)
-{
-	if(modem_ops->power_on) {
-		po->ops->power_on = modem_ops->power_on;
-	}
-	if(modem_ops->power_off) {
-		po->ops->power_off = modem_ops->power_off;
-	}
-	if(modem_ops->power_reset) {
-		po->ops->power_reset = modem_ops->power_reset;
-	}
-	if(modem_ops->set_flight_mode) {
-		po->ops->set_flight_mode = modem_ops->set_flight_mode;
-	}
-	if(modem_ops->get_imei) {
-		po->ops->get_imei = modem_ops->get_imei;
-	}
-	if(modem_ops->get_version) {
-		po->ops->get_version = modem_ops->get_version;
-	}
-	if(modem_ops->get_sn) {
-		po->ops->get_sn = modem_ops->get_sn;
-	}
-	if(modem_ops->dun_pin_ctrl) {
-		po->ops->dun_pin_ctrl = modem_ops->dun_pin_ctrl;
-	}
-	if(modem_ops->get_flight_mode) {
-		po->ops->get_flight_mode = modem_ops->get_flight_mode;
-	}
-
-	return;
-}
-
 static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 {
 	enum tcore_request_command command;
@@ -133,6 +100,13 @@ static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->power_reset(o, ur);
+			break;
+
+		case TREQ_MODEM_POWER_LOW:
+			if (!po->ops->power_low)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->power_low(o, ur);
 			break;
 
 		case TREQ_MODEM_SET_FLIGHTMODE:
@@ -184,35 +158,16 @@ static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 	return TCORE_RETURN_SUCCESS;
 }
 
-void tcore_modem_override_ops(CoreObject *o, struct tcore_modem_operations *modem_ops)
-{
-	struct private_object_data *po = NULL;
-
-	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_MODEM);
-
-	po = (struct private_object_data *)tcore_object_ref_object(o);
-	if (!po) {
-		return;
-	}
-
-	if(modem_ops) {
-		_clone_modem_operations(po, modem_ops);
-	}
-
-	return;
-}
-
-CoreObject *tcore_modem_new(TcorePlugin *p,
-			struct tcore_modem_operations *ops, TcoreHal *hal)
+CoreObject *tcore_modem_new(TcorePlugin *p, const char *name,
+		struct tcore_modem_operations *ops, TcoreHal *hal)
 {
 	CoreObject *o = NULL;
 	struct private_object_data *po = NULL;
 
-	//dbg("Entered");
 	if (!p)
 		return NULL;
 
-	o = tcore_object_new(p, hal);
+	o = tcore_object_new(p, name, hal);
 	if (!o)
 		return NULL;
 
@@ -229,21 +184,28 @@ CoreObject *tcore_modem_new(TcorePlugin *p,
 	tcore_object_set_free_hook(o, _free_hook);
 	tcore_object_set_clone_hook(o, _clone_hook);
 	tcore_object_set_dispatcher(o, _dispatcher);
+
 	return o;
 }
 
 void tcore_modem_free(CoreObject *o)
 {
+	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_MODEM);
+	tcore_object_free(o);
+}
+
+void tcore_modem_set_ops(CoreObject *o, struct tcore_modem_operations *ops)
+{
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_MODEM);
 
-	po = tcore_object_ref_object(o);
-	if (!po)
+	po = (struct private_object_data *)tcore_object_ref_object(o);
+	if (!po) {
 		return;
+	}
 
-	free(po);
-	tcore_object_free(o);
+	po->ops = ops;
 }
 
 TReturn tcore_modem_set_flight_mode_state(CoreObject *o, gboolean flag)
@@ -276,28 +238,28 @@ gboolean tcore_modem_get_flight_mode_state(CoreObject *o)
 
 TReturn tcore_modem_set_powered(CoreObject *o, gboolean pwr)
 {
-	struct private_object_data *po;
+	TcoreHal *h;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_MODEM, TCORE_RETURN_EINVAL);
 
-	po = tcore_object_ref_object(o);
-	if (!po)
-		return FALSE;
+	h = tcore_object_get_hal(o);
+	if (!h)
+		return TCORE_RETURN_FAILURE;
 
-	po->powered = pwr;
+	tcore_hal_set_power_state(h, pwr);
 
 	return TCORE_RETURN_SUCCESS;
 }
 
 gboolean tcore_modem_get_powered(CoreObject *o)
 {
-	struct private_object_data *po;
+	TcoreHal *h;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_MODEM, FALSE);
 
-	po = tcore_object_ref_object(o);
-	if (!po)
+	h = tcore_object_get_hal(o);
+	if (!h)
 		return FALSE;
 
-	return po->powered;
+	return tcore_hal_get_power_state(h);
 }

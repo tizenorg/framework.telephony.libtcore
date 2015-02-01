@@ -35,7 +35,7 @@ __BEGIN_DECLS
 #define SAT_SS_STRING_LEN_MAX 160
 #define SAT_USSD_STRING_LEN_MAX 255
 #define SAT_ALPHA_ID_LEN_MAX 255		/**<	max length of  alpha identifier		*/
-#define SAT_ITEM_TEXT_LEN_MAX 45		/**<	max length of item text		*/
+#define SAT_ITEM_TEXT_LEN_MAX 255		/**<	max length of item text		*/
 #define SAT_SMS_TPDU_SMS_DATA_LEN_MAX 175
 #define SAT_ITEMS_NEXT_ACTION_INDI_LIST_MAX_COUNT 50	 /**<	max count of items next action indication list	*/
 #define SAT_IMG_DATA_FILE_PATH_LEN_MAX 50	 /**<   max length of image data file name (Icon, CLUT)		*/
@@ -130,7 +130,7 @@ enum type_of_number{
 	TON_DEDICATED_ACCESS = 4,	/*< subscriber number */
 	TON_ALPHA_NUMERIC = 5,		/*< alphanumeric, GSM 7-bit default alphabet) */
 	TON_ABBREVIATED_NUMBER = 6,	/*< abbreviated number */
-	TON_RESERVED_FOR_EXT = 7	/*< reserved for extension */
+	TON_RESERVED_FOR_EXT = 0xF	/*< reserved for extension */
 };
 
 enum numbering_plan_identifier{
@@ -233,19 +233,8 @@ struct tel_sat_cmd_qualifier_play_tone{
 	enum vibration_alert vibration_alert;
 };
 
-enum refresh_command{
-	REFRESH_SIM_INIT_AND_FULL_FCN = 0, /**<	command qualifier for REFRESH SIM INIT AND FULL FILE CHANGE_NOTIFICATION		*/
-	REFRESH_FCN = 1, /**<	command qualifier for REFRESH FILE CHANGE NOTIFICATION		*/
-	REFRESH_SIM_INIT_AND_FCN = 2, /**<	command qualifier for REFRESH SIM INIT AND FILE CHANGE NOTIFICATION		*/
-	REFRESH_SIM_INIT = 3, /**<	command qualifier for REFRESH SIM INIT		*/
-	REFRESH_SIM_RESET = 4, /**<	command qualifier for REFRESH SIM RESET		*/
-	REFRESH_3G_APPLICATION_RESET = 5, /**<	command qualifier for REFRESH 3G APPLICATION RESET		*/
-	REFRESH_3G_SESSION_RESET = 6, /**<	command qualifier for REFRESH 3G SESSION RESET		*/
-	REFRESH_RESERVED = 0xFF /**<	command qualifier for REFRESH RESERVED		*/
-};
-
 struct tel_sat_cmd_qualifier_refresh{
-	enum refresh_command refresh;
+	enum tel_sim_refresh_command refresh;
 };
 
 enum provide_local_info_command{
@@ -396,6 +385,7 @@ struct tel_sat_item_info{
 	unsigned char item_id;
 	unsigned char text_len;
 	unsigned char text[SAT_ITEM_TEXT_LEN_MAX + 1];
+	struct data_coding_scheme dcs;
 };
 
 /*
@@ -474,7 +464,8 @@ enum tel_sat_me_problem_type{
 };
 
 enum tel_sat_user_confirm_type{
-	USER_CONFIRM_YES,						/**<This Enum Informs That user confirms yes */
+	USER_CONFIRM_NOT_SPECIFIED = -1,			/**<This Enum Informs That not specified */
+	USER_CONFIRM_YES = 0,						/**<This Enum Informs That user confirms yes */
 	USER_CONFIRM_NO_OR_CANCEL,				/**<This enum informs that user confirms no/cancel */
 	USER_CONFIRM_HELP_INFO,				/**<This enum informs that user wants help information */
 	USER_CONFIRM_END,						/**<This enum informs that user confirms end */
@@ -721,11 +712,11 @@ struct tel_sat_call_ctrl_req_action{
 /*
  * 8.31 Icon identifier
  */
-enum img_coding_scheme{
+/*enum img_coding_scheme{
 	IMAGE_CODING_SCHEME_BASIC = 0x11,
 	IMAGE_CODING_SCHEME_COLOUR = 0x21,
 	IMAGE_CODING_SCHEME_RESERVED = 0xFF
-};
+};*/
 
 enum icon_qualifier{
 	ICON_QUALI_SELF_EXPLANATORY = 0,
@@ -1115,6 +1106,7 @@ struct tel_sat_network_access_name{
  * 8.72 Text attribute
  */
 struct tel_sat_text_attribute{
+	gboolean b_txt_attr;
 	unsigned char text_formatting[4];
 };
 
@@ -1308,7 +1300,6 @@ struct tel_sat_setup_event_list_tlv{
 	struct tel_sat_cmd_detail_info command_detail;
 	struct tel_sat_device_identities device_id;
 	struct tel_sat_event_list event_list;
-	struct tel_sat_event_list modem_event_list;
 };
 
 /*
@@ -1452,6 +1443,14 @@ struct tel_sat_send_channel_tlv{
  * 6.6.31 GET CHANNEL STATUS
  */
 struct tel_sat_get_channel_status_tlv{
+	struct tel_sat_cmd_detail_info command_detail;
+	struct tel_sat_device_identities device_id;
+};
+
+/*
+ * 6.6.XX UNSUPPORTED CMD
+ */
+struct tel_sat_unsupproted_command_tlv{
 	struct tel_sat_cmd_detail_info command_detail;
 	struct tel_sat_device_identities device_id;
 };
@@ -1707,6 +1706,13 @@ struct tel_sat_tr_get_channel_status_tlv{
 	struct tel_sat_channel_status channel_status;
 };
 
+struct tel_sat_tr_unsupport_command_tlv{
+	struct tel_sat_cmd_detail_info command_detail;
+	struct tel_sat_device_identities device_id;
+	enum tel_sat_result_type result_type;
+	enum tel_sat_me_problem_type me_problem_type;
+};
+
 struct treq_sat_terminal_rsp_data{
 	int cmd_number;
 	enum tel_sat_proactive_cmd_type cmd_type;
@@ -1734,7 +1740,13 @@ struct treq_sat_terminal_rsp_data{
 		struct tel_sat_tr_send_data_tlv send_data;
 		struct tel_sat_tr_receive_data_tlv receive_data;
 		struct tel_sat_tr_get_channel_status_tlv get_channel_status;
+		struct tel_sat_tr_unsupport_command_tlv unsupport_cmd;
 	}terminal_rsp_data;
+};
+
+struct treq_sat_user_confirmation_data{
+	int user_conf;
+	int icon_conf; /* Notice: Not being used for now*/
 };
 
 /*
@@ -1755,7 +1767,14 @@ struct tresp_sat_envelop_data{
 /*
  * Define SAT Notification structure
  */
+enum call_control_result{
+	call_control_allowed_no_mod = 0x00,
+	call_control_not_allowed = 0x01,
+	call_control_allowed_with_mod = 0x02
+};
+
 struct tnoti_sat_proactive_ind{
+	int decode_err_code;
 	int cmd_number;
 	enum tel_sat_proactive_cmd_type cmd_type;
 	union{
@@ -1782,8 +1801,31 @@ struct tnoti_sat_proactive_ind{
 		struct tel_sat_receive_channel_tlv receive_data;
 		struct tel_sat_send_channel_tlv send_data;
 		struct tel_sat_get_channel_status_tlv get_channel_status;
+		struct tel_sat_unsupproted_command_tlv unsupport_cmd;
 	}proactive_ind_data;
 };
+
+struct tnoti_sat_call_control_result_ind{
+	enum call_control_result cc_result;
+
+	struct tel_sat_address address;
+	struct tel_sat_ss_string ss_string;
+
+	struct tel_sat_ccp ccp1;
+	struct tel_sat_subaddress sub_address;
+	struct tel_sat_alpha_identifier alpha_id;
+	struct tel_sat_repeat_indicator_type bc_repeat_type;
+	struct tel_sat_ccp ccp2;
+};
+
+struct tnoti_sat_mo_sm_control_result_ind{
+	enum call_control_result cc_result;
+
+	struct tel_sat_address rp_dst_address;
+	struct tel_sat_address tp_dst_address;
+	struct tel_sat_alpha_identifier alpha_id;
+};
+
 __END_DECLS
 
 #endif

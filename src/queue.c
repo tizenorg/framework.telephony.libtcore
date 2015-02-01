@@ -85,13 +85,13 @@ static gboolean _on_pending_timeout(gpointer user_data)
 
 	dbg("pending timeout!!");
 
-	if (p == NULL)
+	if (!p)
 		return FALSE;
 
 	tcore_pending_emit_timeout_callback(p);
 
 	p->on_response = NULL;
-	tcore_hal_dispatch_response_data(p->queue->hal, p->id, 0, NULL);
+	tcore_hal_free_timeout_pending_request(p->queue->hal, p, 0, NULL);
 
 	return FALSE;
 }
@@ -100,8 +100,8 @@ TcorePending *tcore_pending_new(CoreObject *co, unsigned int id)
 {
 	TcorePending *p;
 
-	p = g_try_new0(struct tcore_pending_type, 1);
-	if (p == NULL)
+	p = calloc(1, sizeof(struct tcore_pending_type));
+	if (!p)
 		return NULL;
 
 	p->id = id;
@@ -126,28 +126,29 @@ TcorePending *tcore_pending_new(CoreObject *co, unsigned int id)
 
 void tcore_pending_free(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return;
 
 	dbg("pending(0x%x) free, id=0x%x", (unsigned int)pending, pending->id);
 
-	if ((tcore_hal_get_mode(pending->queue->hal) != TCORE_HAL_MODE_AT)
-		&& (tcore_hal_get_mode(pending->queue->hal) != TCORE_HAL_MODE_TRANSPARENT))
-	{
-		if (pending->data)
-			g_free(pending->data);
+	if (pending->queue) {
+		enum tcore_hal_mode mode = tcore_hal_get_mode(pending->queue->hal);
+		if ((mode != TCORE_HAL_MODE_AT)
+				&& (mode != TCORE_HAL_MODE_TRANSPARENT))
+			if (pending->data)
+				free(pending->data);
 	}
 
 	if (pending->timer_src) {
 		g_source_remove(pending->timer_src);
 	}
 
-	g_free(pending);
+	free(pending);
 }
 
 unsigned int tcore_pending_get_id(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return 0;
 
 	return pending->id;
@@ -156,7 +157,7 @@ unsigned int tcore_pending_get_id(TcorePending *pending)
 TReturn tcore_pending_set_auto_free_status_after_sent(TcorePending *pending,
 		gboolean flag)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->flag_auto_free_after_sent = flag;
@@ -166,7 +167,7 @@ TReturn tcore_pending_set_auto_free_status_after_sent(TcorePending *pending,
 
 gboolean tcore_pending_get_auto_free_status_after_sent(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return FALSE;
 
 	return pending->flag_auto_free_after_sent;
@@ -175,20 +176,20 @@ gboolean tcore_pending_get_auto_free_status_after_sent(TcorePending *pending)
 TReturn tcore_pending_set_request_data(TcorePending *pending,
 		unsigned int data_len, void *data)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	if (pending->data) {
 		if (pending->data_len != 0) {
-			g_free(pending->data);
+			free(pending->data);
 			pending->data = NULL;
 		}
 	}
 
 	pending->data_len = data_len;
 	if (pending->data_len > 0) {
-		pending->data = g_try_malloc0(data_len);
-		if (pending->data == NULL)
+		pending->data = calloc(data_len, 1);
+		if (!pending->data)
 			return TCORE_RETURN_ENOMEM;
 
 		memcpy(pending->data, data, data_len);
@@ -202,7 +203,7 @@ TReturn tcore_pending_set_request_data(TcorePending *pending,
 
 void *tcore_pending_ref_request_data(TcorePending *pending, unsigned int *data_len)
 {
-	if (pending == NULL)
+	if (!pending)
 		return NULL;
 
 	if (data_len)
@@ -214,7 +215,7 @@ void *tcore_pending_ref_request_data(TcorePending *pending, unsigned int *data_l
 TReturn tcore_pending_set_priority(TcorePending *pending,
 		enum tcore_pending_priority priority)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->priority = priority;
@@ -225,7 +226,7 @@ TReturn tcore_pending_set_priority(TcorePending *pending,
 TReturn tcore_pending_get_priority(TcorePending *pending,
 		enum tcore_pending_priority *result_priority)
 {
-	if ((pending == NULL) || (result_priority == NULL))
+	if (!pending || !result_priority)
 		return TCORE_RETURN_EINVAL;
 
 	*result_priority = pending->priority;
@@ -233,9 +234,19 @@ TReturn tcore_pending_get_priority(TcorePending *pending,
 	return TCORE_RETURN_SUCCESS;
 }
 
+TReturn tcore_pending_start_timer(TcorePending *pending)
+{
+	/* pending timer */
+	if (pending->timeout > 0 && pending->on_timeout) {
+		dbg("start pending timer! (%d secs)", pending->timeout);
+		pending->timer_src = g_timeout_add_seconds(pending->timeout, _on_pending_timeout, pending);
+	}
+	return TCORE_RETURN_SUCCESS;
+}
+
 TReturn tcore_pending_set_timeout(TcorePending *pending, unsigned int timeout)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->timeout = timeout;
@@ -243,10 +254,18 @@ TReturn tcore_pending_set_timeout(TcorePending *pending, unsigned int timeout)
 	return TCORE_RETURN_SUCCESS;
 }
 
+unsigned int  tcore_pending_get_timeout(TcorePending *pending)
+{
+	if (!pending)
+		return 0;
+
+	return pending->timeout;
+}
+
 TReturn tcore_pending_get_send_status(TcorePending *pending,
 		gboolean *result_status)
 {
-	if ((pending == NULL) || (result_status == NULL))
+	if (!pending || !result_status)
 		return TCORE_RETURN_EINVAL;
 
 	*result_status = pending->flag_sent;
@@ -257,7 +276,7 @@ TReturn tcore_pending_get_send_status(TcorePending *pending,
 TReturn tcore_pending_set_send_callback(TcorePending *pending,
 		TcorePendingSendCallback func, void *user_data)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->on_send = func;
@@ -269,7 +288,7 @@ TReturn tcore_pending_set_send_callback(TcorePending *pending,
 TReturn tcore_pending_set_timeout_callback(TcorePending *pending,
 		TcorePendingTimeoutCallback func, void *user_data)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->on_timeout = func;
@@ -281,7 +300,7 @@ TReturn tcore_pending_set_timeout_callback(TcorePending *pending,
 TReturn tcore_pending_set_response_callback(TcorePending *pending,
 		TcorePendingResponseCallback func, void *user_data)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->on_response = func;
@@ -292,7 +311,7 @@ TReturn tcore_pending_set_response_callback(TcorePending *pending,
 
 TReturn tcore_pending_emit_send_callback(TcorePending *pending, gboolean result)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->flag_sent = TRUE;
@@ -300,20 +319,12 @@ TReturn tcore_pending_emit_send_callback(TcorePending *pending, gboolean result)
 	if (pending->on_send)
 		pending->on_send(pending, result, pending->on_send_user_data);
 
-	if (result == TRUE) {
-		if (pending->flag_auto_free_after_sent == FALSE && pending->timeout > 0) {
-			/* timer */
-			dbg("start pending timer! (%d secs)", pending->timeout);
-			pending->timer_src = g_timeout_add_seconds(pending->timeout, _on_pending_timeout, pending);
-		}
-	}
-
 	return TCORE_RETURN_SUCCESS;
 }
 
 TReturn tcore_pending_emit_timeout_callback(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	if (pending->on_timeout)
@@ -325,7 +336,7 @@ TReturn tcore_pending_emit_timeout_callback(TcorePending *pending)
 TReturn tcore_pending_emit_response_callback(TcorePending *pending,
 		int data_len, const void *data)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	if (pending->on_response)
@@ -337,7 +348,7 @@ TReturn tcore_pending_emit_response_callback(TcorePending *pending,
 
 CoreObject *tcore_pending_ref_core_object(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return NULL;
 
 	return pending->co;
@@ -345,7 +356,7 @@ CoreObject *tcore_pending_ref_core_object(TcorePending *pending)
 
 TcorePlugin *tcore_pending_ref_plugin(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return NULL;
 
 	return pending->plugin;
@@ -353,7 +364,7 @@ TcorePlugin *tcore_pending_ref_plugin(TcorePending *pending)
 
 TReturn tcore_pending_link_user_request(TcorePending *pending, UserRequest *ur)
 {
-	if (pending == NULL)
+	if (!pending)
 		return TCORE_RETURN_EINVAL;
 
 	pending->ur = ur;
@@ -363,7 +374,7 @@ TReturn tcore_pending_link_user_request(TcorePending *pending, UserRequest *ur)
 
 UserRequest *tcore_pending_ref_user_request(TcorePending *pending)
 {
-	if (pending == NULL)
+	if (!pending)
 		return NULL;
 
 	return pending->ur;
@@ -373,15 +384,15 @@ TcoreQueue *tcore_queue_new(TcoreHal *h)
 {
 	TcoreQueue *queue;
 
-	queue = g_try_new0(struct tcore_queue_type, 1);
-	if (queue == NULL)
+	queue = calloc(1, sizeof(struct tcore_queue_type));
+	if (!queue)
 		return FALSE;
 
 	queue->hal = h;
 
 	queue->gq = g_queue_new();
-	if (queue->gq == NULL) {
-		g_free(queue);
+	if (!queue->gq) {
+		free(queue);
 		return FALSE;
 	}
 
@@ -392,13 +403,13 @@ TcoreQueue *tcore_queue_new(TcoreHal *h)
 
 void tcore_queue_free(TcoreQueue *queue)
 {
-	if (queue == NULL)
+	if (!queue)
 		return;
 
 	if (queue->gq)
 		g_queue_free(queue->gq);
 
-	g_free(queue);
+	free(queue);
 }
 
 static void _tcore_queue_push_head(TcoreQueue *queue, TcorePending *pending)
@@ -409,7 +420,7 @@ static void _tcore_queue_push_head(TcoreQueue *queue, TcorePending *pending)
 	do {
 		i++;
 		tmp = g_queue_peek_nth(queue->gq, i);
-		if (tmp == NULL) {
+		if (!tmp) {
 			break;
 		}
 
@@ -426,7 +437,7 @@ TReturn tcore_queue_push(TcoreQueue *queue, TcorePending *pending)
 {
 	enum tcore_pending_priority priority;
 
-	if ((queue == NULL) || (pending == NULL))
+	if (!queue || !pending)
 		return TCORE_RETURN_EINVAL;
 
 	if (pending->id == 0) {
@@ -453,15 +464,15 @@ TReturn tcore_queue_push(TcoreQueue *queue, TcorePending *pending)
 			break;
 	}
 
-	dbg("pending(0x%x) push to queue. queue length=%d",
-			(unsigned int)pending, g_queue_get_length(queue->gq));
+	dbg("pending(%p) push to queue(%p). queue length=%d",
+			(unsigned int)pending, queue, g_queue_get_length(queue->gq));
 
 	return TCORE_RETURN_SUCCESS;
 }
 
 TcorePending *tcore_queue_pop(TcoreQueue *queue)
 {
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	return g_queue_pop_head(queue->gq);
@@ -472,12 +483,12 @@ TcorePending *tcore_queue_pop_by_pending(TcoreQueue *queue, TcorePending *pendin
 	TcorePending *tmp;
 	int i = 0;
 
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	do {
 		tmp = g_queue_peek_nth(queue->gq, i);
-		if (tmp == NULL)
+		if (!tmp)
 			return NULL;
 
 		if (tmp == pending) {
@@ -501,7 +512,7 @@ TcorePending *tcore_queue_pop_timeout_pending(TcoreQueue *queue)
 
 	do {
 		pending = g_queue_peek_nth(queue->gq, i);
-		if (pending == NULL)
+		if (!pending)
 			return NULL;
 
 		if (cur_time - pending->timestamp >= (int)pending->timeout) {
@@ -517,7 +528,7 @@ TcorePending *tcore_queue_pop_timeout_pending(TcoreQueue *queue)
 
 TcorePending *tcore_queue_ref_head(TcoreQueue *queue)
 {
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	return g_queue_peek_head(queue->gq);
@@ -525,7 +536,7 @@ TcorePending *tcore_queue_ref_head(TcoreQueue *queue)
 
 TcorePending *tcore_queue_ref_tail(TcoreQueue *queue)
 {
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	return g_queue_peek_tail(queue->gq);
@@ -539,12 +550,12 @@ static TcorePending *_tcore_queue_search_full(TcoreQueue *queue, unsigned int id
 	int i = 0;
 	UserRequest *ur;
 
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	do {
 		pending = g_queue_peek_nth(queue->gq, i);
-		if (pending == NULL)
+		if (!pending)
 			return NULL;
 
 		if ((field & 0xF0) == 0x10) {
@@ -597,7 +608,7 @@ TcorePending *tcore_queue_search_by_command(TcoreQueue *queue,
 
 TcorePending *tcore_queue_pop_by_id(TcoreQueue *queue, unsigned int id)
 {
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	return _tcore_queue_search_full(queue, id, 0, SEARCH_FIELD_ID_ALL, TRUE);
@@ -605,7 +616,7 @@ TcorePending *tcore_queue_pop_by_id(TcoreQueue *queue, unsigned int id)
 
 TcorePending *tcore_queue_ref_pending_by_id(TcoreQueue *queue, unsigned int id)
 {
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	return _tcore_queue_search_full(queue, id, 0, SEARCH_FIELD_ID_ALL, FALSE);
@@ -616,12 +627,12 @@ TcorePending *tcore_queue_ref_next_pending(TcoreQueue *queue)
 	TcorePending *pending = NULL;
 	int i = 0;
 
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	do {
 		pending = g_queue_peek_nth(queue->gq, i);
-		if (pending == NULL) {
+		if (!pending) {
 			return NULL;
 		}
 
@@ -649,15 +660,40 @@ TcorePending *tcore_queue_ref_next_pending(TcoreQueue *queue)
 
 unsigned int tcore_queue_get_length(TcoreQueue *queue)
 {
-	if (queue == NULL)
+	if (!queue)
 		return 0;
 
 	return g_queue_get_length(queue->gq);
 }
 
+unsigned int tcore_queue_get_normal_length(TcoreQueue *queue)
+{
+	TcorePending *pending;
+	int i = 0;
+
+	if (!queue)
+		return 0;
+
+	do {
+		pending = g_queue_peek_nth(queue->gq, i);
+		if (!pending) {
+			break;
+		}
+
+		if (pending->priority == TCORE_PENDING_PRIORITY_IMMEDIATELY) {
+			i++;
+			continue;
+		}
+
+		break;
+	} while (1);
+
+	return g_queue_get_length(queue->gq) - i;
+}
+
 TcoreHal *tcore_queue_ref_hal(TcoreQueue *queue)
 {
-	if (queue == NULL)
+	if (!queue)
 		return NULL;
 
 	return queue->hal;
@@ -667,20 +703,22 @@ TReturn tcore_queue_cancel_pending_by_command(TcoreQueue *queue, enum tcore_requ
 {
 	TcorePending *pending;
 
-	if (queue == NULL)
+	if (!queue)
 		return TCORE_RETURN_EINVAL;
 
 	while (1) {
 		pending = _tcore_queue_search_full(queue, 0, command, SEARCH_FIELD_COMMAND_ALL, FALSE);
-		if (pending == NULL)
+		if (!pending)
 			break;
 
 		dbg("pending(0x%x) cancel", (unsigned int)pending);
 
 		if (queue->hal) {
+			dbg("hal %p", queue->hal);
 			tcore_hal_dispatch_response_data(queue->hal, pending->id, 0, NULL);
 		}
 		else {
+			dbg("no hal");
 			pending = tcore_queue_pop_by_pending(queue, pending);
 			tcore_pending_emit_response_callback(pending, 0, NULL);
 			tcore_user_request_unref(tcore_pending_ref_user_request(pending));

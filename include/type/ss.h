@@ -136,6 +136,32 @@ enum telephony_ss_forwarding_no_reply_time {
 	SS_CF_NO_REPLY_30_SEC	= 30,
 };
 
+enum telephony_ss_forwarding_type_of_number {
+	SS_CF_TON_UNKNOWN = 0, /**< unknown */
+	SS_CF_TON_INTERNATIONAL = 1, /**< international number */
+	SS_CF_TON_NATIONAL = 2, /**< national number */
+	SS_CF_TON_NETWORK_SPECIFIC = 3, /**< network specific number */
+	SS_CF_TON_DEDICATED_ACCESS = 4, /**< subscriber number */
+	SS_CF_TON_ALPHA_NUMERIC = 5, /**< alphanumeric, GSM 7-bit default alphabet) */
+	SS_CF_TON_ABBREVIATED_NUMBER = 6, /**< abbreviated number */
+	SS_CF_TON_RESERVED_FOR_EXT = 7 /**< reserved for extension */
+};
+
+enum telephony_ss_forwarding_numbering_plan_identity {
+	SS_CF_NPI_UNKNOWN = 0, /**< Unknown */
+	SS_CF_NPI_ISDN_TEL = 1, /**< ISDN/Telephone numbering plan */
+	SS_CF_NPI_DATA_NUMBERING_PLAN = 3, /**< Data numbering plan */
+	SS_CF_NPI_TELEX = 4, /**< Telex numbering plan */
+	SS_CF_NPI_SVC_CNTR_SPECIFIC_PLAN = 5, /**< Service Center Specific plan */
+	SS_CF_NPI_SVC_CNTR_SPECIFIC_PLAN2 = 6, /**< Service Center Specific plan */
+	SS_CF_NPI_NATIONAL = 8, /**< National numbering plan */
+	SS_CF_NPI_PRIVATE = 9, /**< Private numbering plan */
+	SS_CF_NPI_ERMES_NUMBERING_PLAN = 10, /**< ERMES numbering plan */
+	SS_CF_NPI_RESERVED_FOR_EXT = 0xF /**< Reserved for extension */
+};
+
+
+
 enum telephony_ss_cli_type {
 	SS_CLI_TYPE_NONE,
 	SS_CLI_TYPE_CLIP,       /* 0x01 : Calling Line Identification Presentation */
@@ -145,6 +171,15 @@ enum telephony_ss_cli_type {
 	SS_CLI_TYPE_CDIP,       /* 0x05 : Called Line Identification Presentation */
 	SS_CLI_TYPE_CNAP,      /* 0x06 : Calling Name Presentation */
 	SS_CLI_TYPE_MAX
+};
+
+enum telephony_ss_cli_status{
+	SS_CLI_STATUS_NOT_PROVISONED = 0x01, /**<Service not provided by the service provider */
+	SS_CLI_STATUS_PROVISIONED, /**<Service is provided by the service provider */
+	SS_CLI_STATUS_ACTIVATED, /**<Service is activated at the network */
+	SS_CLI_STATUS_UNKOWN, /**<Service status is unknown*/
+	SS_CLI_STATUS_TEMP_RESTRICTED, /**<Service is temporarily restricted */
+	SS_CLI_STATUS_TEMP_ALLOWED /**<Service is temporarily allowed */
 };
 
 enum telephony_ss_ussd_type {
@@ -167,6 +202,15 @@ enum telephony_ss_ussd_status {
 	SS_USSD_MAX
 };
 
+enum telephony_ss_info_type {
+	SS_INFO_TYPE_BARRING = 0x00,
+	SS_INFO_TYPE_FORWARDING,
+	SS_INFO_TYPE_WAITING,
+	SS_INFO_TYPE_CLI,
+	SS_INFO_TYPE_SEND_USSD,
+	SS_INFO_TYPE_MAX
+};
+
 enum telephony_ss_aoc_type {
 	SS_AOC_TYPE_RESET		=0x00,		/* AoC Reset Message */
 	SS_AOC_TYPE_ACM			=0x01,		/* Accumulated call meter Message */
@@ -177,48 +221,58 @@ enum telephony_ss_aoc_type {
 };
 
 enum telephony_ss_error {
-	SS_ERROR_NONE, /**<  SS operation was successful */
-	SS_ERROR_TIMEREXPIRE, /**< SS operation timer expired on network. */
-	SS_ERROR_UNKNOWNSUBSCRIBER, /**< SS error indicating unknown/illegal subscriber.  */
-	SS_ERROR_BEARERSERVICENOTPROVISIONED, /**<The network returns this error when it is requested to  @n
-	 perform an operation on a supplementary service  */
-	SS_ERROR_TELESERVICENOTPROVISIONED, /**<The network returns this error when it is requested to perform  @n
-	 an operation on a supplementary service  */
-	SS_ERROR_ILLEGALSSOPERATION, /**<This error is returned by the network when it is requested to perform an illegal operation @n
-	 which is defined as not applicable for the relevant supplementary service */
-	SS_ERROR_ERRORSTATUS, /**<This error is returned by the network when it is requested to perform an operation @n
-	 which is not compatible with the current status of the relevant supplementary service. */
-	SS_ERROR_NOTAVAILABLE, /**< SS not available in network */
-	SS_ERROR_SUBSCRIPTIONVIOLATION, /**< SS service subscription violation. */
-	SS_ERROR_INCOMPATIBILITY, /**< This error is returned by the network when it is requested for a supplementary service operation incompatible with the @n
-	 status of another supplementary service or with the teleservice or bearer service for which the operation is requested */
-	SS_ERROR_SYSTEMFAILURE, /**< This error is returned by the network, when it cannot perform an operation because of a failure in the network */
-	SS_ERROR_DATAMISSING, /**< This error is returned by the network when an optional parameter is missing in an invoke component @n
-	 or an inner data structure, while it is required by the context of the request. */
-	SS_ERROR_UNEXPECTEDDATAVALUE, /**< SS error indicating unexpected data value on network side *//**< SS operation barred.  */
-	SS_ERROR_PWREGISTRATIONFAILURE, /**< SS error indicating change password failure. */
-	SS_ERROR_NEGATIVEPWCHECK, /**< SS error indicating negative password check.  */
-	SS_ERROR_FACILITYNOTSUPPORTED, /**< SS service facility not supported  */
-	SS_ERROR_RESOURCESNOTAVAILABLE, /**< SS error indicating resources not available in network.  */
-	SS_ERROR_MAXNOMPTYEXCEEDED, /**< SS error indicating Maximum MPTY is reached.  */
-	SS_ERROR_CALLBARRED, /**< This error is returned by the network to the MS when call independent subscriber control procedures are barred by the operator */
-	SS_ERROR_NUMBEROFPWATTEMPTSVIOLATION, /**< SS error indicating barring password attempts violated.  */
-	SS_ERROR_ABSENTSUBSCRIBER, /**< This error is returned when the subscriber has activated the detach service or the system detects the absence condition */
-	SS_ERROR_ILLEGALSUBSCRIBER, /**<This error is returned when illegality of the access has been @n
+	SS_ERROR_NONE =0x0, /**<  SS operation was successful */
+
+	SS_ERROR_UNKNOWNSUBSCRIBER =0x01, /**< SS error indicating unknown/illegal subscriber.  */
+	SS_ERROR_ILLEGALSUBSCRIBER= 0x09, /**<This error is returned when illegality of the access has been @n
 	 established by use of authentication procedure. */
-	SS_ERROR_ILLEGALEQUIPMENT, /**<This error is returned when the IMEI check procedure has shown that  @n
+	SS_ERROR_BEARERSERVICENOTPROVISIONED = 0x0a, /**<The network returns this error when it is requested to  @n
+	 perform an operation on a supplementary service  */
+	SS_ERROR_TELESERVICENOTPROVISIONED= 0x0b, /**<The network returns this error when it is requested to perform  @n
+	 an operation on a supplementary service  */
+	SS_ERROR_ILLEGALEQUIPMENT= 0x0c, /**<This error is returned when the IMEI check procedure has shown that  @n
 	 the IMEI is blacklisted or not whitelisted  */
-	SS_ERROR_USSDBUSY, /**< SS error indicating USSD Busy(Already SS / USSD is ongoing).  */
-	SS_ERROR_UNKNOWNALPHABET, /**< SS error indicating unknown SS data coding of alphabet */
-	SS_ERROR_INVALIDDEFLECTEDTONUMBER, /**< SS error indicating the invalid deflected to number.  */
-	SS_ERROR_DEFLECTIONTOSERVEDSUBSCRIBER, /**< This error is returned if a diversion to the served  @n
+	SS_ERROR_CALLBARRED= 0x0d, /**< This error is returned by the network to the MS when call independent subscriber control procedures are barred by the operator */
+
+	SS_ERROR_ILLEGALSSOPERATION= 0x10, /**<This error is returned by the network when it is requested to perform an illegal operation @n
+	 which is defined as not applicable for the relevant supplementary service */
+	SS_ERROR_ERRORSTATUS= 0x11, /**<This error is returned by the network when it is requested to perform an operation @n
+	 which is not compatible with the current status of the relevant supplementary service. */
+	SS_ERROR_NOTAVAILABLE= 0x12, /**< SS not available in network */
+	SS_ERROR_SUBSCRIPTIONVIOLATION= 0x13, /**< SS service subscription violation. */
+	SS_ERROR_INCOMPATIBILITY= 0x14, /**< This error is returned by the network when it is requested for a supplementary service operation incompatible with the @n
+	 status of another supplementary service or with the teleservice or bearer service for which the operation is requested */
+	SS_ERROR_FACILITYNOTSUPPORTED= 0x15, /**< SS service facility not supported  */
+	SS_ERROR_ABSENTSUBSCRIBER= 0x1b, /**< This error is returned when the subscriber has activated the detach service or the system detects the absence condition */
+
+	SS_ERROR_SYSTEMFAILURE= 0x22, /**< This error is returned by the network, when it cannot perform an operation because of a failure in the network */
+	SS_ERROR_DATAMISSING= 0x23, /**< This error is returned by the network when an optional parameter is missing in an invoke component @n
+	 or an inner data structure, while it is required by the context of the request. */
+	SS_ERROR_UNEXPECTEDDATAVALUE= 0x24, /**< SS error indicating unexpected data value on network side *//**< SS operation barred.  */
+	SS_ERROR_PWREGISTRATIONFAILURE= 0x25, /**< SS error indicating change password failure. */
+	SS_ERROR_NEGATIVEPWCHECK= 0x26, /**< SS error indicating negative password check.  */
+	SS_ERROR_NUMBEROFPWATTEMPTSVIOLATION= 0x2b, /**< SS error indicating barring password attempts violated.  */
+
+	SS_ERROR_UNKNOWNALPHABET= 0x47, /**< SS error indicating unknown SS data coding of alphabet */
+	SS_ERROR_USSDBUSY= 0x48, /**< SS error indicating USSD Busy(Already SS / USSD is ongoing).  */
+
+	SS_ERROR_FIXED_DIALING_NUMBER_ONLY = 0x5F, /**< SS error indicating Dialing number is not FDN */
+
+	SS_ERROR_REJECTEDBYUSER= 0x79, /**< SS operation rejected by user.  */
+	SS_ERROR_REJECTEDBYNETWORK= 0x7a, /**< SS operation rejected by network.  */
+	SS_ERROR_DEFLECTIONTOSERVEDSUBSCRIBER= 0x7b, /**< This error is returned if a diversion to the served  @n
 	 subscriber's number was requested.  */
-	SS_ERROR_SPECIALSERVICECODE, /**< This error is returned if diversion to a special service code was requested.  */
-	SS_ERROR_REJECTEDBYUSER, /**< SS operation rejected by user.  */
-	SS_ERROR_REJECTEDBYNETWORK, /**< SS operation rejected by network.  */
+	SS_ERROR_SPECIALSERVICECODE= 0x7c, /**< This error is returned if diversion to a special service code was requested.  */
+	SS_ERROR_INVALIDDEFLECTEDTONUMBER= 0x7d, /**< SS error indicating the invalid deflected to number.  */
+	SS_ERROR_MAXNOMPTYEXCEEDED= 0x7e, /**< SS error indicating Maximum MPTY is reached.  */
+	SS_ERROR_RESOURCESNOTAVAILABLE= 0x7f, /**< SS error indicating resources not available in network.  */
+	SS_ERROR_REJECTEDBYCALLCONTROL= 0x80, /**< SS operation rejected by call control.  */
+
+	SS_ERROR_TIMEREXPIRE, /**< SS operation timer expired on network. */
+
 	SS_ERROR_NET_NOT_ALLOWED_EMERGENCY_CALLS_ONLY, /**< SS operation is not allowed by network.  */
-	SS_ERROR_UNKNOWNERROR, /**< SS error indicating unknown error  */
-	SS_ERROR_OEM_NOT_SUPPORTED /**< If oem do not support any of SS requests, then this error will be returned back */
+	SS_ERROR_OEM_NOT_SUPPORTED, /**< If oem do not support any of SS requests, then this error will be returned back */
+	SS_ERROR_UNKNOWNERROR /**< SS error indicating unknown error  */
 };
 
 
@@ -240,6 +294,8 @@ struct treq_ss_forwarding {
 	enum telephony_ss_class class;
 	enum telephony_ss_forwarding_mode mode;
 	enum telephony_ss_forwarding_no_reply_time time;
+	enum telephony_ss_forwarding_type_of_number ton;
+	enum telephony_ss_forwarding_numbering_plan_identity npi;
 	char number[ MAX_SS_FORWARDING_NUMBER_LEN ];
 };
 
@@ -252,10 +308,17 @@ struct treq_ss_cli {
 	enum telephony_ss_cli_type type;
 };
 
+struct treq_ss_set_cli {
+	enum telephony_ss_cli_type type;
+	enum telephony_ss_cli_status status;
+};
+
 #define MAX_SS_USSD_LEN 208
 struct treq_ss_ussd {
 	enum telephony_ss_ussd_type type;
-	char str[ MAX_SS_USSD_LEN ];
+	unsigned char dcs;
+	unsigned short len;
+	unsigned char str[ MAX_SS_USSD_LEN ];
 };
 
 // response
@@ -281,8 +344,9 @@ struct tresp_ss_forwarding {
 		enum telephony_ss_status status;
 		enum telephony_ss_forwarding_mode mode;
 		enum telephony_ss_forwarding_no_reply_time time;
+		enum telephony_ss_forwarding_type_of_number ton;
+		enum telephony_ss_forwarding_numbering_plan_identity npi;
 		gboolean number_present;
-		int		 number_type;
 		char	 number[ MAX_SS_FORWARDING_NUMBER_LEN ];
 	} *record;
 	enum telephony_ss_error err;
@@ -297,26 +361,47 @@ struct tresp_ss_waiting {
 	enum telephony_ss_error err;
 };
 
+struct tresp_ss_set_cli {
+	enum telephony_ss_error err;
+};
+
 struct tresp_ss_cli {
 	enum telephony_ss_cli_type type;
-	gboolean status;
+	enum telephony_ss_cli_status status;
 	enum telephony_ss_error err;
 };
 
 struct tresp_ss_ussd {
 	enum telephony_ss_ussd_type type;
 	enum telephony_ss_ussd_status status;
-	char str[ MAX_SS_USSD_LEN ];
+	unsigned char dcs;
+	unsigned short len;
+	unsigned char str[ MAX_SS_USSD_LEN ];
 	enum telephony_ss_error err;
 };
-
-
 
 // notification
 
 struct tnoti_ss_ussd {
 	enum telephony_ss_ussd_status status;
-	char str[ MAX_SS_USSD_LEN ];
+	unsigned char dcs;
+	unsigned short len;
+	unsigned char str[ MAX_SS_USSD_LEN ];
+};
+
+struct tnoti_ss_barring_status {
+	int record_num;
+	struct barring_info *record;
+};
+
+struct tnoti_ss_forwarding_status {
+	int record_num;
+	struct forwarding_info *record;
+};
+
+struct tnoti_ss_waiting_status {
+	int record_num;
+	struct waiting_info *record;
 };
 
 #define MAX_SS_RELEASE_COMPLETE_DATA_SIZE 260
@@ -324,6 +409,15 @@ struct tnoti_ss_release_complete {
 	int data_len;
 	unsigned char data[ MAX_SS_RELEASE_COMPLETE_DATA_SIZE ];
 };
+
+struct tnoti_ss_information {
+	enum telephony_ss_error err;
+	enum telephony_ss_info_type ss_type;
+#if 0 /* To be expanded later with ss information */
+	void *data;                                                       /* ( struct barring_info *,   struct forwarding_info *, struct waiting_info * ...etc...) */
+#endif
+};
+
 
 __END_DECLS
 

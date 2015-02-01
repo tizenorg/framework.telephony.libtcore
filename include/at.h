@@ -26,7 +26,7 @@ __BEGIN_DECLS
 #include <tcore.h>
 #include <queue.h>
 
-#define ZERO								0
+#define ZERO		0
 
 enum tcore_at_command_type {
     TCORE_AT_NO_RESULT,   /* no intermediate response expected */
@@ -104,10 +104,6 @@ typedef gboolean (*TcoreATNotificationCallback)(TcoreAT *at, const GSList *lines
 typedef struct tcore_at_response TcoreATResponse;
 typedef struct tcore_at_request TcoreATRequest;
 
-void tcore_at_process_binary_data(TcoreAT *at,char *position,int data_len);
-int sum_4_bytes(char* posn);
-
-gboolean tcore_at_add_hook(TcoreHal *hal, void *hook_func);
 TcoreAT*         tcore_at_new(TcoreHal *hal);
 void             tcore_at_free(TcoreAT *at);
 
@@ -117,6 +113,9 @@ TReturn          tcore_at_buf_write(TcoreAT *at, unsigned int data_len,
 TReturn          tcore_at_set_request(TcoreAT *at, TcoreATRequest *req, gboolean send);
 TcoreATRequest*  tcore_at_get_request(TcoreAT *at);
 TcoreATResponse* tcore_at_get_response(TcoreAT *at);
+
+void tcore_at_process_binary_data(TcoreAT *at, char *position, int data_len);
+gboolean tcore_at_add_hook(TcoreHal *hal, void *hook_func);
 
 TReturn          tcore_at_add_notification(TcoreAT *at, const char *prefix,
                      gboolean pdu, TcoreATNotificationCallback callback,
@@ -142,6 +141,7 @@ GSList*          tcore_at_tok_new(const char *line);
 void             tcore_at_tok_free(GSList *tokens);
 char*            tcore_at_tok_extract(const char *src);
 char*            tcore_at_tok_nth(GSList *tokens, unsigned int token_index);
+void tcore_free_pending_timeout_at_request(TcoreAT *at);
 
 TReturn tcore_prepare_and_send_at_request(CoreObject *co,
 												const char *at_cmd,
@@ -151,7 +151,11 @@ TReturn tcore_prepare_and_send_at_request(CoreObject *co,
 												TcorePendingResponseCallback resp_cb,
 												void *resp_cb_data,
 												TcorePendingSendCallback send_cb,
-												void *send_cb_data);
+												void *send_cb_data,
+												unsigned int timeout,
+												TcorePendingTimeoutCallback timeout_cb,
+												void *timeout_cb_data);
+
 __END_DECLS
 
 #endif

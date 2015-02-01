@@ -49,66 +49,6 @@ struct private_object_data {
 	struct tcore_ss_operations *ops;
 };
 
-static void _clone_ss_operations(struct private_object_data *po, struct tcore_ss_operations *ss_ops)
-{
-	if(ss_ops->barring_activate) {
-		po->ops->barring_activate = ss_ops->barring_activate;
-	}
-	if(ss_ops->barring_deactivate) {
-		po->ops->barring_deactivate = ss_ops->barring_deactivate;
-	}
-	if(ss_ops->barring_change_password) {
-		po->ops->barring_change_password = ss_ops->barring_change_password;
-	}
-	if(ss_ops->barring_get_status) {
-		po->ops->barring_get_status = ss_ops->barring_get_status;
-	}
-	if(ss_ops->forwarding_activate) {
-		po->ops->forwarding_activate = ss_ops->forwarding_activate;
-	}
-	if(ss_ops->forwarding_deactivate) {
-		po->ops->forwarding_deactivate = ss_ops->forwarding_deactivate;
-	}
-	if(ss_ops->forwarding_register) {
-		po->ops->forwarding_register = ss_ops->forwarding_register;
-	}
-	if(ss_ops->forwarding_deregister) {
-		po->ops->forwarding_deregister = ss_ops->forwarding_deregister;
-	}
-	if(ss_ops->forwarding_get_status) {
-		po->ops->forwarding_get_status = ss_ops->forwarding_get_status;
-	}
-	if(ss_ops->waiting_activate) {
-		po->ops->waiting_activate = ss_ops->waiting_activate;
-	}
-	if(ss_ops->waiting_deactivate) {
-		po->ops->waiting_deactivate = ss_ops->waiting_deactivate;
-	}
-	if(ss_ops->waiting_get_status) {
-		po->ops->waiting_get_status = ss_ops->waiting_get_status;
-	}
-	if(ss_ops->cli_activate) {
-		po->ops->cli_activate = ss_ops->cli_activate;
-	}
-	if(ss_ops->cli_deactivate) {
-		po->ops->cli_deactivate = ss_ops->cli_deactivate;
-	}
-	if(ss_ops->cli_get_status) {
-		po->ops->cli_get_status = ss_ops->cli_get_status;
-	}
-	if(ss_ops->send_ussd) {
-		po->ops->send_ussd = ss_ops->send_ussd;
-	}
-	if(ss_ops->set_aoc) {
-		po->ops->set_aoc = ss_ops->set_aoc;
-	}
-	if(ss_ops->get_aoc) {
-		po->ops->get_aoc = ss_ops->get_aoc;
-	}
-
-	return;
-}
-
 static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 {
 	enum tcore_request_command command;
@@ -124,74 +64,135 @@ static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 	command = tcore_user_request_get_command(ur);
 	switch (command) {
 		case TREQ_SS_BARRING_ACTIVATE:
+			if (!po->ops->barring_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_activate(o, ur);
 			break;
 
 		case TREQ_SS_BARRING_DEACTIVATE:
+			if (!po->ops->barring_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_deactivate(o, ur);
 			break;
 
 		case TREQ_SS_BARRING_CHANGE_PASSWORD:
+			if (!po->ops->barring_change_password)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_change_password(o, ur);
 			break;
 
 		case TREQ_SS_BARRING_GET_STATUS:
+			if (!po->ops->barring_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_get_status(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_ACTIVATE:
+			if (!po->ops->forwarding_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_activate(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_DEACTIVATE:
+			if (!po->ops->forwarding_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_deactivate(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_REGISTER:
+			if (!po->ops->forwarding_register)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_register(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_DEREGISTER:
+			if (!po->ops->forwarding_deregister)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_deregister(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_GET_STATUS:
+			if (!po->ops->forwarding_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_get_status(o, ur);
 			break;
 
 		case TREQ_SS_WAITING_ACTIVATE:
+			if (!po->ops->waiting_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->waiting_activate(o, ur);
 			break;
 
 		case TREQ_SS_WAITING_DEACTIVATE:
+			if (!po->ops->waiting_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->waiting_deactivate(o, ur);
 			break;
 
 		case TREQ_SS_WAITING_GET_STATUS:
+			if (!po->ops->waiting_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->waiting_get_status(o, ur);
 			break;
 
 		case TREQ_SS_CLI_ACTIVATE:
+			if (!po->ops->cli_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->cli_activate(o, ur);
 			break;
 
 		case TREQ_SS_CLI_DEACTIVATE:
+			if (!po->ops->cli_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->cli_deactivate(o, ur);
 			break;
 
+		case TREQ_SS_CLI_SET_STATUS:
+			if (!po->ops->cli_set_status)
+				return TCORE_RETURN_ENOSYS;
+
+			ret = po->ops->cli_set_status(o, ur);
+			break;
+
 		case TREQ_SS_CLI_GET_STATUS:
+			if (!po->ops->cli_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->cli_get_status(o, ur);
 			break;
 
 		case TREQ_SS_SEND_USSD:
+			if (!po->ops->send_ussd)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->send_ussd(o, ur);
 			break;
 
 		case TREQ_SS_SET_AOC:
+			if (!po->ops->set_aoc)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->set_aoc(o, ur);
 			break;
 
 		case TREQ_SS_GET_AOC:
+			if (!po->ops->get_aoc)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->get_aoc(o, ur);
 			break;
 
@@ -243,7 +244,7 @@ static void _ussd_session_init(struct ussd_session *ussd_s)
 }
 
 struct ussd_session* tcore_ss_ussd_create_session(CoreObject *o,
-				enum tcore_ss_ussd_type type, void *data, int data_len)
+		enum tcore_ss_ussd_type type, void *data, int data_len)
 {
 	struct private_object_data *po = NULL;
 
@@ -313,8 +314,8 @@ enum tcore_ss_ussd_type tcore_ss_ussd_get_session_type(struct ussd_session *ussd
 	}
 }
 
-void tcore_ss_ussd_set_session_type(struct ussd_session* ussd_s,
-				enum tcore_ss_ussd_type type)
+void tcore_ss_ussd_set_session_type(struct ussd_session *ussd_s,
+		enum tcore_ss_ussd_type type)
 {
 	if (!ussd_s || !ussd_s->session) {
 		dbg("[ error ] there is no session");
@@ -340,8 +341,7 @@ int tcore_ss_ussd_get_session_data(struct ussd_session* ussd_s, void **data)
 	}
 }
 
-void tcore_ss_ussd_set_session_data(struct ussd_session* ussd_s,
-				void* data, int data_len)
+void tcore_ss_ussd_set_session_data(struct ussd_session* ussd_s, void *data, int data_len)
 {
 	if (!ussd_s || !ussd_s->session) {
 		dbg("[ error ] there is no session");
@@ -355,26 +355,9 @@ void tcore_ss_ussd_set_session_data(struct ussd_session* ussd_s,
 	}
 }
 
-void tcore_ss_override_ops(CoreObject *o, struct tcore_ss_operations *ss_ops)
-{
-	struct private_object_data *po = NULL;
 
-	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_SS);
-
-	po = (struct private_object_data *)tcore_object_ref_object(o);
-	if (!po) {
-		return;
-	}
-
-	if(ss_ops) {
-		_clone_ss_operations(po, ss_ops);
-	}
-
-	return;
-}
-
-CoreObject *tcore_ss_new(TcorePlugin *p,
-				struct tcore_ss_operations *ops, TcoreHal *hal)
+CoreObject *tcore_ss_new(TcorePlugin *p, const char *name,
+		struct tcore_ss_operations *ops, TcoreHal *hal)
 {
 	CoreObject *o = NULL;
 	struct private_object_data *po = NULL;
@@ -382,7 +365,7 @@ CoreObject *tcore_ss_new(TcorePlugin *p,
 	if (!p)
 		return NULL;
 
-	o = tcore_object_new(p, hal);
+	o = tcore_object_new(p, name, hal);
 	if (!o)
 		return NULL;
 
@@ -411,3 +394,18 @@ void tcore_ss_free(CoreObject *o)
 
 	tcore_object_free(o);
 }
+
+void tcore_ss_set_ops(CoreObject *o, struct tcore_ss_operations *ops)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_SS);
+
+	po = (struct private_object_data *)tcore_object_ref_object(o);
+	if (!po) {
+		return;
+	}
+
+	po->ops = ops;
+}
+

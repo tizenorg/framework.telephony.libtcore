@@ -25,17 +25,21 @@
 
 __BEGIN_DECLS
 
-
 struct tcore_gps_operations {
 	TReturn (*confirm_measure_pos)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_frequency_aiding)(CoreObject *o, UserRequest *ur);
+	TReturn (*enable_smart_assistant)(CoreObject *o, UserRequest *ur);
+	TReturn (*disable_smart_assistant)(CoreObject *o, UserRequest *ur);
+	TReturn (*sync_smart_assistant_area_list)(CoreObject *o, UserRequest *ur);
+	TReturn (*del_smart_assistant_area_list)(CoreObject *o, UserRequest *ur);
+	TReturn (*add_smart_assistant_area)(CoreObject *o, UserRequest *ur);
+	TReturn (*modify_smart_assistant_area)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_smart_assistant_info)(CoreObject *o, UserRequest *ur);
 };
 
-CoreObject *tcore_gps_new(TcorePlugin *p,
-			struct tcore_gps_operations *ops, TcoreHal *hal);
-void tcore_gps_free(CoreObject *o);
-
-void tcore_gps_override_ops(CoreObject *o, struct tcore_gps_operations *gps_ops);
+CoreObject*  tcore_gps_new(TcorePlugin *p, const char *name, struct tcore_gps_operations *ops, TcoreHal *hal);
+void         tcore_gps_free(CoreObject *o);
+void tcore_gps_set_ops(CoreObject *o, struct tcore_gps_operations *ops);
 
 __END_DECLS
 

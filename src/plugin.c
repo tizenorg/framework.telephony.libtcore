@@ -52,15 +52,12 @@ TcorePlugin *tcore_plugin_new(Server *server,
 {
 	TcorePlugin *p;
 
-	p = g_try_new0(struct tcore_plugin_type, 1);
-	if (p == NULL)
+	p = calloc(1, sizeof(struct tcore_plugin_type));
+	if (!p)
 		return NULL;
 
-	/*
-	 * Assign 'filename' name irrespective of if it is NULL,
-	 * g_strdup would take care of this scenario.
-	 */
-	p->filename = g_strdup(filename);
+	if (filename)
+		p->filename = strdup(filename);
 
 	p->desc = desc;
 	p->property = g_hash_table_new(g_str_hash, g_str_equal);
@@ -75,7 +72,7 @@ void tcore_plugin_free(TcorePlugin *plugin)
 	GSList *list;
 	CoreObject *o;
 
-	if (plugin == NULL)
+	if (!plugin)
 		return;
 
 	dbg("");
@@ -83,7 +80,7 @@ void tcore_plugin_free(TcorePlugin *plugin)
 	if (plugin->list_co) {
 		for (list = plugin->list_co; list; list = list->next) {
 			o = list->data;
-			if (o == NULL)
+			if (!o)
 				continue;
 
 			tcore_object_free(o);
@@ -95,7 +92,7 @@ void tcore_plugin_free(TcorePlugin *plugin)
 	}
 
 	if (plugin->filename) {
-		g_free(plugin->filename);
+		free(plugin->filename);
 		plugin->filename = NULL;
 	}
 
@@ -111,12 +108,12 @@ void tcore_plugin_free(TcorePlugin *plugin)
 		plugin->handle = NULL;
 	}
 
-	g_free(plugin);
+	free(plugin);
 }
 
 const struct tcore_plugin_define_desc *tcore_plugin_get_description(TcorePlugin *plugin)
 {
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
 	return plugin->desc;
@@ -124,24 +121,21 @@ const struct tcore_plugin_define_desc *tcore_plugin_get_description(TcorePlugin 
 
 char *tcore_plugin_get_filename(TcorePlugin *plugin)
 {
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
-	/*
-	 * Return copy of 'filename',
-	 *
-	 * it CAN even be NULL if plugin->filename is NULL,
-	 * g_strdup will take care of this scenario.
-	 */
-	return g_strdup(plugin->filename);
+	if (!plugin->filename)
+		return NULL;
+
+	return strdup(plugin->filename);
 }
 
-char* tcore_plugin_ref_plugin_name(TcorePlugin *plugin)
+const char* tcore_plugin_ref_plugin_name(TcorePlugin *plugin)
 {
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
-	if (plugin->desc == NULL)
+	if (!plugin->desc->name)
 		return NULL;
 
 	return plugin->desc->name;
@@ -149,7 +143,7 @@ char* tcore_plugin_ref_plugin_name(TcorePlugin *plugin)
 
 Server *tcore_plugin_ref_server(TcorePlugin *plugin)
 {
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
 	return plugin->parent_server;
@@ -157,7 +151,7 @@ Server *tcore_plugin_ref_server(TcorePlugin *plugin)
 
 TReturn tcore_plugin_link_user_data(TcorePlugin *plugin, void *user_data)
 {
-	if (plugin == NULL)
+	if (!plugin)
 		return TCORE_RETURN_EINVAL;
 
 	plugin->user_data = user_data;
@@ -167,20 +161,32 @@ TReturn tcore_plugin_link_user_data(TcorePlugin *plugin, void *user_data)
 
 void *tcore_plugin_ref_user_data(TcorePlugin *plugin)
 {
-	if (plugin == NULL)
-		return FALSE;
+	if (!plugin)
+		return NULL;
 
 	return plugin->user_data;
 }
 
 TReturn tcore_plugin_add_core_object(TcorePlugin *plugin, CoreObject *co)
 {
-	if ((plugin == NULL) || (co == NULL))
+	if (!plugin || !co)
 		return TCORE_RETURN_EINVAL;
 
-	dbg("add core_object! (Type: [0x%x])", tcore_object_get_type(co));
+	dbg("add core_object! (name=%s)", tcore_object_ref_name(co));
 
 	plugin->list_co = g_slist_insert(plugin->list_co, co, 0);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+TReturn tcore_plugin_remove_core_object(TcorePlugin *plugin, CoreObject *co)
+{
+	if (!plugin || !co)
+		return TCORE_RETURN_EINVAL;
+
+	dbg("remove core_object! (name=%s)", tcore_object_ref_name(co));
+
+	plugin->list_co = g_slist_remove(plugin->list_co, co);
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -190,12 +196,12 @@ CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, unsigned int type)
 	GSList *list;
 	CoreObject *co;
 
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
 	for (list = plugin->list_co; list; list = list->next) {
 		co = list->data;
-		if (co == NULL)
+		if (!co)
 			continue;
 
 		if (tcore_object_get_type(co) == type) {
@@ -206,22 +212,40 @@ CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, unsigned int type)
 	return NULL;
 }
 
+GSList *tcore_plugin_get_core_objects(TcorePlugin *plugin)
+{
+	GSList *list, *rlist = NULL;
+	CoreObject *co;
+
+	if (!plugin)
+		return NULL;
+
+	for (list = plugin->list_co; list; list = list->next) {
+		co = list->data;
+		if (!co)
+			continue;
+
+		rlist = g_slist_append(rlist, co);
+	}
+
+	return rlist;
+}
+
 GSList *tcore_plugin_get_core_objects_bytype(TcorePlugin *plugin, unsigned int type)
 {
 	GSList *list, *rlist = NULL;
 	CoreObject *co;
 
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
 	for (list = plugin->list_co; list; list = list->next) {
 		co = list->data;
-		if (co == NULL)
+		if (!co)
 			continue;
 
-		if (tcore_object_get_type(co) == type) {
+		if ((CORE_OBJECT_TYPE_DEFAULT |(tcore_object_get_type(co) & 0x0FF00000)) == type)
 			rlist = g_slist_append(rlist, co);
-		}
 	}
 
 	return rlist;
@@ -232,14 +256,14 @@ TReturn tcore_plugin_core_object_event_emit(TcorePlugin *plugin, const char *eve
 	GSList *list;
 	CoreObject *co;
 
-	if (plugin == NULL)
+	if (!plugin)
 		return TCORE_RETURN_EINVAL;
 
 	dbg("event(%s) emit", event);
 
 	for (list = plugin->list_co; list; list = list->next) {
 		co = list->data;
-		if (co == NULL)
+		if (!co)
 			continue;
 
 		tcore_object_emit_callback(co, event, event_info);
@@ -252,19 +276,19 @@ TReturn tcore_plugin_link_property(TcorePlugin *plugin, const char *key, void *d
 {
 	void *prev;
 
-	if (plugin == NULL)
+	if (!plugin)
 		return TCORE_RETURN_EINVAL;
 
-	if (plugin->property == NULL)
+	if (!plugin->property)
 		return TCORE_RETURN_EINVAL;
 
 	prev = g_hash_table_lookup(plugin->property, key);
 	if (prev != NULL) {
-		g_free(prev);
+		free(prev);
 		g_hash_table_replace(plugin->property, (gpointer)key, data);
 	}
 	else {
-		g_hash_table_insert(plugin->property, g_strdup(key), data);
+		g_hash_table_insert(plugin->property, strdup(key), data);
 	}
 
 	return TCORE_RETURN_SUCCESS;
@@ -272,10 +296,10 @@ TReturn tcore_plugin_link_property(TcorePlugin *plugin, const char *key, void *d
 
 void *tcore_plugin_ref_property(TcorePlugin *plugin, const char *key)
 {
-	if (plugin == NULL)
+	if (!plugin)
 		return NULL;
 
-	if (plugin->property == NULL)
+	if (!plugin->property)
 		return NULL;
 
 	return g_hash_table_lookup(plugin->property, key);

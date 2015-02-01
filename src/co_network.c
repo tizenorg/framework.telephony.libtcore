@@ -39,74 +39,18 @@ struct private_object_data {
 	enum telephony_network_service_domain_status ps_domain_status;
 	char *plmn;
 	gboolean roaming_state;
+	int restricted_state;
 	unsigned int lac;
 	unsigned int rac;
 	unsigned int cell_id;
+	gboolean gsm_dtm_support; // DTM (Dual Transfer Mode)
 
 	char *network_name_short;
 	char *network_name_full;
 	char *network_name_spn;
 	enum tcore_network_name_priority network_name_priority;
-
-	GSList *network_operator_info_table[1000];
+	GHashTable *operator_info_hash;
 };
-
-static void _clone_network_operations(struct private_object_data *po, struct tcore_network_operations *network_ops)
-{
-	if(network_ops->search) {
-		po->ops->search = network_ops->search;
-	}
-	if(network_ops->set_plmn_selection_mode) {
-		po->ops->set_plmn_selection_mode = network_ops->set_plmn_selection_mode;
-	}
-	if(network_ops->get_plmn_selection_mode) {
-		po->ops->get_plmn_selection_mode = network_ops->get_plmn_selection_mode;
-	}
-	if(network_ops->set_service_domain) {
-		po->ops->set_service_domain = network_ops->set_service_domain;
-	}
-	if(network_ops->get_service_domain) {
-		po->ops->get_service_domain = network_ops->get_service_domain;
-	}
-	if(network_ops->set_band) {
-		po->ops->set_band = network_ops->set_band;
-	}
-	if(network_ops->get_band) {
-		po->ops->get_band = network_ops->get_band;
-	}
-	if(network_ops->set_preferred_plmn) {
-		po->ops->set_preferred_plmn = network_ops->set_preferred_plmn;
-	}
-	if(network_ops->get_preferred_plmn) {
-		po->ops->get_preferred_plmn = network_ops->get_preferred_plmn;
-	}
-	if(network_ops->set_order) {
-		po->ops->set_order = network_ops->set_order;
-	}
-	if(network_ops->get_order) {
-		po->ops->get_order = network_ops->get_order;
-	}
-	if(network_ops->set_power_on_attach) {
-		po->ops->set_power_on_attach = network_ops->set_power_on_attach;
-	}
-	if(network_ops->get_power_on_attach) {
-		po->ops->get_power_on_attach = network_ops->get_power_on_attach;
-	}
-	if(network_ops->set_cancel_manual_search) {
-		po->ops->set_cancel_manual_search = network_ops->set_cancel_manual_search;
-	}
-	if(network_ops->get_serving_network) {
-		po->ops->get_serving_network = network_ops->get_serving_network;
-	}
-	if(network_ops->set_mode) {
-		po->ops->set_mode = network_ops->set_mode;
-	}
-	if(network_ops->get_mode) {
-		po->ops->get_mode = network_ops->get_mode;
-	}
-
-	return;
-}
 
 static TReturn _dispatcher(CoreObject *co, UserRequest *ur)
 {
@@ -126,133 +70,162 @@ static TReturn _dispatcher(CoreObject *co, UserRequest *ur)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->search(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_PLMN_SELECTION_MODE:
 			if (!po->ops->set_plmn_selection_mode)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_plmn_selection_mode(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_PLMN_SELECTION_MODE:
 			if (!po->ops->get_plmn_selection_mode)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_plmn_selection_mode(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_SERVICE_DOMAIN:
 			if (!po->ops->set_service_domain)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_service_domain(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_SERVICE_DOMAIN:
 			if (!po->ops->get_service_domain)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_service_domain(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_BAND:
 			if (!po->ops->set_band)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_band(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_BAND:
 			if (!po->ops->get_band)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_band(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_PREFERRED_PLMN:
 			if (!po->ops->set_preferred_plmn)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_preferred_plmn(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_PREFERRED_PLMN:
 			if (!po->ops->get_preferred_plmn)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_preferred_plmn(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_ORDER:
 			if (!po->ops->set_order)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_order(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_ORDER:
 			if (!po->ops->get_order)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_order(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_POWER_ON_ATTACH:
 			if (!po->ops->set_power_on_attach)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_power_on_attach(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_POWER_ON_ATTACH:
 			if (!po->ops->get_power_on_attach)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_power_on_attach(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_CANCEL_MANUAL_SEARCH:
 			if (!po->ops->set_cancel_manual_search)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_cancel_manual_search(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_SERVING_NETWORK:
 			if (!po->ops->get_serving_network)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_serving_network(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_MODE:
 			if (!po->ops->set_mode)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_mode(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_MODE:
 			if (!po->ops->get_mode)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_mode(co, ur);
-			break;
 
 		case TREQ_NETWORK_SET_NEIGHBORING_CELL_INFO:
 			if (!po->ops->set_neighboring_cell_info)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->set_neighboring_cell_info(co, ur);
-			break;
 
 		case TREQ_NETWORK_GET_NEIGHBORING_CELL_INFO:
 			if (!po->ops->get_neighboring_cell_info)
 				return TCORE_RETURN_ENOSYS;
 
 			return po->ops->get_neighboring_cell_info(co, ur);
-			break;
+
+		case TREQ_NETWORK_SET_DEFAULT_DATA_SUBSCRIPTION:
+			if (!po->ops->set_default_data_subscription)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->set_default_data_subscription(co, ur);
+
+		case TREQ_NETWORK_GET_DEFAULT_DATA_SUBSCRIPTION:
+			if (!po->ops->get_default_data_subscription)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->get_default_data_subscription(co, ur);
+
+		case TREQ_NETWORK_SET_DEFAULT_SUBSCRIPTION:
+			if (!po->ops->set_default_subscription)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->set_default_subscription(co, ur);
+
+		case TREQ_NETWORK_GET_DEFAULT_SUBSCRIPTION:
+			if (!po->ops->get_default_subscription)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->get_default_subscription(co, ur);
+			
+		case TREQ_NETWORK_SET_EMERGENCY_CALLBACK_MODE:
+			if (!po->ops->set_emergency_callback_mode)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->set_emergency_callback_mode(co, ur);
+
+		case TREQ_NETWORK_SET_ROAMING_PREFERENCE:
+			if (!po->ops->set_roaming_preference)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->set_roaming_preference(co, ur);
+
+		case TREQ_NETWORK_GET_ROAMING_PREFERENCE:
+			if (!po->ops->get_roaming_preference)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->get_roaming_preference(co, ur);
+
+		case TREQ_NETWORK_GET_SUBSCRIPTION_INFO:
+			if (!po->ops->get_subscription_info)
+				return TCORE_RETURN_ENOSYS;
+
+			return po->ops->get_subscription_info(co, ur);
 
 		default:
 			break;
@@ -294,26 +267,8 @@ static void _clone_hook(CoreObject *src, CoreObject *dest)
 	tcore_object_link_object(dest, dest_po);
 }
 
-void tcore_network_override_ops(CoreObject *o, struct tcore_network_operations *network_ops)
-{
-	struct private_object_data *po = NULL;
-
-	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_NETWORK);
-
-	po = (struct private_object_data *)tcore_object_ref_object(o);
-	if (!po) {
-		return;
-	}
-
-	if(network_ops) {
-		_clone_network_operations(po, network_ops);
-	}
-
-	return;
-}
-
-CoreObject *tcore_network_new(TcorePlugin *plugin,
-			struct tcore_network_operations *ops, TcoreHal *hal)
+CoreObject *tcore_network_new(TcorePlugin *plugin, const char *name,
+		struct tcore_network_operations *ops, TcoreHal *hal)
 {
 	CoreObject *o = NULL;
 	struct private_object_data *po = NULL;
@@ -321,7 +276,7 @@ CoreObject *tcore_network_new(TcorePlugin *plugin,
 	if (!plugin)
 		return NULL;
 
-	o = tcore_object_new(plugin, hal);
+	o = tcore_object_new(plugin, name, hal);
 	if (!o)
 		return NULL;
 
@@ -332,6 +287,7 @@ CoreObject *tcore_network_new(TcorePlugin *plugin,
 	}
 
 	po->ops = ops;
+	po->operator_info_hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, g_free);
 
 	tcore_object_set_type(o, CORE_OBJECT_TYPE_NETWORK);
 	tcore_object_link_object(o, po);
@@ -345,28 +301,12 @@ CoreObject *tcore_network_new(TcorePlugin *plugin,
 void tcore_network_free(CoreObject *co)
 {
 	struct private_object_data *po = NULL;
-	GSList *list;
-	int i;
 
 	CORE_OBJECT_CHECK(co, CORE_OBJECT_TYPE_NETWORK);
 
 	po = tcore_object_ref_object(co);
 	if (!po)
 		return;
-
-	for (i=0; i<999; i++) {
-		list = po->network_operator_info_table[i];
-		if (!list)
-			continue;
-
-		for (; list; list = list->next) {
-
-			if (list->data)
-				free(list->data);
-		}
-
-		g_slist_free(po->network_operator_info_table[i]);
-	}
 
 	if (po->network_name_short)
 		free(po->network_name_short);
@@ -377,8 +317,24 @@ void tcore_network_free(CoreObject *co)
 	if (po->plmn)
 		free(po->plmn);
 
-	free(po);
+	if (po->operator_info_hash)
+		g_hash_table_destroy(po->operator_info_hash);
+
 	tcore_object_free(co);
+}
+
+void tcore_network_set_ops(CoreObject *o, struct tcore_network_operations *ops)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_NETWORK);
+
+	po = (struct private_object_data *)tcore_object_ref_object(o);
+	if (!po) {
+		return;
+	}
+
+	po->ops = ops;
 }
 
 char* tcore_network_get_plmn(CoreObject *co)
@@ -445,34 +401,46 @@ TReturn tcore_network_set_network_name(CoreObject *co,
 	if (!po)
 		return TCORE_RETURN_EINVAL;
 
-	if (type == TCORE_NETWORK_NAME_TYPE_SHORT) {
-		if (po->network_name_short)
-			free(po->network_name_short);
+	switch (type) {
+		case TCORE_NETWORK_NAME_TYPE_SHORT:
+			if (po->network_name_short) {
+				free (po->network_name_short);
+				po->network_name_short = NULL;
+			}
 
-		dbg("short network_name = [%s]", network_name);
-		po->network_name_short = g_strdup(network_name);
-	}
-	else if (type == TCORE_NETWORK_NAME_TYPE_FULL) {
-		if (po->network_name_full)
-			free(po->network_name_full);
+			if (network_name)
+				po->network_name_short = g_strdup (network_name);
 
-		dbg("full network_name = [%s]", network_name);
-		po->network_name_full = g_strdup(network_name);
-	}
-	else if (type == TCORE_NETWORK_NAME_TYPE_SPN) {
-		if (po->network_name_spn)
-			free(po->network_name_spn);
+			break;
 
-		dbg("spn network_name = [%s]", network_name);
-		po->network_name_spn = g_strdup(network_name);
-	}
-	else {
-		return TCORE_RETURN_EINVAL;
+		case TCORE_NETWORK_NAME_TYPE_FULL:
+			if (po->network_name_full) {
+				free (po->network_name_full);
+				po->network_name_full = NULL;
+			}
+
+			if (network_name)
+				po->network_name_full = g_strdup (network_name);
+
+			break;
+
+		case TCORE_NETWORK_NAME_TYPE_SPN:
+			if (po->network_name_spn) {
+				free (po->network_name_spn);
+				po->network_name_spn = NULL;
+			}
+
+			if (network_name)
+				po->network_name_spn = g_strdup (network_name);
+
+			break;
+
+		default:
+			return TCORE_RETURN_EINVAL;
 	}
 
 	return TCORE_RETURN_SUCCESS;
 }
-
 
 TReturn tcore_network_get_network_name_priority(CoreObject *co,
 		enum tcore_network_name_priority *priority)
@@ -538,6 +506,35 @@ TReturn tcore_network_set_roaming_state(CoreObject *co, gboolean state)
 	return TCORE_RETURN_SUCCESS;
 }
 
+int tcore_network_get_restricted_state(CoreObject *co)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(co, CORE_OBJECT_TYPE_NETWORK, FALSE);
+
+	po = tcore_object_ref_object(co);
+	if (!po)
+		return FALSE;
+
+	return po->restricted_state;
+}
+
+TReturn tcore_network_set_restricted_state(CoreObject *co, int state)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(co, CORE_OBJECT_TYPE_NETWORK, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(co);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	po->restricted_state = state;
+	dbg("restricted_state = 0x%x", state);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
 TReturn tcore_network_get_service_status(CoreObject *co,
 		enum tcore_network_service_domain_type type,
 		enum telephony_network_service_domain_status *result)
@@ -560,6 +557,9 @@ TReturn tcore_network_get_service_status(CoreObject *co,
 
 		case TCORE_NETWORK_SERVICE_DOMAIN_TYPE_PACKET:
 			*result = po->ps_domain_status;
+			break;
+		default:
+			err("invalid network type");
 			break;
 	}
 
@@ -586,8 +586,12 @@ TReturn tcore_network_set_service_status(CoreObject *co,
 
 		case TCORE_NETWORK_SERVICE_DOMAIN_TYPE_PACKET:
 			po->ps_domain_status = status;
-			dbg("cs.status = 0x%x", status);
+			dbg("ps.status = 0x%x", status);
 			break;
+		default:
+			err("invalid network type");
+			break;
+
 	}
 
 	return TCORE_RETURN_SUCCESS;
@@ -727,6 +731,35 @@ TReturn tcore_network_get_cell_id(CoreObject *co, unsigned int *result)
 	return TCORE_RETURN_SUCCESS;
 }
 
+gboolean tcore_network_get_gsm_dtm_support(CoreObject *co)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(co, CORE_OBJECT_TYPE_NETWORK, FALSE);
+
+	po = tcore_object_ref_object(co);
+	if (!po)
+		return FALSE;
+
+	return po->gsm_dtm_support;
+}
+
+TReturn tcore_network_set_gsm_dtm_support(CoreObject *co, gboolean state)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(co, CORE_OBJECT_TYPE_NETWORK, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(co);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	po->gsm_dtm_support = state;
+	dbg("gsm_dtm_support = %d", state);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
 TReturn tcore_network_set_service_type(CoreObject *co,
 		enum telephony_network_service_type service_type)
 {
@@ -763,26 +796,39 @@ TReturn tcore_network_get_service_type(CoreObject *co,
 }
 
 TReturn tcore_network_operator_info_add(CoreObject *co,
-		struct tcore_network_operator_info *noi)
+		const struct tcore_network_operator_info *noi)
 {
 	struct private_object_data *po = NULL;
-	int mcc_index = 0;
+	char plmn[7];
+	int mcc_index, mnc_index;
 
 	CORE_OBJECT_CHECK_RETURN(co, CORE_OBJECT_TYPE_NETWORK, TCORE_RETURN_EINVAL);
 
 	if (!noi)
 		return TCORE_RETURN_EINVAL;
 
+	mcc_index = atoi(noi->mcc);
+	mnc_index = atoi(noi->mnc);
+
+	if (mcc_index > 999 || mnc_index > 999) {
+		err("mcc_index %d mnc_index %d", mcc_index, mnc_index);
+		return TCORE_RETURN_EINVAL;
+	}
+
 	po = tcore_object_ref_object(co);
 	if (!po)
 		return TCORE_RETURN_EINVAL;
 
-	mcc_index = atoi(noi->mcc);
-	if (mcc_index > 999)
-		return TCORE_RETURN_EINVAL;
+	g_strlcpy(plmn, noi->mcc, 4);
+	g_strlcpy(plmn+3, noi->mnc, 3);
 
-	po->network_operator_info_table[mcc_index] = g_slist_append(
-			po->network_operator_info_table[mcc_index], noi);
+	if (g_hash_table_lookup(po->operator_info_hash, plmn)) {
+		//dbg("Remove existed (key:%s)", plmn);
+		g_hash_table_remove(po->operator_info_hash, plmn);
+	}
+
+	//dbg("Adding mcc[%s] mnc[%s] name[%s] type[%d] in operator info table", noi->mcc, noi->mnc, noi->name, noi->type);
+	g_hash_table_insert(po->operator_info_hash, g_strdup(plmn), g_memdup(noi, sizeof(struct tcore_network_operator_info)));
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -791,41 +837,39 @@ struct tcore_network_operator_info *
 tcore_network_operator_info_find(CoreObject *co, const char *mcc, const char *mnc)
 {
 	struct private_object_data *po = NULL;
-	GSList *list;
-	int mcc_index = 0;
 	struct tcore_network_operator_info *data;
+	char plmn[7];
+	int mcc_index, mnc_index;
 
 	CORE_OBJECT_CHECK_RETURN(co, CORE_OBJECT_TYPE_NETWORK, NULL);
 
 	if (!mcc || !mnc)
 		return NULL;
 
+	mcc_index = atoi(mcc);
+	mnc_index = atoi(mnc);
+
+	if (mcc_index > 999 || mnc_index > 999) {
+		err("mcc_index %d mnc_index %d", mcc_index, mnc_index);
+		return NULL;
+	}
+
 	po = tcore_object_ref_object(co);
 	if (!po)
 		return NULL;
 
-	mcc_index = atoi(mcc);
-	if (mcc_index > 999)
-		return NULL;
+	g_strlcpy(plmn, mcc, 4);
+	g_strlcpy(plmn+3, mnc, 3);
 
-	list = po->network_operator_info_table[mcc_index];
-	if (list == NULL) {
-		dbg("mcc[%d] is not in operator table", mcc_index);
-		return NULL;
+	data =  g_hash_table_lookup(po->operator_info_hash, plmn);
+
+	if (data) {
+		dbg("found mcc[%s], mnc[%s] name[%s] type[%d] in operator info table (%p)",
+			data->mcc, data->mnc, data->name, data->type, po->operator_info_hash);
+	} else {
+		dbg("mcc[%s] mnc[%s] not present in operator table (%p)",
+			mcc, mnc, po->operator_info_hash);
 	}
 
-	for (; list; list = list->next) {
-		if (!list->data)
-			continue;
-
-		data = list->data;
-
-		dbg(" +- mnc[%s]", data->mnc);
-		if (g_strcmp0(data->mnc, mnc) == 0)
-			return data;
-	}
-
-	dbg("mcc[%s] mnc[%s] is not in operator table", mcc, mnc);
-
-	return NULL;
+	return data;
 }

@@ -23,17 +23,48 @@
 
 __BEGIN_DECLS
 
+#define SMART_ASSISTANT_AREA_LIST_MAX 10
+
+struct tel_smart_assistant_area {
+	unsigned short index;
+	unsigned char mode_state;
+};
+
+struct tel_smart_assistant_area_list {
+	unsigned char count;
+	struct tel_smart_assistant_area area[SMART_ASSISTANT_AREA_LIST_MAX];
+};
+
 struct treq_gps_set_frequency_aiding {
 	unsigned char enable;
+};
+
+struct treq_set_smart_assistant_info {
+	unsigned short index;
+	unsigned char lpp_state;
 };
 
 struct tresp_gps_set_frequency_aiding {
 	TReturn result;
 };
 
+struct tresp_smart_assistant_result {
+	TReturn result;
+};
+
 struct tnoti_gps_frequency_aiding {
 	unsigned char lock_status;
 	unsigned char afc_update;
+};
+
+struct tnoti_smart_assistant_area_status {
+	unsigned char area_status;
+	unsigned short index;
+};
+
+struct tnoti_smart_assistant_sync_status {
+	unsigned char init_status;
+	unsigned char init_fail_cause;
 };
 
 __END_DECLS

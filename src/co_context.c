@@ -30,11 +30,9 @@
 #include "user_request.h"
 #include "co_context.h"
 
-#define DEVNAME_LEN_MAX 16
-
 struct private_object_data {
 	enum co_context_state state;
-	unsigned int id;
+	unsigned char id;
 	enum co_context_role role;
 
 	char *apn;
@@ -55,11 +53,16 @@ struct private_object_data {
 	union tcore_ip4_type dns_secondary_v4;
 
 	/*IPv6 will be supported*/
+	char* ip_v6;
+	char* gateway_v6;
+	char* dns_primary_v6;
+	char* dns_secondary_v6;
+
 
 	char *proxy;
 	char *mmsurl;
 	char *profile_name;
-	char devname[DEVNAME_LEN_MAX];
+	char devname[16];
 };
 
 static void _free_hook(CoreObject *o)
@@ -68,12 +71,12 @@ static void _free_hook(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 	if (po) {
-		g_free(po);
+		free(po);
 		tcore_object_link_object(o, NULL);
 	}
 }
 
-CoreObject *tcore_context_new(TcorePlugin *p, TcoreHal *hal)
+CoreObject *tcore_context_new(TcorePlugin *p, const char *name, TcoreHal *hal)
 {
 	CoreObject *o = NULL;
 	struct private_object_data *po = NULL;
@@ -81,7 +84,7 @@ CoreObject *tcore_context_new(TcorePlugin *p, TcoreHal *hal)
 	if (!p)
 		return NULL;
 
-	o = tcore_object_new(p, hal);
+	o = tcore_object_new(p, name, hal);
 	if (!o)
 		return NULL;
 
@@ -106,27 +109,13 @@ CoreObject *tcore_context_new(TcorePlugin *p, TcoreHal *hal)
 
 void tcore_context_free(CoreObject *o)
 {
-	struct private_object_data *po = NULL;
-
 	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_PS_CONTEXT);
-
-	po = tcore_object_ref_object(o);
-	if (!po)
-		return;
-
-	g_free(po);
-	tcore_object_link_object(o, NULL);
 	tcore_object_free(o);
 }
 
 TReturn tcore_context_set_state(CoreObject *o, enum co_context_state state)
 {
 	struct private_object_data *po = NULL;
-
-	dbg("Set State: [%s]", ((state == CONTEXT_STATE_ACTIVATED) ? "ACTIVATED"
-					: (state == CONTEXT_STATE_ACTIVATING) ? "ACTIVATING"
-					: (state == CONTEXT_STATE_DEACTIVATED) ? "DEACTIVATED"
-					: "DEACTIVATING"));
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
 
@@ -152,7 +141,7 @@ enum co_context_state    tcore_context_get_state(CoreObject *o)
 	return po->state;
 }
 
-TReturn tcore_context_set_id(CoreObject *o, unsigned int id)
+TReturn tcore_context_set_id(CoreObject *o, unsigned char id)
 {
 	struct private_object_data *po = NULL;
 
@@ -167,7 +156,7 @@ TReturn tcore_context_set_id(CoreObject *o, unsigned int id)
 	return TCORE_RETURN_SUCCESS;
 }
 
-unsigned int tcore_context_get_id(CoreObject *o)
+unsigned char  tcore_context_get_id(CoreObject *o)
 {
 	struct private_object_data *po = NULL;
 
@@ -216,6 +205,44 @@ char *tcore_context_get_apn(CoreObject *o)
 		return NULL;
 
 	return g_strdup(po->apn);
+}
+
+TReturn tcore_context_set_address(CoreObject *o, const char *addr)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	if (po->addr) {
+		free(po->addr);
+		po->addr = NULL;
+	}
+
+	if (addr) {
+		po->addr = g_strdup(addr);
+	}
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+char *tcore_context_get_address(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	if (!po->addr)
+		return NULL;
+
+	return g_strdup(po->addr);
 }
 
 TReturn tcore_context_set_role(CoreObject *o, enum co_context_role role)
@@ -406,6 +433,82 @@ char *tcore_context_get_password(CoreObject *o)
 	return g_strdup(po->password);
 }
 
+TReturn tcore_context_set_dns1(CoreObject *o, const char *dns)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	if (po->dns1) {
+		free(po->dns1);
+		po->dns1 = NULL;
+	}
+
+	if (dns) {
+		po->dns1 = g_strdup(dns);
+	}
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+char *tcore_context_get_dns1(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	if (!po->dns1)
+		return NULL;
+
+	return g_strdup(po->dns1);
+}
+
+TReturn tcore_context_set_dns2(CoreObject *o, const char *dns)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	if (po->dns2) {
+		free(po->dns2);
+		po->dns2 = NULL;
+	}
+
+	if (dns) {
+		po->dns2 = g_strdup(dns);
+	}
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+char *tcore_context_get_dns2(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	if (!po->dns2)
+		return NULL;
+
+	return g_strdup(po->dns2);
+}
+
 TReturn tcore_context_set_auth(CoreObject *o, enum co_context_auth auth)
 {
 	struct private_object_data *po = NULL;
@@ -552,31 +655,23 @@ TReturn tcore_context_set_devinfo(CoreObject *o, struct tnoti_ps_pdp_ipconfigura
 {
 	struct private_object_data *po = NULL;
 
-	dbg("Setup device information");
-
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
 
 	po = tcore_object_ref_object(o);
-	if (!po) {
-		err("Failed to refer Object");
+	if (!po)
 		return FALSE;
-	}
-
-	if (!devinfo) {
-		err("Device info is NULL");
+	if (!devinfo)
 		return FALSE;
-	}
 
+	po->ip_v6 = g_strdup((gchar *)devinfo->ipv6_address);
+	po->dns_primary_v6 = g_strdup((gchar *)devinfo->ipv6_primary_dns);
+	po->dns_secondary_v6 = g_strdup((gchar *)devinfo->ipv6_secondary_dns);
+	po->gateway_v6 = g_strdup((gchar *)devinfo->ipv6_gateway);
 	memcpy(&(po->ip_v4), devinfo->ip_address, sizeof(union tcore_ip4_type));
 	memcpy(&(po->dns_primary_v4), devinfo->primary_dns, sizeof(union tcore_ip4_type));
 	memcpy(&(po->dns_secondary_v4), devinfo->secondary_dns, sizeof(union tcore_ip4_type));
 	memcpy(&(po->gateway_v4), devinfo->gateway, sizeof(union tcore_ip4_type));
 	memcpy(po->devname, devinfo->devname, sizeof(char) * 16);
-
-	msg("	IP Address: [0x%x]", po->ip_v4);
-	msg("	DNS - Primary: [0x%x] Secondary: [0x%x]", po->dns_primary_v4, po->dns_secondary_v4);
-	msg("	Gateway: [0x%x]", po->gateway_v4);
-	msg("	Device Name: [%s]", po->devname);
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -585,13 +680,23 @@ TReturn tcore_context_reset_devinfo(CoreObject *o)
 {
 	struct private_object_data *po = NULL;
 
-	dbg("Reset device information");
-
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
 
 	po = tcore_object_ref_object(o);
 	if (!po)
-		return TCORE_RETURN_FAILURE;
+		return FALSE;
+
+	if(po->ip_v6) g_free(po->ip_v6);
+	po->ip_v6 = NULL;
+
+	if(po->dns_primary_v6) g_free(po->dns_primary_v6);
+	po->dns_primary_v6 = NULL;
+
+	if(po->dns_secondary_v6) g_free(po->dns_secondary_v6);
+	po->dns_secondary_v6 = NULL;
+
+	if(po->gateway_v6) g_free(po->gateway_v6);
+	po->gateway_v6 = NULL;
 
 	memset(&(po->ip_v4), 0, sizeof(union tcore_ip4_type));
 	memset(&(po->dns_primary_v4), 0, sizeof(union tcore_ip4_type));
@@ -615,6 +720,12 @@ void tcore_context_cp_service_info(CoreObject *dest, CoreObject *src)
 
 	d_po->state = s_po->state;
 	d_po->id = s_po->id;
+
+	d_po->ip_v6 = g_strdup(s_po->ip_v6);
+	d_po->dns_primary_v6 = g_strdup(s_po->dns_primary_v6);
+	d_po->dns_secondary_v6 = g_strdup(s_po->dns_secondary_v6);
+	d_po->gateway_v6 = g_strdup(s_po->gateway_v6);
+
 	memcpy(&(d_po->ip_v4), &(s_po->ip_v4), sizeof(union tcore_ip4_type));
 	memcpy(&(d_po->dns_primary_v4), &(s_po->dns_primary_v4), sizeof(union tcore_ip4_type));
 	memcpy(&(d_po->dns_secondary_v4), &(s_po->dns_secondary_v4), sizeof(union tcore_ip4_type));
@@ -622,46 +733,6 @@ void tcore_context_cp_service_info(CoreObject *dest, CoreObject *src)
 	memcpy(d_po->devname, s_po->devname, sizeof(char) * 16);
 
 	return;
-}
-
-static void tcore_context_set_ipv4_atoi(unsigned char *ip4, const char *str)
-{
-	char *token = NULL;
-	char *temp = NULL;
-	int index = 0;
-
-	temp = g_strdup(str);
-	token = strtok(temp, ".");
-	while (token != NULL) {
-		ip4[index++] = atoi(token);
-		msg("	[%c]", ip4[index-1]);
-		token = strtok(NULL, ".");
-	}
-	g_free(temp);
-}
-
-TReturn tcore_context_set_ipv4_addr(CoreObject *o, const char *addr)
-{
-	struct private_object_data *po = NULL;
-
-	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
-
-	po = tcore_object_ref_object(o);
-	if (!po)
-		return TCORE_RETURN_EINVAL;
-
-	if (po->addr) {
-		free(po->addr);
-		po->addr = NULL;
-	}
-
-	if (addr) {
-		po->addr = g_strdup(addr);
-		tcore_context_set_ipv4_atoi(po->ip_v4.s, addr);
-		dbg("IP Address: [%s]", addr);
-	}
-
-	return TCORE_RETURN_SUCCESS;
 }
 
 char* tcore_context_get_ipv4_addr(CoreObject *o)
@@ -675,35 +746,6 @@ char* tcore_context_get_ipv4_addr(CoreObject *o)
 		return NULL;
 
 	return tcore_util_get_string_by_ip4type(po->ip_v4);
-}
-
-TReturn tcore_context_set_ipv4_dns(CoreObject *o, const char *dns1, const char *dns2)
-{
-	struct private_object_data *po = NULL;
-
-	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
-
-	po = tcore_object_ref_object(o);
-	if (!po)
-		return TCORE_RETURN_EINVAL;
-
-	g_free(po->dns1);
-	po->dns1 = NULL;
-
-	g_free(po->dns2);
-	po->dns2 = NULL;
-
-	if (dns1) {
-		po->dns1 = g_strdup(dns1);
-		tcore_context_set_ipv4_atoi(po->dns_primary_v4.s, dns1);
-	}
-
-	if (dns2) {
-		po->dns2 = g_strdup(dns2);
-		tcore_context_set_ipv4_atoi(po->dns_secondary_v4.s, dns2);
-	}
-
-	return TCORE_RETURN_SUCCESS;
 }
 
 char* tcore_context_get_ipv4_dns1(CoreObject *o)
@@ -745,23 +787,6 @@ char* tcore_context_get_ipv4_gw(CoreObject *o)
 	return tcore_util_get_string_by_ip4type(po->gateway_v4);
 }
 
-TReturn tcore_context_set_ipv4_devname(CoreObject *o, const char *name)
-{
-	struct private_object_data *po = NULL;
-
-	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
-
-	po = tcore_object_ref_object(o);
-	if (!po)
-		return TCORE_RETURN_EINVAL;
-
-	if (name) {
-		snprintf(po->devname, DEVNAME_LEN_MAX, "%s", name);
-	}
-
-	return TCORE_RETURN_SUCCESS;
-}
-
 char* tcore_context_get_ipv4_devname(CoreObject *o)
 {
 	struct private_object_data *po = NULL;
@@ -776,4 +801,56 @@ char* tcore_context_get_ipv4_devname(CoreObject *o)
 		return NULL;
 
 	return g_strdup(po->devname);
+}
+
+char* tcore_context_get_ipv6_addr(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	return po->ip_v6;
+}
+
+char* tcore_context_get_ipv6_dns1(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	return po->dns_primary_v6;
+}
+
+char* tcore_context_get_ipv6_dns2(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	return po->dns_secondary_v6;
+}
+
+char* tcore_context_get_ipv6_gw(CoreObject *o)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS_CONTEXT, NULL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return NULL;
+
+	return po->gateway_v6;
 }

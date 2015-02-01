@@ -36,8 +36,11 @@
 #include "tcore.h"
 #include "util.h"
 
+
 #define	tabGsmUniMax2 9
 #define	tabGsmUniMax 42
+
+gboolean tcore_debug = TRUE;
 
 static gboolean		_find_gsm_code_exception_table(unsigned short src);
 static int 		_get_gsm_code_size(unsigned short* src, int src_len);
@@ -47,7 +50,6 @@ static void		_convert_gsm_to_utf8(unsigned char *dest, unsigned short *dest_len,
 static gboolean		_convert_unicode_to_gsm(unsigned char* dest, int dest_len, unsigned short* src, int src_len);
 static char*		_convert_ucs_to_utf8(unsigned char *src, int src_len);
 static int			_convert_ucs2_to_gsm(unsigned char* dest, unsigned short* src, unsigned int src_len);
-static int			_convert_ucs2_to_utf8(char *out, unsigned short *out_len, char *in, unsigned short in_len);
 static void		_convert_alpha_field_ucs2_to_utf8(unsigned char *out, unsigned short *out_len, unsigned char *in, unsigned short in_len);
 static int			_convert_utf8_to_unicode(unsigned short* dest, unsigned char* src, unsigned int src_len);
 
@@ -138,7 +140,7 @@ static int _get_gsm_code_size(unsigned short* src, int src_len)
 
 static gboolean _convert_gsm_to_unicode(unsigned short *dest, int dest_len, unsigned char *src, unsigned int src_len)
 {
-	int index, tmp_len;
+	int count, tmp_len;
 
 	if(!dest || !src) {
 		dbg( "dest(%p) or src(%p) is null",dest, src);
@@ -152,8 +154,8 @@ static gboolean _convert_gsm_to_unicode(unsigned short *dest, int dest_len, unsi
 
 	dbg("source string (%s) len(%d)", src, src_len);
 
-	for(index = 0; index < (int)src_len; index++){
-		if(src[index] == 0x1B)
+	for(count = 0; count < (int)src_len; count++){
+		if(src[count] == 0x1B)
 			src_len--;
 	}
 	dbg("strlen excluding escape character (%d)", src_len);
@@ -166,12 +168,12 @@ static gboolean _convert_gsm_to_unicode(unsigned short *dest, int dest_len, unsi
 
 static int _convert_gsm_to_ucs2(unsigned short* dest, unsigned char* src, unsigned int src_len)
 {
-	int index;
+	int count;
 	unsigned short* org;
 
 	org = dest;
 
-	for(index=0; index < (int)src_len; index++){
+	for(count=0; count < (int)src_len; count++){
 		int table_index=0;
 		gboolean b_tabled = FALSE;
 
@@ -180,7 +182,7 @@ static int _convert_gsm_to_ucs2(unsigned short* dest, unsigned char* src, unsign
 		 * The byte value shoulbe be changed to unicode.
 		 */
 		if(*src == 0x1B){
-			src++; index++;//move to next byte
+			src++; count++;//move to next byte
 			for(table_index=0; table_index < tabGsmUniMax2; table_index++){
 				if(*src == gsm_unicode2_table[table_index].gsm){
 					*dest = gsm_unicode2_table[table_index].unicode;
@@ -219,7 +221,7 @@ static int _convert_gsm_to_ucs2(unsigned short* dest, unsigned char* src, unsign
 
 static void _convert_gsm_to_utf8(unsigned char* dest, unsigned short* dest_len, unsigned char* src, unsigned int src_len)
 {
-	int tmp_len = 0;
+	unsigned short tmp_len = 0;
 	char *target_tmp = NULL;
 	unsigned char *raw_unicode = NULL;
 	unsigned short tmp_dest[SAT_TEXT_STRING_LEN_MAX];
@@ -227,8 +229,9 @@ static void _convert_gsm_to_utf8(unsigned char* dest, unsigned short* dest_len, 
 	memset(tmp_dest, 0 , SAT_TEXT_STRING_LEN_MAX);
 
 	_convert_gsm_to_unicode(tmp_dest, SAT_TEXT_STRING_LEN_MAX, src, src_len);
-	while(tmp_dest[tmp_len] != '\0')
+	while(tmp_dest[tmp_len] != '\0'){
 		tmp_len++;
+	}
 	tmp_len++; // add null character
 
 	tmp_len = tmp_len*2; //for byte align
@@ -237,7 +240,6 @@ static void _convert_gsm_to_utf8(unsigned char* dest, unsigned short* dest_len, 
 
 	memcpy(raw_unicode, (unsigned char*)tmp_dest, tmp_len);
 
-	*dest_len = tmp_len;
 	target_tmp = _convert_ucs_to_utf8(raw_unicode, tmp_len);
 	if(!target_tmp){
 		dbg( "str is NULL");
@@ -245,6 +247,8 @@ static void _convert_gsm_to_utf8(unsigned char* dest, unsigned short* dest_len, 
 		return;
 	}
 
+	*dest_len = strlen((const char*)target_tmp);
+	dbg("utf8 (%s), len(%d)", (const char*)target_tmp, strlen((const char*)target_tmp));
 	memcpy(dest, target_tmp, strlen((const char*)target_tmp));
 	dbg("final utf8 str (%s), length (%d)", dest, tmp_len);
 
@@ -304,7 +308,6 @@ static char* _convert_ucs_to_utf8(unsigned char* src, int src_len)
 	iconv_t cd = NULL;
 	size_t ileft = 0;
 	size_t oleft = 0;
-	int err = 0;
 
 	char* pIn = NULL;
 	char* in_buf = NULL;
@@ -327,11 +330,16 @@ static char* _convert_ucs_to_utf8(unsigned char* src, int src_len)
 	in_buf[ileft] = '\0';
 
 	cd = iconv_open("UTF-8", "UCS-2");
-	err = iconv(cd, (char**) &in_buf, &ileft, &out_buf, &oleft);
 
-	utf_str[src_len * 2 - ileft] = '\0';
+	if (iconv(cd, (char**) &in_buf, &ileft, &out_buf, &oleft) == (size_t)(-1)) {
+		dbg("failed to iconv errno:%d", errno);
+	} else {
+		utf_str[src_len * 2 - ileft] = '\0';
+	}
+
 	iconv_close(cd);
 	free(pIn);
+
 	return utf_str;
 }
 
@@ -396,111 +404,104 @@ static int _convert_ucs2_to_gsm(unsigned char* dest, unsigned short* src, unsign
 	return gc_len;
 }
 
-static int _convert_ucs2_to_utf8(char *out, unsigned short *out_len, char *in, unsigned short in_len)
+int tcore_util_convert_ucs2_to_utf8(char *out, unsigned short *out_len, char *in, unsigned short in_len)
 {
-	char *p_o = NULL;
-	size_t src_len = in_len;
-	size_t dest_len = in_len*3;
+	//input string "char *in" should be BIG-ENDIAN format.
+	gsize byte_converted = 0;
+	gsize byte_read = 0;
+	gchar *str_converted = NULL;
 
-	iconv_t cd = iconv_open("UTF-8", "UCS2");
-	if (cd == (iconv_t) (-1)) {
-		perror("iconv_open");
+	if (NULL == out || NULL == out_len || NULL == in) {
+		dbg( "Invalid Input Parameter");
 		return 0;
 	}
+try_again:
+	str_converted = (gchar *)g_convert((const gchar *)in, (gssize)in_len, "UTF8", "UCS-2BE", &byte_read, &byte_converted, NULL);
 
-	p_o = out;
+	dbg("read:[%d] converted:[%d] out:[%s]", byte_read, byte_converted, str_converted);
 
-	dbg("expected input bytes:%d dest_len:%d\n", src_len, dest_len);
-
-	if (iconv(cd, &in, &src_len, &p_o, &dest_len) == (size_t)(-1)) {
-		dbg("failed to iconv errno:%d", errno);
+	*out_len = byte_converted;
+	if (str_converted) {
+		memcpy(out, str_converted, byte_converted);
+		g_free(str_converted);
 	} else {
-		dbg("remained input bytes:%d processed bytes:%d", src_len, in_len*3-dest_len);
-		out[in_len*3-dest_len] = '\0';
+		warn("Cannot get converted data");
+		if (byte_read > 0) {
+			in_len = byte_read;
+			goto try_again;
+		}
 	}
-	*out_len = in_len*3-dest_len;
-	dbg("out_len[%d], output[%s]", *out_len, out);
-	iconv_close(cd);
 	return 0;
 }
 
 static void _convert_alpha_field_ucs2_to_utf8(unsigned char *out, unsigned short *out_len, unsigned char *in, unsigned short in_len)
 {
-	//input string UNSIGNED CHAR *IN should be encoded with BIG-ENDIAN
+	//input string "unsigned char *in" should be BIG-ENDIAN format.
+	int i = 0;
+
 	switch(in[0]) {
 		case 0x80: {
-			unsigned char num = in_len/2;	//number of characters
-			int i = 0;
-			int data_loc = 1;	//starting location of data
-			unsigned short* in_buf = NULL;
 			dbg("[UCS2] prefix case:[0x80]");
-			in_buf = (unsigned short*)malloc(num * sizeof(unsigned short));
-			for(i=0; i<num; i++,data_loc++)	{
-				in_buf[i] = ((unsigned short)in[data_loc]<<8) + (unsigned short)in[data_loc+1];
-				data_loc++;
-				dbg("[UCS2]in_buf[%d]=0x%04x", i, in_buf[i]);
-			}
-			_convert_ucs2_to_utf8((char*)out, out_len, (char*) in_buf, num*2);
-			if(in_buf!=NULL)	free(in_buf);
+			tcore_util_hex_dump(" [UCS2] ", in_len, in);
+			tcore_util_convert_ucs2_to_utf8((char *)out, out_len, (char*)in+1, in_len-1);
 		} break;
 
 		case 0x81: {
 			unsigned char num = in[1];	//number of characters
 			unsigned short base = (unsigned short) in[2] << 7;	//base pointer for UCS2 type
-			int i = 0;
 			int data_loc = 3;	//starting location of data
 			unsigned short* in_buf = NULL;
 			dbg("[UCS2] prefix case:[0x81]");
 			in_buf = (unsigned short*)malloc(num * sizeof(unsigned short));
 			for(i=0; i<num; i++,data_loc++)	{
 				if(in[data_loc]<0x80) {	// if the MSB is zero (0x80 => 1000b), then remaining 7 bits are GSM default character.
-					_convert_gsm_to_ucs2(&in_buf[i], (unsigned char *)&in[data_loc], 1);
+					_convert_gsm_to_ucs2(&in_buf[i], &in[data_loc], 1);
 					dbg("[UCS2]in_buf[%d]=0x%04x", i, in_buf[i]);
 				} else {	// if the MSB is 1 then the remaining 7 bits are offset value added to Base Pointer which the result defines the UCS2 character.
 					in_buf[i] = base + ((unsigned short)(in[data_loc]) & 0x7F);
 					dbg("[UCS2]in_buf[%d]=0x%04x", i, in_buf[i]);
 				}
 			}
-			_convert_ucs2_to_utf8((char*)out, out_len, (char*) in_buf, num*2);
-			if(in_buf!=NULL)	free(in_buf);
-
+			{
+				unsigned char *dest = NULL;
+				dest = (unsigned char*)malloc(num*2);
+				tcore_util_swap_byte_order(dest, (unsigned char*)in_buf, num*2);
+				tcore_util_convert_ucs2_to_utf8((char *)out, out_len, (char*) dest, num*2);
+				if(in_buf!=NULL)	free(in_buf);
+				if(dest!=NULL)	free(dest);
+			}
 		} break;
 
 		case 0x82: {
 			unsigned char num = in[1];	//number of characters
 			unsigned short base = ((unsigned short) in[2] << 8) | (unsigned short) in[3];	//base pointer for UCS2 type
-			int i = 0;
 			int data_loc = 4;	//starting location of data
 			unsigned short* in_buf = NULL;
 			dbg("[UCS2] prefix case:[0x82]");
 			in_buf = (unsigned short*)malloc(num * sizeof(unsigned short));
 			for(i=0; i<num; i++,data_loc++)	{
 				if(in[data_loc]<0x80) {
-					_convert_gsm_to_ucs2(&in_buf[i], (unsigned char *)&in[data_loc], (unsigned int)1);
+					_convert_gsm_to_ucs2(&in_buf[i], &in[data_loc], (unsigned int)1);
 					dbg("[UCS2]in_buf[%d]=0x%04x", i, in_buf[i]);
 				} else {
 					in_buf[i] = base + ((unsigned short)(in[data_loc]) & 0x7F);
 					dbg("[UCS2]in_buf[%d]=0x%04x", i, in_buf[i]);
 				}
 			}
-			_convert_ucs2_to_utf8((char*)out, out_len, (char*) in_buf, num*2);
-			if(in_buf!=NULL)	free(in_buf);
+			{
+				unsigned char *dest = NULL;
+				dest = (unsigned char*)malloc(num*2);
+				tcore_util_swap_byte_order(dest, (unsigned char*)in_buf, num*2);
+				tcore_util_convert_ucs2_to_utf8((char *)out, out_len, (char*) dest, num*2);
+				if(in_buf!=NULL)	free(in_buf);
+				if(dest!=NULL)	free(dest);
+			}
 		} break;
 
 		default: {
-			unsigned char num = in_len/2;	//number of characters
-			int i = 0;
-			int data_loc = 0;	//starting location of data
-			unsigned short* in_buf = NULL;
 			dbg("[UCS2] non-prefix case.");
-			in_buf = (unsigned short*)malloc(num * sizeof(unsigned short));
-			for(i=0; i<num; i++,data_loc++)	{
-				in_buf[i] = ((unsigned short)in[data_loc]<<8) + (unsigned short)in[data_loc+1];
-				data_loc++;
-				dbg("[UCS2]in_buf[%d]=0x%04x", i, in_buf[i]);
-			}
-			_convert_ucs2_to_utf8((char*)out, out_len, (char*) in_buf, num*2);
-			if(in_buf!=NULL)	free(in_buf);
+			tcore_util_hex_dump(" [UCS2] ", in_len, in);
+			tcore_util_convert_ucs2_to_utf8((char *)out, out_len, (char*)in, in_len);
 		} break;
 	}
 }
@@ -552,7 +553,43 @@ static int _convert_utf8_to_unicode(unsigned short* dest, unsigned char* src, un
 	return (dest - org);
 }
 
+static char _convert_gsm7bit_extension( char c )
+{
+	switch ( c ) {
+		case 0x0A:
+		case 0x1B:
+			return ' ';
+		case 0x14:
+			return '^';
+		case 0x28:
+			return '{';
+		case 0x29:
+			return '}';
+		case 0x2F:
+			return '\\';
+		case 0x3C:
+			return '[';
+		case 0x3D:
+			return '~';
+		case 0x3E:
+			return ']';
+		case 0x40:
+			return '|';
+		/*
+		   case 0x65:
+		   This code represents the EURO currency symbol. The code value is that used for the character ‘e’. Therefore
+		   a receiving entity which is incapable of displaying the EURO currency symbol will display the character ‘e’
+		   instead. GSM 03.38
+		*/
+		case 0x65:
+			return 'e';
+		default:
+			dbg("this is not extension character : (0x%x)", c);
+			break;
+	}
 
+	return c;
+}
 
 gboolean tcore_util_convert_utf8_to_gsm(unsigned char *dest, int *dest_len, unsigned char* src, int src_len)
 {
@@ -603,57 +640,38 @@ gboolean tcore_util_convert_utf8_to_gsm(unsigned char *dest, int *dest_len, unsi
 	return TRUE;
 }
 
-gboolean tcore_util_convert_utf8_to_ucs2(unsigned char* dest, int* dest_len,	unsigned char* src, int src_len)
+gboolean tcore_util_convert_utf8_to_ucs2(char **dest, int *dest_len, unsigned char *src, int src_len)
 {
 	gsize byte_converted = 0;
 	gsize byte_read = 0;
-	gchar* str_converted = NULL;
-	GError *error = NULL;
-	int i;
-	char tmp_char;
+	gchar *str_converted = NULL;
 
-	if (dest == NULL || dest_len == NULL || src == NULL) {
+	if (NULL == src || NULL == dest || NULL == dest_len) {
 		dbg( "Invalid Input Parameter");
 		return FALSE;
 	}
+try_again:
+	/*Converting from UTF8 => UCS-2 BIG-ENDIAN FORMAT using the g_convert*/
+	str_converted = (gchar *)g_convert((const gchar *)src, (gssize)src_len, "UCS-2BE", "UTF8", &byte_read, &byte_converted, NULL);
 
-	/*Converting from UTF8 => UCS-2 using the g_convert*/
-	str_converted = (gchar*) g_convert((gchar*) src, (gsize) src_len,
-																		(gchar*) "UCS-2", (gchar*) "UTF8",
-																		(gsize*) &byte_read, (gsize*) &byte_converted,
-																		&error);
-	if (str_converted == NULL) {
-		dbg( "str_converted is NULL");
-		if (error != NULL) {
-			dbg( "Problem while conversion UTF8 => UCS2, ErrorCode[%d]", error->code);
-		}
-		return FALSE;
-	}
-
-	dbg( "src_len[%u], byte_read[%u], byte_converted[%u]", src_len, byte_read, byte_converted);
-	*dest_len = (int) byte_converted;
-
-	if (byte_converted % 2 != 0) {
-		dbg( "string length is wrong!");
+	dbg("byte_read: [%d] byte_converted: [%d]", byte_read, byte_converted);
+	if (str_converted) {
+		*dest = str_converted;
+		*dest_len = byte_converted;
 	} else {
-		for (i = 0; i < (int)byte_converted; i++) {
-			if (i % 2 == 0) {
-				tmp_char = str_converted[i];
-				str_converted[i] = str_converted[i + 1];
-				str_converted[i + 1] = tmp_char;
-			}
+		warn("Cannot get converted string");
+		if (byte_read > 0) {
+			src_len = byte_read;
+			goto try_again;
 		}
 	}
-	memcpy((unsigned char*) dest, (unsigned char*) str_converted, byte_converted);
-	g_free(str_converted);
 	return TRUE;
 }
 
 gboolean tcore_util_convert_string_to_utf8(unsigned char *dest, unsigned short *dest_len,
 		enum alphabet_format dcs, const unsigned char *src, unsigned short src_len)
 {
-	dbg("dcs=[0x%02x]", dcs );
-	dbg("src=[%s], src_len=[%d]", src, src_len);
+	dbg("dcs=[0x%02x], src=[%s], src_len=[%d]", dcs, src, src_len );
 
 	if(src==NULL || src_len==0) {
 		err("src is NULL or src_len is 0");
@@ -663,7 +681,6 @@ gboolean tcore_util_convert_string_to_utf8(unsigned char *dest, unsigned short *
 	switch (dcs) {
 		case ALPHABET_FORMAT_SMS_DEFAULT: {
 			unsigned char* tmp_dest_str = NULL;
-			dbg( "case : [ALPHABET_FORMAT_SMS_DEFAULT]");
 			tmp_dest_str = (unsigned char*)tcore_util_unpack_gsm7bit((const unsigned char *)src, src_len);
 
 			if(!tmp_dest_str) {
@@ -676,14 +693,17 @@ gboolean tcore_util_convert_string_to_utf8(unsigned char *dest, unsigned short *
 			}
 		}	break;
 
-		case ALPHABET_FORMAT_8BIT_DATA: {	//GSM7bit with bit 8 set to 0
+		case ALPHABET_FORMAT_8BIT_DATA: {//GSM7bit with bit 8 set to 0
 			int tmp_str_len = 0;
 			unsigned char *src_buf = NULL;
+
 			src_buf = (unsigned char*)malloc(src_len);
-			if(NULL == src_buf){
-				err("src_buf is NULL!");
+			if(src_buf == NULL) {
+				dbg("src_buf malloc failed.");
 				return FALSE;
 			}
+
+			memset(src_buf, 0, src_len);
 			memcpy(src_buf, src, src_len);
 
 			/*get string length*/
@@ -695,24 +715,28 @@ gboolean tcore_util_convert_string_to_utf8(unsigned char *dest, unsigned short *
 			while (src[tmp_str_len - 1] == 0x20 && tmp_str_len > 0) {
 				tmp_str_len--;
 			}
-			dbg( "case : [ALPHABET_FORMAT_8BIT_DATA]");
 			dbg( "tmp_str_len[%d]", tmp_str_len);
 
 			_convert_gsm_to_utf8(dest, dest_len, src_buf, tmp_str_len);
-			free(src_buf);
+			if(src_buf != NULL)
+				free(src_buf);
 		}	break;
 
 		case ALPHABET_FORMAT_UCS2: {
 			unsigned char *src_buf = NULL;
+
 			src_buf = (unsigned char*)malloc(src_len);
-			if(NULL == src_buf){
-				err("src_buf is NULL");
+			if(src_buf == NULL) {
+				dbg("src_buf malloc failed.");
 				return FALSE;
 			}
+
+			memset(src_buf, 0, src_len);
 			memcpy(src_buf, src, src_len);
-			dbg( "case : [ALPHABET_FORMAT_UCS2]");
+
 			_convert_alpha_field_ucs2_to_utf8(dest, dest_len, src_buf, src_len);
-			free(src_buf);
+			if(src_buf != NULL)
+				free(src_buf);
 		}	break;
 
 		default: {
@@ -723,13 +747,56 @@ gboolean tcore_util_convert_string_to_utf8(unsigned char *dest, unsigned short *
 	return TRUE;
 }
 
-void tcore_util_swap_byte_order(unsigned short* dest, const unsigned short* src, int src_len)
+gboolean tcore_util_convert_ascii_to_utf8( unsigned char **dest, int *dest_len, unsigned char *src, int src_len )
+{
+	int i = 0, j = 0, tmp_len = 0;
+	unsigned char *tmp = 0;
+
+	if ( (!dest) || (!src) || (!dest_len) )
+		return FALSE;
+
+	if ( !src_len ) {
+		src_len = strlen( (char*)src );
+	}
+
+	tmp_len = (src_len * 2);
+	tmp = g_new0( unsigned char, tmp_len );
+
+	for ( i=0, j=0; i<src_len; i++, j++ ) {
+		if ( src[i] <= 0x7F ) {
+			tmp[j] = src[i];
+
+		} else if ( (src[i] >= 0x80) && (src[i] <= 0xBF) ) {
+			tmp[j] = 0xC2;
+			tmp[++j] = src[i];
+
+		} else { //( (src[i] >= 0xC0) && (src[i] <= 0xFF) )
+			tmp[j] = 0xC3;
+			tmp[++j] = (src[i] - 0x40);
+
+		}
+	}
+
+	*dest_len = (j+1);
+
+	*dest = g_new0( unsigned char, *dest_len );
+	memcpy( *dest, tmp, j );
+
+	g_free( tmp );
+
+	return TRUE;
+}
+
+void tcore_util_swap_byte_order(unsigned char* dest, const unsigned char* src, int src_len)
 {
 	int i = 0;
-
-	for (i = 0; i < src_len; i++) {
-		dest[i] = (src[i] << 8) + (src[i] >> 8);
+	for (i = 0; i+1 < src_len; i=i+2) {
+		dest[i] = src[i+1];
+		dest[i+1] = src[i];
 	}
+	if(src_len%2==1)
+		dest[i-1] = src[i-1];
+	dbg("swap completed.");
 }
 
 static gboolean _tcore_util_marshal_create_gvalue(GValue *value,
@@ -828,6 +895,8 @@ static void _tcore_util_marshal_remove_value(gpointer value)
 	}
 
 	g_value_unset((GValue *) value);
+	g_free(value);
+
 	return;
 }
 
@@ -878,7 +947,7 @@ static gboolean _tcore_util_marshal_convert_str_to_type(GValue *src,
 	return TRUE;
 }
 
-TReturn tcore_util_netif(const char *name, gboolean enabled)
+TReturn tcore_util_netif_up(const char *name)
 {
 	int ret;
 	int fd;
@@ -890,11 +959,7 @@ TReturn tcore_util_netif(const char *name, gboolean enabled)
 	if (strlen(name) > IFNAMSIZ)
 		return TCORE_RETURN_EINVAL;
 
-	if (enabled == TRUE)
-		fd = socket(AF_INET, SOCK_DGRAM, 0);
-	else
-		fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
-
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
 	if (fd < 0) {
 		return TCORE_RETURN_FAILURE;
 	}
@@ -909,10 +974,47 @@ TReturn tcore_util_netif(const char *name, gboolean enabled)
 		return TCORE_RETURN_FAILURE;
 	}
 
-	if (enabled == TRUE)
-		ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
-	else
-		ifr.ifr_flags &= ~(IFF_UP | IFF_RUNNING);
+	ifr.ifr_flags |= IFF_UP | IFF_RUNNING;
+
+	ret = ioctl(fd, SIOCSIFFLAGS, &ifr);
+	if (ret < 0) {
+		close(fd);
+		return TCORE_RETURN_FAILURE;
+	}
+
+	close(fd);
+	return TCORE_RETURN_SUCCESS;
+}
+
+TReturn tcore_util_netif_down(const char *name)
+{
+	int ret;
+	int fd;
+	struct ifreq ifr;
+
+	if (!name)
+		return TCORE_RETURN_EINVAL;
+
+	if (strlen(name) > IFNAMSIZ)
+		return TCORE_RETURN_EINVAL;
+
+	fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_IP);
+	if (fd < 0) {
+		return TCORE_RETURN_FAILURE;
+	}
+
+	memset(&ifr, 0, sizeof(struct ifreq));
+	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+
+
+	ret = ioctl(fd, SIOCGIFFLAGS, &ifr);
+	if (ret < 0) {
+		close(fd);
+		return TCORE_RETURN_FAILURE;
+	}
+
+	ifr.ifr_flags &= ~(IFF_UP | IFF_RUNNING);
 
 	ret = ioctl(fd, SIOCSIFFLAGS, &ifr);
 	if (ret < 0) {
@@ -1006,12 +1108,108 @@ TReturn tcore_util_netif_set(const char *name, const char *ipaddr,
 	return TCORE_RETURN_SUCCESS;
 }
 
+TReturn tcore_util_reset_ipv4_socket(const char *name, const char* ipaddr)
+{
+	int ret;
+	int fd;
+	struct ifreq ifr;
+	struct sockaddr_in sai;
+
+	if (!name)
+		return TCORE_RETURN_EINVAL;
+
+	if (strlen(name) > IFNAMSIZ)
+		return TCORE_RETURN_EINVAL;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		return TCORE_RETURN_FAILURE;
+	}
+
+	memset(&sai, 0, sizeof(struct sockaddr_in));
+	sai.sin_family = AF_INET;
+	sai.sin_port = 0;
+	if (ipaddr) {
+		if (!inet_aton(ipaddr, &sai.sin_addr)) {
+			dbg("fail to inet_aton()");
+			close(fd);
+			return TCORE_RETURN_FAILURE;
+		}
+	}
+
+	memset(&ifr, 0, sizeof(struct ifreq));
+	memcpy(&ifr.ifr_addr, &sai, sizeof(sai));
+	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+
+	if(!ipaddr) {
+		ret = ioctl(fd, SIOCGIFADDR, &ifr);
+		if (ret < 0) {
+			dbg("fail to ioctl[SIOCGIFADDR]!!!");
+			close(fd);
+			return TCORE_RETURN_FAILURE;
+		}
+	}
+	/* SIOCKILLADDR is initially introduced in Android OS. */
+#ifndef SIOCKILLADDR
+#define SIOCKILLADDR    0x8939
+#endif
+	ret = ioctl(fd, SIOCKILLADDR, &ifr);
+	if (ret < 0) {
+		dbg("fail to ioctl[SIOCKILLADDR]!!!");
+		close(fd);
+		return TCORE_RETURN_FAILURE;
+	}
+
+	if(ipaddr) {
+		dbg("devname: %s, ipaddr: %s", name, ipaddr);
+	} else {
+		memset(&sai, 0, sizeof(struct sockaddr_in));
+		memcpy(&sai, &ifr.ifr_addr, sizeof(struct sockaddr_in));
+		dbg("devname: %s, ipaddr: %s", name, inet_ntoa(sai.sin_addr));
+	}
+	close(fd);
+	return TCORE_RETURN_SUCCESS;
+}
+
+TReturn tcore_util_netif_set_mtu(const char *name, unsigned int mtu)
+{
+	int ret;
+	int fd;
+	struct ifreq ifr;
+
+	if (!name)
+		return TCORE_RETURN_EINVAL;
+
+	if (strlen(name) > IFNAMSIZ)
+		return TCORE_RETURN_EINVAL;
+
+	fd = socket(AF_INET, SOCK_DGRAM, 0);
+	if (fd < 0) {
+		return TCORE_RETURN_FAILURE;
+	}
+
+	memset(&ifr, 0, sizeof(struct ifreq));
+	strncpy(ifr.ifr_name, name, IFNAMSIZ);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
+	ifr.ifr_data = (void*)mtu;
+
+	ret = ioctl(fd, SIOCSIFMTU, &ifr);
+	if (ret < 0) {
+		dbg("fail to ioctl[SIOCSIFMTU]!!!");
+		close(fd);
+		return TCORE_RETURN_FAILURE;
+	}
+
+	close(fd);
+	return TCORE_RETURN_SUCCESS;
+}
+
 char *tcore_util_get_string_by_ip4type(union tcore_ip4_type ip)
 {
 	char buf[16]; /* 'nnn'*4 + '.'*3 + '\0' */
 
 	snprintf(buf, 16, "%d.%d.%d.%d", ip.s[0], ip.s[1], ip.s[2], ip.s[3]);
-	dbg("IP Address: [%s]", buf);
 
 	return strdup(buf);
 }
@@ -1076,6 +1274,9 @@ enum tcore_dcs_type tcore_util_get_cbs_coding_scheme(unsigned char encode)
 			else if ((encode & 0x04) == 0x04)
 				dcs = TCORE_DCS_TYPE_8_BIT;
 			break;
+		default:
+			err("invalid encoding type");
+			break;
 	}
 
 	return dcs;
@@ -1106,7 +1307,7 @@ unsigned char *tcore_util_decode_hex(const char *src, int len)
 		out_len = len;
 	}
 
-	buf = calloc(out_len, 1);
+	buf = calloc(1, out_len);
 	if (!buf)
 		return NULL;
 
@@ -1120,65 +1321,44 @@ unsigned char *tcore_util_decode_hex(const char *src, int len)
 	return buf;
 }
 
-#define convert_to_hex(in, out) (in <= 9) ? \
-	(out = '0' + in) : (out = 'A' + in - 10)
-
-long tcore_util_encode_hex(const unsigned char *src, long num_bytes,
-				char *buf)
+void tcore_util_hex_dump(const char *pad, int size, const void *data)
 {
-	long i, j;
+	char buf[255] = {0, };
+	char hex[4] = {0, };
+	int i = 0;
+	unsigned char *p = NULL;
 
-	if (num_bytes <= 0)
-		return -1;
-
-	for (i = 0, j = 0; i < num_bytes; i++, j++) {
-		convert_to_hex(((src[i] >> 4) & 0xf), buf[j++]);
-		convert_to_hex((src[i] & 0xf), buf[j]);
+	if (0 >= size) {
+		msg("%sno data", pad);
+		return;
 	}
 
-	buf[j] = '\0';
+	p = (unsigned char *)data;
 
-	return j;
-}
+	g_snprintf(buf, 255, "%s%04X: ", pad, 0);
+	for (i = 0; i<size; i++) {
+		g_snprintf(hex, 4, "%02X ", p[i]);
+		memcpy(buf+strlen(buf), hex, 4);
 
-/* pdu buffer size must be 12 (SCA max length) + 164 (TPDU max length) bytes */
-int tcore_util_pdu_encode(const unsigned char *sca, const unsigned char *tpdu,
-				int tpdu_len, char *pdu)
-{
-	int i, sca_len;
-	unsigned char converted_sca[SMS_ENCODED_SCA_LEN_MAX];
-
-	if (sca[0] == 0) {
-		converted_sca[0] = 0;
-		sca_len = 0;
-
-		goto out;
+		if ((i + 1) % 8 == 0) {
+			if ((i + 1) % 16 == 0) {
+				msg("%s", buf);
+				memset(buf, 0, 255);
+				snprintf(buf, 255, "%s%04X: ", pad, i + 1);
+			}
+			else {
+				strcat(buf, "  ");
+			}
+		}
 	}
 
-	/*
-	 * For PDU, the SC Address length is the number of packed BCD bytes
-	 * + 1 byte for SC Address type whereas the length given in
-	 * 3GPP 23.040 Address encoding is the number of digits without 1 byte
-	 * for address type.
-	 */
-	sca_len = ((sca[0] + 1) / 2) + 1;
-
-	converted_sca[0] = (unsigned char)sca_len;
-
-	for (i = 1; i <= sca_len; i++)
-		converted_sca[i] = sca[i];
-
-out:
-	memcpy(pdu, converted_sca, sca_len + 1);
-	memcpy(pdu + sca_len + 1, tpdu, tpdu_len);
-
-	return sca_len + 1 + tpdu_len;
+	msg("%s", buf);
 }
 
 unsigned char *tcore_util_unpack_gsm7bit(const unsigned char *src, unsigned int src_len)
 {
 	unsigned char *dest;
-	int i = 0;
+	int i = 0, j = 0;
 	unsigned int pos = 0;
 	unsigned char shift = 0;
 	int outlen = 0;
@@ -1189,7 +1369,7 @@ unsigned char *tcore_util_unpack_gsm7bit(const unsigned char *src, unsigned int 
 
 	outlen = (src_len * 8) / 7;
 
-	dest = calloc(outlen + 1, 1);
+	dest = calloc(1, outlen + 1);
 	if (!dest)
 		return NULL;
 
@@ -1213,9 +1393,19 @@ unsigned char *tcore_util_unpack_gsm7bit(const unsigned char *src, unsigned int 
 	}
 
 	/*If a character is '\r'(13), change it to space(32) */
-	for (i = 0; i < outlen; i++)
-		if (dest[i] == '\r')
-			dest[i] = ' ';
+	for (i = 0, j=0; i < outlen; i++, j++) {
+		if (dest[i] == '\r') {
+			dest[j] = ' ';
+
+		} else if (dest[i] == 0x1B) { /*If a charater is 0x1B (escape), next charater is changed on gsm 7bit extension table */
+			dest[j] = _convert_gsm7bit_extension( dest[++i] );
+
+		} else {
+			dest[j] = dest[i];
+		}
+	}
+
+	outlen -= ( i - j );
 
 	dest[outlen] = '\0';
 
@@ -1235,7 +1425,7 @@ unsigned char *tcore_util_pack_gsm7bit(const unsigned char *src, unsigned int sr
 
 	outlen = ((src_len * 7) / 8) + 1;
 
-	dest = calloc(outlen + 1, 1);
+	dest = calloc(1, outlen + 1);
 	if (!dest)
 		return NULL;
 
@@ -1268,9 +1458,50 @@ unsigned char *tcore_util_pack_gsm7bit(const unsigned char *src, unsigned int sr
 	return dest;
 }
 
+char* tcore_util_convert_bcd_str_2_ascii_str(const char* src, int src_len)
+{
+	int count = 0;
+	char *dest = NULL;
+
+	if(!src)
+		return NULL;
+
+	dest = malloc((src_len+1)*sizeof(char));
+	memset(dest, 0, (src_len+1)*sizeof(char));
+
+	for(count = 0; count < src_len; count++){
+		switch(src[count]){
+			case 0x0A:
+				dest[count] = '*';
+				break;
+			case 0x0B:
+				dest[count] = '#';
+				break;
+			case 0x0C:
+				dest[count] = 'p'; //Pause
+				break;
+			case 0x0D:
+				dest[count] = '?'; //Wild Card character
+				break;
+			case 0x0E: //ignore, RFU
+			case 0x0F:
+				dest[count] = '\0'; //Null termination
+				break;
+			default:
+				dest[count] = src[count]+'0'; //digits 0~9
+				break;
+		}
+	}
+
+	dest[count] = '\0';
+	dbg("PARSER - number(%s) len(%d)", dest, strlen(dest));
+
+	return dest;
+}
+
 char* tcore_util_convert_bcd2ascii(const char* src, int src_len, int max_len)
 {
-	int index = 0, len=0;
+	int count = 0, len=0;
 	char l_bcd = 0x00, h_bcd = 0x0F;
 	char *dest = NULL;
 
@@ -1285,9 +1516,9 @@ char* tcore_util_convert_bcd2ascii(const char* src, int src_len, int max_len)
 	dest = malloc((src_len*2)*sizeof(char)+1);
 	memset(dest, 0, (src_len*2)*sizeof(char)+1);
 
-	for(index = 0; index < src_len; index++){
-		l_bcd = src[index] & 0x0F;
-		h_bcd = (src[index] & 0xF0) >> 0x04;
+	for(count = 0; count < src_len; count++){
+		l_bcd = src[count] & 0x0F;
+		h_bcd = (src[count] & 0xF0) >> 0x04;
 
 		switch(l_bcd){
 			case 0x0A:
@@ -1340,6 +1571,27 @@ char* tcore_util_convert_bcd2ascii(const char* src, int src_len, int max_len)
 	return dest;
 }
 
+char* tcore_util_convert_digit2ascii(const char* src, int src_len)
+{
+	int count = 0;
+	char *dest = NULL;
+
+	if(!src)
+		return NULL;
+
+	dest = malloc((src_len+1)*sizeof(char));
+	memset(dest, 0, (src_len+1)*sizeof(char));
+
+	for(count = 0; count < src_len; count++){
+		dest[count] = src[count] + '0';
+	}
+	dest[count] = '\0';
+
+	dbg("PARSER - number(%s) len(%d)", dest, strlen(dest));
+	return dest;
+}
+
+
 GHashTable *tcore_util_marshal_create()
 {
 	GHashTable *ht = NULL;
@@ -1361,9 +1613,13 @@ void tcore_util_marshal_destory(GHashTable *ht)
 
 GHashTable *tcore_util_marshal_deserialize_string(const gchar *serialized_string)
 {
-	int index = 0;
+	int count = 0;
 	gchar **tuple = NULL;
 	GHashTable *ht = NULL;
+	GValue src = G_VALUE_INIT;
+
+	if (!serialized_string)
+		return NULL;
 
 	ht = g_hash_table_new_full(g_str_hash, g_str_equal, g_free,
 			_tcore_util_marshal_remove_value);
@@ -1372,30 +1628,31 @@ GHashTable *tcore_util_marshal_deserialize_string(const gchar *serialized_string
 		return ht;
 	}
 
-	tuple = g_strsplit((gchar *) serialized_string, " ", 0);
+	g_value_init(&src, G_TYPE_STRING);
 
-	while (strlen(tuple[index]) > 3) {
+	tuple = g_strsplit(serialized_string, " ", 0);
+
+	while (strlen(tuple[count]) > 3) {
 		int tmp = 0;
 		guchar *content = NULL;
 		gchar **inner_tuple = NULL;
-		GValue *src = g_new0(GValue, 1);
 		GValue *dest = g_new0(GValue, 1);
 		unsigned int type = 0;
 
-		inner_tuple = g_strsplit(tuple[index], ":", 0);
+		inner_tuple = g_strsplit(tuple[count], ":", 0);
 		type = atoi(inner_tuple[1]);
 		content = g_base64_decode(inner_tuple[2], (gsize *)&tmp);
 
-		g_value_init(src, G_TYPE_STRING);
 		g_value_init(dest, type);
 
-		g_value_set_string(src, (const gchar *)content);
-		_tcore_util_marshal_convert_str_to_type(src, dest, type);
+		g_value_set_string(&src, (const gchar *)content);
+		_tcore_util_marshal_convert_str_to_type(&src, dest, type);
 		g_hash_table_insert(ht, g_strdup(inner_tuple[0]), dest);
 
+		g_value_reset(&src);
 		g_free(content);
 		g_strfreev(inner_tuple);
-		index++;
+		count++;
 	}
 
 	g_strfreev(tuple);
@@ -1543,5 +1800,10 @@ GHashTable *tcore_util_marshal_get_object(GHashTable *ht, const gchar *key)
 char *tcore_util_get_version(void)
 {
 	return strdup(TCORE_VERSION);
+}
+
+void tcore_util_set_log(gboolean enable)
+{
+	tcore_debug = enable;
 }
 

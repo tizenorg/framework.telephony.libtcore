@@ -27,10 +27,10 @@
 #include <dlfcn.h>
 
 #include <glib.h>
-#include <glib/gprintf.h>
 
 #include "tcore.h"
 #include "plugin.h"
+#include "hal.h"
 #include "server.h"
 #include "user_request.h"
 #include "core_object.h"
@@ -40,20 +40,20 @@
 #include "udev.h"
 #include "util.h"
 
-#define MODEMS_PATH "/usr/lib/telephony/plugins/modems"
+#define MODEMS_PATH "/usr/lib/telephony/plugins/modems/"
 
 struct tcore_server_type {
 	GMainLoop *mainloop;
 	GSList *plugins;
 	GSList *communicators;
 	GSList *storages;
+	GSList *hals;
 	GSList *modems;
 
 	GSList *template_co;
 
 	GSList *hook_list_request;
 	GSList *hook_list_notification;
-
 	TcorePlugin *default_plugin;
 	TcoreUdev *udev;
 };
@@ -69,13 +69,13 @@ struct tcore_modem_type {
 
 struct hook_request_type {
 	enum tcore_request_command command;
-	tcore_server_request_hook func;
+	TcoreServerRequestHook func;
 	void *user_data;
 };
 
 struct hook_notification_type {
 	enum tcore_notification_command command;
-	tcore_server_notification_hook func;
+	TcoreServerNotificationHook func;
 	void *user_data;
 };
 
@@ -84,7 +84,7 @@ static gint _compare_priority(gconstpointer a, gconstpointer b)
 	TcorePlugin *plugin1 = (TcorePlugin *)a;
 	TcorePlugin *plugin2 = (TcorePlugin *)b;
 
-	if (plugin2 == NULL)
+	if (!plugin2)
 		return 1;
 
 	return tcore_plugin_get_description(plugin1)->priority -
@@ -94,7 +94,7 @@ static gint _compare_priority(gconstpointer a, gconstpointer b)
 static char *_server_enumerate_modem(TcorePlugin *plugin)
 {
 	static unsigned int cp_counter = 0;
-	char *filename;
+	const char *filename;
 
 	if (plugin == NULL)
 		return NULL;
@@ -103,8 +103,8 @@ static char *_server_enumerate_modem(TcorePlugin *plugin)
 	 * Presently enumeration is based on Modem Interface Plug-in descriptor name
 	 * followed by an incremental Positive integer 'cp_count'.
 	 *
-	 * For example, if Modem Interface Plug-in descriptor name is 'imcmodem' then,
-	 *	'name' would be enumerated as "imcmode_N", where N >= 0
+	 * For example, if Modem Interface Plug-in descriptor name is 'qmimodem' then,
+	 *	'name' would be enumerated as "qmimodem_N", where N >= 0
 	 */
 	filename = tcore_plugin_ref_plugin_name(plugin);
 	if (filename == NULL)
@@ -115,65 +115,51 @@ static char *_server_enumerate_modem(TcorePlugin *plugin)
 	return g_strdup_printf("%s%d", filename, cp_counter++);
 }
 
-static TcoreModem *_server_find_modem(Server *s,
-				TcorePlugin *modem_iface_plugin, TcorePlugin *modem_plugin)
+static TcoreModem *__get_modem(TcorePlugin *modem_plugin)
+{
+	GSList *list;
+	TcoreModem *modem;
+	Server *s;
+
+	s = tcore_plugin_ref_server(modem_plugin);
+	if (s == NULL) {
+		err("server is NULL");
+		return NULL;
+	}
+
+	for (list = s->modems; list; list = list->next) {
+		modem = list->data;
+		if (modem == NULL) {
+			dbg("Modem is NULL");
+			continue;
+		}
+
+		if (modem->modem_plugin == modem_plugin)
+			return modem;
+	}
+
+	err("Modem not found");
+
+	return NULL;
+}
+
+static TcorePlugin *_find_default_plugin(Server *s)
 {
 	GSList *list;
 	TcoreModem *modem;
 
-	dbg("Modem Plug-in [0x%x][%s] Modem Interface Plug-in: [0x%x][%s]",
-			modem_plugin, tcore_plugin_ref_plugin_name(modem_plugin),
-			modem_iface_plugin, tcore_plugin_ref_plugin_name(modem_iface_plugin));
+	if (s->default_plugin != NULL) {
+		return s->default_plugin;
+	}
 
 	for (list = s->modems; list; list = list->next) {
 		modem = list->data;
 		if (modem == NULL)
 			continue;
 
-		/*
-		 * Specifically for Unregister, Add Modem Plug-in
-		 * and Add/Remove Mapping Table -
-		 *
-		 * MUST match Modem Interface Plug-in
-		 *			AND
-		 * If passed Modem Interface Plug-in is NULL, then
-		 * Modem Interface Plug-in of 'modems' MUST be NULL
-		 */
-		if ((modem_iface_plugin == modem->modem_iface_plugin)
-			&& ((modem_plugin == NULL) && (modem->modem_plugin == NULL))) {
-			dbg("'modem' found!!!");
-			return modem;
-		}
-
-		/*
-		 * Specifically for get Mapping Table -
-		 *
-		 * Modem Interface Plug-in MUST be NULL
-		 *			AND
-		 * Passed Modem Plug-in MUST match Modem Plug-of 'modems'
-		 */
-		if ((modem_iface_plugin == NULL)
-			&& (modem_plugin == modem->modem_plugin)) {
-			dbg("'modem' found!!!");
-			return modem;
-		}
-
-		/*
-		 * Specifically for get CP name -
-		 *
-		 * Passed Modem OR Modem Interface Plug-in MUST match
-		 *			AND
-		 * MUST match either Modem OR Modem Interface Plug-in of 'modems'
-		 */
-		if ((modem_iface_plugin == modem_plugin)
-				&& ((modem_iface_plugin == modem->modem_iface_plugin)
-					|| (modem_plugin == modem->modem_plugin))) {
-			dbg("'modem' found!!!");
-			return modem;
-		}
+		s->default_plugin = modem->modem_plugin;
+		return modem->modem_plugin;
 	}
-
-	err("Modem not found");
 
 	return NULL;
 }
@@ -182,12 +168,15 @@ Server *tcore_server_new()
 {
 	Server *s;
 
-	s = g_try_new0(struct tcore_server_type, 1);
-	if (s == NULL)
+	s = calloc(1, sizeof(struct tcore_server_type));
+	if (!s) {
+		err("Server allocation failed!!!");
 		return NULL;
+	}
 
 	s->mainloop = g_main_loop_new (NULL, FALSE);
-	if (s->mainloop == NULL) {
+	if (!s->mainloop) {
+		err("mainloop creation failed!!!");
 		free(s);
 		return NULL;
 	}
@@ -195,7 +184,7 @@ Server *tcore_server_new()
 	s->plugins = NULL;
 	s->communicators = NULL;
 	s->storages = NULL;
-	s->template_co = NULL;
+	s->hals = NULL;
 	s->hook_list_request = NULL;
 	s->hook_list_notification = NULL;
 	s->default_plugin = NULL;
@@ -205,23 +194,24 @@ Server *tcore_server_new()
 
 void tcore_server_free(Server *s)
 {
-	GSList *list;
-	TcorePlugin *p;
-	const struct tcore_plugin_define_desc *desc;
+	GSList *list = NULL;
+	TcorePlugin *p = NULL;
+	struct tcore_plugin_define_desc *desc = NULL;
 
-	if (s == NULL)
+	if (!s) {
+		err("Server is NULL");
 		return;
+	}
+	s->plugins = g_slist_reverse(s->plugins);
 
-	if (s->mainloop)
-		g_main_loop_unref(s->mainloop);
+	/* Unload all plug-ins */
+	for (list = s->plugins; list; list = list->next) {
+		p = list->data;
+		if (!p)
+			continue;
 
-    for (list = s->plugins; list; list = list->next) {
-        p = list->data;
-        if (p == NULL)
-            continue;
-
-        desc = (struct tcore_plugin_define_desc *)tcore_plugin_get_description(p);
-		if ((desc == NULL) || (desc->unload == NULL))
+		desc = (struct tcore_plugin_define_desc *)tcore_plugin_get_description(p);
+		if (!desc || !desc->unload)
 			continue;
 
 		desc->unload(p);
@@ -231,35 +221,27 @@ void tcore_server_free(Server *s)
 		list->data = NULL;
 	}
 
-	if (s->hook_list_notification)
-		g_slist_free_full(s->hook_list_notification, g_free);
-
-	if (s->hook_list_request)
-		g_slist_free_full(s->hook_list_request, g_free);
-
-	if (s->template_co)
-		g_slist_free(s->template_co);
-
-	if (s->storages)
-		g_slist_free(s->storages);
-
-	if (s->communicators)
-		g_slist_free(s->communicators);
-
+	/* Free plug-ins */
 	if (s->plugins) {
 		g_slist_free(s->plugins);
 		s->plugins = NULL;
 	}
 
-	/* Freeing Server */
-	g_free(s);
+	/* Unref 'mainloop' */
+	if (s->mainloop) {
+		g_main_loop_unref(s->mainloop);
+	}
+
+	/* Free server */
+	free(s);
+	dbg("Freeing Server");
 }
 
 TReturn tcore_server_run(Server *s)
 {
 	char *version;
 
-	if ((s == NULL)|| (s->mainloop == NULL))
+	if (!s || !s->mainloop)
 		return TCORE_RETURN_EINVAL;
 
 	version = tcore_util_get_version();
@@ -277,7 +259,7 @@ TReturn tcore_server_run(Server *s)
 
 TReturn tcore_server_exit(Server *s)
 {
-	if ((s == NULL)|| (s->mainloop == NULL))
+	if (!s || !s->mainloop)
 		return TCORE_RETURN_EINVAL;
 
 	g_main_loop_quit(s->mainloop);
@@ -287,7 +269,7 @@ TReturn tcore_server_exit(Server *s)
 
 TReturn tcore_server_add_plugin(Server *s, TcorePlugin *plugin)
 {
-	if ((s == NULL)|| (plugin == NULL))
+	if (!s || !plugin)
 		return TCORE_RETURN_EINVAL;
 
 	s->plugins = g_slist_insert_sorted(s->plugins, plugin, _compare_priority);
@@ -303,6 +285,8 @@ TcorePlugin *tcore_server_find_plugin(Server *s, const char *name)
 	TcoreModem *modem;
 
 	dbg("Name: [%s]", name);
+	if (g_strcmp0(TCORE_PLUGIN_DEFAULT, name) == 0)
+		return _find_default_plugin(s);
 
 	for (list = s->modems; list; list = list->next) {
 		modem = list->data;
@@ -320,7 +304,7 @@ TcorePlugin *tcore_server_find_plugin(Server *s, const char *name)
 
 GSList *tcore_server_ref_plugins(Server *s)
 {
-	if (s == NULL)
+	if (!s)
 		return NULL;
 
 	return s->plugins;
@@ -328,7 +312,7 @@ GSList *tcore_server_ref_plugins(Server *s)
 
 TReturn tcore_server_add_communicator(Server *s, Communicator *comm)
 {
-	if ((s == NULL)|| (comm == NULL))
+	if (!s || !comm)
 		return TCORE_RETURN_EINVAL;
 
 	s->communicators = g_slist_insert(s->communicators, comm, 0);
@@ -338,9 +322,20 @@ TReturn tcore_server_add_communicator(Server *s, Communicator *comm)
 	return TCORE_RETURN_SUCCESS;
 }
 
+TReturn tcore_server_remove_communicator(Server *s, Communicator *comm)
+{
+	if (!s || !comm)
+		return TCORE_RETURN_EINVAL;
+
+	s->communicators = g_slist_remove( s->communicators, comm );
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+
 GSList *tcore_server_ref_communicators(Server *s)
 {
-	if (s == NULL)
+	if (!s)
 		return NULL;
 
 	return s->communicators;
@@ -353,7 +348,7 @@ Communicator *tcore_server_find_communicator(Server *s, const char *name)
 
 	for (list = s->communicators; list; list = list->next) {
 		comm = list->data;
-		if (comm == NULL) {
+		if (!comm) {
 			continue;
 		}
 
@@ -367,7 +362,7 @@ Communicator *tcore_server_find_communicator(Server *s, const char *name)
 
 TReturn tcore_server_add_storage(Server *s, Storage *strg)
 {
-	if ((s == NULL)|| (strg == NULL))
+	if (!s || !strg)
 		return TCORE_RETURN_EINVAL;
 
 	s->storages = g_slist_insert(s->storages, strg, 0);
@@ -379,7 +374,7 @@ TReturn tcore_server_add_storage(Server *s, Storage *strg)
 
 GSList *tcore_server_ref_storages(Server *s)
 {
-	if (s == NULL)
+	if (!s)
 		return NULL;
 
 	return s->storages;
@@ -392,7 +387,7 @@ Storage *tcore_server_find_storage(Server *s, const char *name)
 
 	for (list = s->storages; list; list = list->next) {
 		strg = list->data;
-		if (strg == NULL) {
+		if (!strg) {
 			continue;
 		}
 
@@ -404,36 +399,51 @@ Storage *tcore_server_find_storage(Server *s, const char *name)
 	return NULL;
 }
 
-TReturn tcore_server_add_template_object(Server *s, CoreObject *template_co)
+TReturn tcore_server_add_hal(Server *s, TcoreHal *hal)
 {
 	GSList *list;
-	CoreObject *temp;
+	TcoreHal *temp;
 
-	if ((s == NULL)|| (template_co == NULL))
+	if (!s || !hal)
 		return TCORE_RETURN_EINVAL;
 
-	for (list = s->template_co; list; list = list->next) {
+	for (list = s->hals; list; list = list->next) {
 		temp = list->data;
-		if (temp == NULL) {
+		if (!temp) {
 			continue;
 		}
 
-		if (tcore_object_get_type(temp) == tcore_object_get_type(template_co)) {
+		if (temp == hal)
 			return TCORE_RETURN_EALREADY;
-		}
 	}
 
-	s->template_co = g_slist_insert(s->template_co, template_co, 0);
+	s->hals = g_slist_insert(s->hals, hal, 0);
+
+	tcore_server_send_notification(s, NULL, TNOTI_SERVER_ADDED_HAL, 0, NULL);
 
 	return TCORE_RETURN_SUCCESS;
 }
 
-GSList *tcore_server_ref_template_object(Server *s)
+TReturn tcore_server_remove_hal(Server *s, TcoreHal *hal)
 {
-	if (s == NULL)
+	if (!s || !hal)
+		return TCORE_RETURN_EINVAL;
+
+	/* Remove HAL from list */
+	s->hals = g_slist_remove(s->hals, hal);
+
+	/* Send Notification */
+	tcore_server_send_notification(s, NULL, TNOTI_SERVER_REMOVED_HAL, 0, NULL);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+GSList *tcore_server_ref_hals(Server *s)
+{
+	if (!s)
 		return NULL;
 
-	return s->template_co;
+	return s->hals;
 }
 
 CoreObject *tcore_server_find_template_object(Server *s, unsigned int type)
@@ -453,9 +463,36 @@ CoreObject *tcore_server_find_template_object(Server *s, unsigned int type)
 	return NULL;
 }
 
+TcoreHal *tcore_server_find_hal(Server *s, const char *name)
+{
+	GSList *list;
+	TcoreHal *hal;
+	char *buf;
+
+	for (list = s->hals; list; list = list->next) {
+		hal = list->data;
+		if (!hal) {
+			continue;
+		}
+
+		buf = tcore_hal_get_name(hal);
+		if (!buf)
+			continue;
+
+		if (g_strcmp0(buf, name) == 0) {
+			free(buf);
+			return hal;
+		}
+
+		free(buf);
+	}
+
+	return NULL;
+}
+
 TReturn tcore_server_link_udev(Server *s, TcoreUdev *udev)
 {
-	if ((s == NULL)|| (udev == NULL))
+	if (!s || !udev)
 		return TCORE_RETURN_EINVAL;
 
 	s->udev = udev;
@@ -465,7 +502,7 @@ TReturn tcore_server_link_udev(Server *s, TcoreUdev *udev)
 
 TcoreUdev *tcore_server_ref_udev(Server *s)
 {
-	if (s == NULL)
+	if (!s)
 		return NULL;
 
 	return s->udev;
@@ -473,56 +510,78 @@ TcoreUdev *tcore_server_ref_udev(Server *s)
 
 TReturn tcore_server_dispatch_request(Server *s, UserRequest *ur)
 {
-	char *modem = NULL;
+	char *modem_name = NULL;
 	TcorePlugin *p;
 	enum tcore_request_command command = 0;
-	GSList *list;
+	GSList *list, *co_list=NULL;
 	struct hook_request_type *hook;
 	int category;
-	CoreObject *co;
+	CoreObject *o;
 	TReturn ret = TCORE_RETURN_ENOSYS;
+	TReturn prev_ret = TCORE_RETURN_FAILURE;
 
-	if ((s == NULL)|| (ur == NULL))
+	if (!s || !ur)
 		return TCORE_RETURN_EINVAL;
 
 	for (list = s->hook_list_request; list; list = list->next) {
 		hook = list->data;
-		if (hook == NULL)
+		if (!hook) {
 			continue;
+		}
 
-		if (hook->command == tcore_user_request_get_command(ur))
-			if (hook->func(s, ur, hook->user_data)
-					== TCORE_HOOK_RETURN_STOP_PROPAGATION)
+		if (hook->command == tcore_user_request_get_command(ur)) {
+			if (hook->func(s, ur, hook->user_data) == TCORE_HOOK_RETURN_STOP_PROPAGATION) {
 				return TCORE_RETURN_SUCCESS;
+			}
+		}
 	}
 
-	modem = tcore_user_request_get_modem_name(ur);
-	if (modem == NULL)
+	modem_name = tcore_user_request_get_modem_name(ur);
+	if (!modem_name)
 		return TCORE_RETURN_EINVAL;
 
-	p = tcore_server_find_plugin(s, modem);
-	if (p == NULL) {
-		free(modem);
+	p = tcore_server_find_plugin(s, (const char*)modem_name);
+	if (!p) {
+		free(modem_name);
 		return TCORE_RETURN_SERVER_WRONG_PLUGIN;
 	}
-	free(modem);
+	free(modem_name);
 
 	command = tcore_user_request_get_command(ur);
 
 	category = CORE_OBJECT_TYPE_DEFAULT | (command & 0x0FF00000);
-	dbg("Category: [0x%x]", category);
 
-	co = tcore_plugin_ref_core_object(p, category);
-	if (co == NULL) {
-		warn("can't find 0x%x core_object", category);
+	co_list = tcore_plugin_get_core_objects_bytype(p, category);
+	if (!co_list) {
+		warn("can't find 0x%x core_object. co_list is null.", category);
 		return TCORE_RETURN_ENOSYS;
 	}
 
-	if (tcore_object_dispatch_request(co, ur) == TCORE_RETURN_SUCCESS)
-			ret = TCORE_RETURN_SUCCESS;
-		else
-			dbg("failed...");
+	for (list = co_list; list; list = list->next) {
+		o = (CoreObject *) list->data;
+		if (!o) {
+			warn("can't find 0x%x core_object", category);
+			continue;
+		}
 
+		/*
+		 * SUCCESS would be returned if even one of the Core Object
+		 * in the list 'co_list' Successfully processes the request.
+		 *
+		 * The concept is to consider that the Request is being
+		 * processed atleast by 1 entity.
+		 */
+		ret = tcore_object_dispatch_request(o, ur);
+		if ( ret != TCORE_RETURN_SUCCESS) {
+			dbg("failed... ret=[%d]", ret);
+		}
+		else {
+			prev_ret = ret;
+		}
+		ret = prev_ret;
+	}
+
+	g_slist_free(co_list);
 	return ret;
 }
 
@@ -533,29 +592,29 @@ TReturn tcore_server_send_notification(Server *s, CoreObject *source,
 	GSList *list;
 	Communicator *comm;
 	struct hook_notification_type *hook;
-	dbg("Send Notification!!! Command: [0x%x]", command);
-
-	if (s == NULL)
+	if (!s)
 		return TCORE_RETURN_EINVAL;
 
-	for (list = s->hook_list_notification; list; list = list->next) {
+	for (list = s->hook_list_notification; list;) {
 		hook = list->data;
-		if (hook == NULL) {
+		list = list->next;
+		if (!hook) {
 			continue;
 		}
 
 		if (hook->command == command) {
-			dbg("Invoking hook_func() for Command: [0x%x]", command);
-			if (hook->func(s, source, command, data_len, data, hook->user_data)
-					== TCORE_HOOK_RETURN_STOP_PROPAGATION)
+			if (hook->func(s, source, command, data_len, data, hook->user_data) == TCORE_HOOK_RETURN_STOP_PROPAGATION) {
 				return TCORE_RETURN_SUCCESS;
+			}
 		}
 	}
 
-	for (list = s->communicators; list; list = list->next) {
+	for (list = s->communicators; list;) {
 		comm = list->data;
-		if (comm == NULL)
+		list = list->next;
+		if (!comm) {
 			continue;
+		}
 
 		tcore_communicator_send_notification(comm, source, command, data_len, data);
 	}
@@ -565,15 +624,15 @@ TReturn tcore_server_send_notification(Server *s, CoreObject *source,
 
 TReturn tcore_server_add_request_hook(Server *s,
 		enum tcore_request_command command,
-		tcore_server_request_hook func, void *user_data)
+		TcoreServerRequestHook func, void *user_data)
 {
 	struct hook_request_type *hook;
 
-	if ((s == NULL)|| (func == NULL))
+	if (!s || !func)
 		return TCORE_RETURN_EINVAL;
 
-	hook = g_try_new0(struct hook_request_type, 1);
-	if (hook == NULL)
+	hook = calloc(1, sizeof(struct hook_request_type));
+	if (!hook)
 		return TCORE_RETURN_ENOMEM;
 
 	hook->command = command;
@@ -585,24 +644,24 @@ TReturn tcore_server_add_request_hook(Server *s,
 	return TCORE_RETURN_SUCCESS;
 }
 
-TReturn tcore_server_remove_request_hook(Server *s, tcore_server_request_hook func)
+TReturn tcore_server_remove_request_hook(Server *s, TcoreServerRequestHook func)
 {
 	struct hook_request_type *hook;
 	GSList *list;
 
-	if (s == NULL)
+	if (!s)
 		return TCORE_RETURN_EINVAL;
 
 	for (list = s->hook_list_request; list; list = list->next) {
 		hook = list->data;
-		if (hook == NULL) {
+		if (!hook) {
 			continue;
 		}
 
 		if (hook->func == func) {
 			s->hook_list_request = g_slist_remove(s->hook_list_request, hook);
+			free(hook);
 			list = s->hook_list_request;
-			g_free(hook);
 		}
 	}
 
@@ -611,153 +670,108 @@ TReturn tcore_server_remove_request_hook(Server *s, tcore_server_request_hook fu
 
 TReturn tcore_server_add_notification_hook(Server *s,
 		enum tcore_notification_command command,
-		tcore_server_notification_hook func, void *user_data)
+		TcoreServerNotificationHook func, void *user_data)
 {
 	struct hook_notification_type *hook;
 
-	if ((s == NULL) || (func == NULL)) {
-		err("server: [0x%x] func: [0x%x]", s, func);
+	if (!s || !func)
 		return TCORE_RETURN_EINVAL;
-	}
 
-	hook = g_try_new0(struct hook_notification_type, 1);
-	if (hook == NULL) {
-		err("Failed to allocate memory");
+	hook = calloc(1, sizeof(struct hook_notification_type));
+	if (!hook)
 		return TCORE_RETURN_ENOMEM;
-	}
 
 	hook->command = command;
 	hook->func = func;
 	hook->user_data = user_data;
 
 	s->hook_list_notification = g_slist_append(s->hook_list_notification, hook);
-	dbg("Added hook_func() for Command: [0x%x]", command);
 
 	return TCORE_RETURN_SUCCESS;
 }
 
 TReturn tcore_server_remove_notification_hook(Server *s,
-		tcore_server_notification_hook func)
+		TcoreServerNotificationHook func)
 {
 	struct hook_notification_type *hook;
 	GSList *list;
 
-	if (s == NULL)
+	if (!s)
 		return TCORE_RETURN_EINVAL;
 
 	for (list = s->hook_list_notification; list; list = list->next) {
 		hook = list->data;
-		if (hook == NULL) {
+		if (!hook) {
 			continue;
 		}
 
 		if (hook->func == func) {
 			s->hook_list_notification = g_slist_remove(s->hook_list_notification, hook);
+			free(hook);
 			list = s->hook_list_notification;
-			g_free(hook);
 		}
 	}
 
 	return TCORE_RETURN_SUCCESS;
 }
 
-gboolean tcore_server_register_modem(Server *s, TcorePlugin *modem_iface_plugin)
+TcoreModem *tcore_server_register_modem(Server *s, TcorePlugin *modem_iface_plugin)
 {
 	TcoreModem *modem;
 
 	if ((s == NULL) || (modem_iface_plugin == NULL)) {
-		err("server [0x%x] Modem Interface Plug-in: [0x%x]", s, modem_iface_plugin);
-		return FALSE;
+		err("Server [%p] Modem Interface Plug-in: [%p]", s, modem_iface_plugin);
+		return NULL;
 	}
 
+	/* Allocate 'modem' */
 	modem = g_try_new0(TcoreModem, 1);
 	if (modem == NULL) {
 		err("Failed to allocate memory");
-		return FALSE;
+		return NULL;
 	}
 
+	/* Enumerate CP Name to 'modem' */
 	modem->cp_name = _server_enumerate_modem(modem_iface_plugin);
+
+	/* Update Modem Interface Plug-in to 'modem' */
 	modem->modem_iface_plugin = modem_iface_plugin;
 
+	/* Add 'modem' to 'modems' list */
 	s->modems = g_slist_append(s->modems, modem);
 	dbg("Added to 'modems' entry - CP Name: [%s] Modem Interface Plug-in: [%s]",
 					modem->cp_name, tcore_plugin_ref_plugin_name(modem_iface_plugin));
 
-	return TRUE;
+	return modem;
 }
 
-void tcore_server_unregister_modem(Server *s, TcorePlugin *modem_iface_plugin)
+void tcore_server_unregister_modem(Server *s, TcoreModem *modem)
 {
-	TcoreModem *modem;
-
-	if ((s == NULL) || (modem_iface_plugin == NULL)) {
-		err("server [0x%x] Modem Interface Plug-in: [0x%x]", s, modem_iface_plugin);
+	if ((s == NULL) || (modem == NULL)) {
+		err("server [%p] Modem: [%p]", s, modem);
 		return;
 	}
 
-	modem = _server_find_modem(s, modem_iface_plugin, NULL);
-	if (modem == NULL) {
-		err("Failed to find 'modem' for Modem Interface Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_iface_plugin));
-		return;
-	}
-
+	/* Remove 'modem' from 'modems' list */
 	s->modems = g_slist_remove(s->modems, modem);
+	dbg("Removed from 'modems' entry - CP Name: [%s] Modem Interface Plug-in: [%s]",
+		modem->cp_name, tcore_plugin_ref_plugin_name(modem->modem_iface_plugin));
 
+	/* Free memory */
 	g_free(modem->cp_name);
 	g_free(modem);
-}
-
-gboolean tcore_server_update_modem_plugin(TcorePlugin *modem_iface_plugin,
-							TcorePlugin *modem_plugin)
-{
-	Server *s;
-	TcoreModem *modem;
-
-	if ((modem_iface_plugin == NULL) || (modem_plugin == NULL)) {
-		err("Modem Plug-in [0x%x] Modem Interface Plug-in: [0x%x]",
-									modem_plugin, modem_iface_plugin);
-		return FALSE;
-	}
-
-	s = tcore_plugin_ref_server(modem_iface_plugin);
-	if (s == NULL) {
-		err("server is NULL");
-		return FALSE;
-	}
-
-	modem = _server_find_modem(s, modem_iface_plugin, NULL);
-	if (modem == NULL) {
-		err("Failed to find 'modem' for Modem Interface Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_iface_plugin));
-		return FALSE;
-	}
-
-	modem->modem_plugin = modem_plugin;
-	dbg("Added to 'modems' pair - Modem Plug-in [%s] <---> Modem Interface Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_plugin),
-					tcore_plugin_ref_plugin_name(modem_iface_plugin));
-
-	return TRUE;
 }
 
 GSList *tcore_server_get_cp_name_list(Server *s)
 {
 	GSList *cp_name_list = NULL;
 	GSList *list;
-	unsigned int list_count;
 	TcoreModem *modem;
 
 	int i = 0;
 
 	if (s == NULL) {
-		err("server is NULL");
-		return NULL;
-	}
-
-	list_count = g_slist_length(s->modems);
-	if (list_count == 0) {
-		err("No entries in Modems list");
+		err("Server is NULL");
 		return NULL;
 	}
 
@@ -768,6 +782,7 @@ GSList *tcore_server_get_cp_name_list(Server *s)
 			continue;
 		}
 
+		/* Add CP name to 'cp_name_list' */
 		dbg("[%d] CP Name: [%s]", i++, modem->cp_name);
 		cp_name_list = g_slist_append(cp_name_list, g_strdup(modem->cp_name));
 	}
@@ -776,53 +791,30 @@ GSList *tcore_server_get_cp_name_list(Server *s)
 	return cp_name_list;
 }
 
-const char *tcore_server_get_cp_name_by_plugin(TcorePlugin *plugin)
+const char *tcore_server_get_cp_name_by_plugin(TcorePlugin *modem_plugin)
 {
-	Server *s;
 	TcoreModem *modem;
 
-	if (plugin == NULL) {
-		err("plugin is NULL");
+	if (modem_plugin == NULL) {
+		err("Modem Plug-in is NULL");
 		return NULL;
 	}
 
-	s = tcore_plugin_ref_server(plugin);
-	if (s == NULL) {
-		err("server is NULL");
-		return NULL;
-	}
-
-	modem = _server_find_modem(s, plugin, plugin);
+	modem = __get_modem(modem_plugin);
 	if (modem == NULL) {
 		err("Failed to find 'modem' for Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(plugin));
+					tcore_plugin_ref_plugin_name(modem_plugin));
 		return NULL;
 	}
 
 	return (const char *)modem->cp_name;
 }
 
-gboolean tcore_server_add_cp_mapping_tbl_entry(TcorePlugin *modem_iface_plugin,
+gboolean tcore_server_add_cp_mapping_tbl_entry(TcoreModem *modem,
 					unsigned int co_type, TcoreHal *hal)
 {
-	Server *s;
-	TcoreModem *modem;
-
-	if (modem_iface_plugin == NULL) {
-		err("Modem Interface is NULL");
-		return FALSE;
-	}
-
-	s = tcore_plugin_ref_server(modem_iface_plugin);
-	if (s == NULL) {
-		err("server is NULL");
-		return FALSE;
-	}
-
-	modem = _server_find_modem(s, modem_iface_plugin, NULL);
 	if (modem == NULL) {
-		err("Failed to find 'modem' for Modem Interface Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_iface_plugin));
+		err("Modem is NULL");
 		return FALSE;
 	}
 
@@ -836,26 +828,10 @@ gboolean tcore_server_add_cp_mapping_tbl_entry(TcorePlugin *modem_iface_plugin,
 	return TRUE;
 }
 
-void tcore_server_remove_cp_mapping_tbl(TcorePlugin *modem_iface_plugin)
+void tcore_server_remove_cp_mapping_tbl(TcoreModem *modem)
 {
-	Server *s;
-	TcoreModem *modem;
-
-	if (modem_iface_plugin == NULL) {
-		err("Modem Interface is NULL");
-		return;
-	}
-
-	s = tcore_plugin_ref_server(modem_iface_plugin);
-	if (s == NULL) {
-		err("server is NULL");
-		return;
-	}
-
-	modem = _server_find_modem(s, modem_iface_plugin, NULL);
 	if (modem == NULL) {
-		err("Failed to find 'modem' for Modem Interface Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_iface_plugin));
+		err("Modem is NULL");
 		return;
 	}
 
@@ -863,38 +839,21 @@ void tcore_server_remove_cp_mapping_tbl(TcorePlugin *modem_iface_plugin)
 	tcore_object_remove_mapping_tbl(modem->mapping_tbl);
 }
 
-void tcore_server_remove_cp_mapping_tbl_entry(TcorePlugin *modem_iface_plugin,
+void tcore_server_remove_cp_mapping_tbl_entry(TcoreModem *modem,
 					TcoreHal *hal)
 {
-	Server *s;
-	TcoreModem *modem;
-
-	if (modem_iface_plugin == NULL) {
-		err("Modem Interface is NULL");
-		return;
-	}
-
-	s = tcore_plugin_ref_server(modem_iface_plugin);
-	if (s == NULL) {
-		err("server is NULL");
-		return;
-	}
-
-	modem = _server_find_modem(s, modem_iface_plugin, NULL);
 	if (modem == NULL) {
-		err("Failed to find 'modem' for Modem Interface Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_iface_plugin));
+		err("Modem is NULL");
 		return;
 	}
 
-	/* Removing the Mapping Table from the Modems list */
+	/* Removing the Mapping Table Entry from the Modems list */
 	modem->mapping_tbl =
 		tcore_object_remove_mapping_tbl_entry(modem->mapping_tbl, hal);
 }
 
 void *tcore_server_get_cp_mapping_tbl(TcorePlugin *modem_plugin)
 {
-	Server *s;
 	TcoreModem *modem;
 
 	if (modem_plugin == NULL) {
@@ -902,13 +861,7 @@ void *tcore_server_get_cp_mapping_tbl(TcorePlugin *modem_plugin)
 		return NULL;
 	}
 
-	s = tcore_plugin_ref_server(modem_plugin);
-	if (s == NULL) {
-		err("server is NULL");
-		return NULL;
-	}
-
-	modem = _server_find_modem(s, NULL, modem_plugin);
+	modem = __get_modem(modem_plugin);
 	if (modem == NULL) {
 		err("Failed to find 'modem' for Modem Plug-in: [%s]",
 					tcore_plugin_ref_plugin_name(modem_plugin));
@@ -918,39 +871,32 @@ void *tcore_server_get_cp_mapping_tbl(TcorePlugin *modem_plugin)
 	return modem->mapping_tbl;
 }
 
-void tcore_server_print_modems(TcorePlugin *plugin)
+void tcore_server_print_modems(Server *s)
 {
-	Server *s;
 	TcoreModem *modem;
+	GSList *list;
 
-	if (plugin == NULL) {
-		err("Modem Interface is NULL");
-		return;
-	}
-
-	s = tcore_plugin_ref_server(plugin);
 	if (s == NULL) {
-		err("server is NULL");
+		err("Server is NULL");
 		return;
 	}
 
-	modem = _server_find_modem(s, plugin, plugin);
-	if (modem == NULL) {
-		err("Failed to find 'modem' for Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(plugin));
-		return;
+	for (list = s->modems ; list ; list = list->next) {
+		modem = list->data;
+		if (modem == NULL) {
+			dbg("Modem is NULL");
+			continue;
+		}
+
+		msg("Modem: [0x%x] CP Name: [%s]", modem, modem->cp_name);
+		msg("Modem Plug-in: [%s] <---> Modem Interface Plug-in: [%s]",
+				tcore_plugin_ref_plugin_name(modem->modem_plugin),
+				tcore_plugin_ref_plugin_name(modem->modem_iface_plugin));
 	}
-
-	msg("Modem Plug-in: [%s] Modem Interface Plug-in: [%s]",
-			tcore_plugin_ref_plugin_name(modem->modem_plugin),
-			tcore_plugin_ref_plugin_name(modem->modem_iface_plugin));
-	msg("CP Name: [%s]", modem->cp_name);
-
-	tcore_object_print_mapping_tbl(modem->mapping_tbl);
 }
 
 TReturn tcore_server_load_modem_plugin(Server *s,
-					TcorePlugin *modem_if_plugin,
+					TcoreModem *modem,
 					const char *name)
 {
 	struct tcore_plugin_define_desc *desc;
@@ -959,24 +905,25 @@ TReturn tcore_server_load_modem_plugin(Server *s,
 	void *handle;
 	TReturn ret = TCORE_RETURN_FAILURE;
 
-	dbg("Enter");
-
-	if (s == NULL || name == NULL) {
+	if ((s == NULL) || (modem == NULL) || (name == NULL)) {
+		err("Server: [%p] modem: [%p] Plug-in Name (.so): [%s] ",
+									s, modem, name);
 		ret = TCORE_RETURN_EINVAL;
 		goto out;
 	}
 
 	filename = g_build_filename(MODEMS_PATH, name, NULL);
 
-	handle = dlopen(filename, RTLD_NOW);
+	/* Open '.so' */
+	handle = dlopen(filename, RTLD_LAZY);
 	if (handle == NULL) {
-		dbg("Failed to load '%s': %s", filename, dlerror());
+		err("Failed to load '%s': %s", filename, dlerror());
 		goto out;
 	}
 
 	desc = dlsym(handle, "plugin_define_desc");
 	if (desc == NULL) {
-		dbg("Failed to load symbol: %s", dlerror());
+		err("Failed to obtain the address of plugin_define_desc: %s", dlerror());
 		dlclose(handle);
 		goto out;
 	}
@@ -984,6 +931,7 @@ TReturn tcore_server_load_modem_plugin(Server *s,
 	dbg("Plugin %s found", desc->name);
 
 	if (desc->load != NULL) {
+		/* Load Modem Plug-in */
 		if (desc->load() == FALSE) {
 			err("Failed to load %s plugin", desc->name);
 			dlclose(handle);
@@ -991,21 +939,26 @@ TReturn tcore_server_load_modem_plugin(Server *s,
 		}
 	}
 
+	/* Create new Plug-in */
 	modem_plugin = tcore_plugin_new(s, desc, filename, handle);
-	tcore_server_add_plugin(s, modem_plugin);
-
-	if (modem_if_plugin != NULL)
-		tcore_server_update_modem_plugin(modem_if_plugin,
-							modem_plugin);
-
-	dbg("Plugin %s loaded successfully", desc->name);
-
-	if (desc->init == NULL) {
-		err("Plugin %s has not initializer", desc->name);
+	if (modem_plugin == NULL) {
+		err("Modem Plug-in is NULL");
 		dlclose(handle);
 		goto out;
 	}
 
+	/* Update Modem Plug-in to 'modem' */
+	modem->modem_plugin = modem_plugin;
+
+	dbg("Plugin %s loaded successfully", desc->name);
+
+	if (desc->init == NULL) {
+		err("Plugin %s has no initializer", desc->name);
+		dlclose(handle);
+		goto out;
+	}
+
+	/* Initialize Modem Plug-in */
 	if (desc->init(modem_plugin) == FALSE) {
 		err("Plugin %s initialization failed", desc->name);
 		dlclose(handle);
@@ -1015,7 +968,7 @@ TReturn tcore_server_load_modem_plugin(Server *s,
 	dbg("Plugin %s initialization success", desc->name);
 
 	/* Notify addition of Plug-in to Upper Layers */
-	tcore_server_send_notification(s, NULL, TNOTI_SERVER_ADDED_PLUGIN,
+	tcore_server_send_notification(s, NULL, TNOTI_SERVER_ADDED_MODEM_PLUGIN,
 								0, modem_plugin);
 
 	ret = TCORE_RETURN_SUCCESS;
@@ -1023,36 +976,18 @@ TReturn tcore_server_load_modem_plugin(Server *s,
 out:
 	g_free(filename);
 
-	dbg("Exit");
-
 	return ret;
 }
 
-void tcore_server_unload_modem_plugin(Server *s, TcorePlugin *modem_if_plugin)
+void tcore_server_unload_modem_plugin(Server *s, TcoreModem *modem)
 {
-	TcoreModem *modem;
 	TcorePlugin *modem_plugin;
 	const struct tcore_plugin_define_desc *desc;
 
-	dbg("Enter");
-
-	if ((s == NULL) || (modem_if_plugin == NULL)) {
-		err("Invalid inputs");
+	if ((s == NULL) || (modem == NULL)) {
+		err("Server: [%p] modem: [%p]", s, modem);
 		return;
 	}
-
-	/* Find modem from Server's Modem's list */
-	modem = _server_find_modem(s, modem_if_plugin, modem_if_plugin);
-	if (modem == NULL) {
-		err("Failed to find 'modem' for Plug-in: [%s]",
-					tcore_plugin_ref_plugin_name(modem_if_plugin));
-		return;
-	}
-
-	msg("Modem Plug-in: [%s] Modem Interface Plug-in: [%s]",
-			tcore_plugin_ref_plugin_name(modem->modem_plugin),
-			tcore_plugin_ref_plugin_name(modem->modem_iface_plugin));
-	msg("CP Name: [%s]", modem->cp_name);
 
 	/* Extract Modem Plug-in */
 	modem_plugin = modem->modem_plugin;
@@ -1061,8 +996,12 @@ void tcore_server_unload_modem_plugin(Server *s, TcorePlugin *modem_if_plugin)
 		return;
 	}
 
-	/* Notify deletion of Plug-in to Upper Layers */
-	tcore_server_send_notification(s, NULL, TNOTI_SERVER_REMOVED_PLUGIN,
+	msg("Modem Plug-in: [%s] <---> Modem Interface Plug-in: [%s] - CP Name: [%s]",
+			tcore_plugin_ref_plugin_name(modem->modem_plugin),
+			tcore_plugin_ref_plugin_name(modem->modem_iface_plugin), modem->cp_name);
+
+	/* Notify removal of Plug-in to Upper Layers */
+	tcore_server_send_notification(s, NULL, TNOTI_SERVER_REMOVED_MODEM_PLUGIN,
 							0, modem_plugin);
 
 	/* Extract descriptor of Modem Plug-in */
@@ -1078,6 +1017,28 @@ void tcore_server_unload_modem_plugin(Server *s, TcorePlugin *modem_if_plugin)
 
 	/* Free Modem Plug-in */
 	tcore_plugin_free(modem_plugin);
+	modem->modem_plugin = NULL;
 
 	dbg("Unloaded Modem Plug-in");
 }
+
+GSList *tcore_server_get_modem_plugin_list(Server *s)
+{
+	GSList *list;
+	GSList *modem_plugin_list = NULL;
+	TcoreModem *modem;
+
+	for (list = s->modems; list; list = list->next) {
+		modem = list->data;
+		if (modem == NULL) {
+			dbg("Modem is NULL");
+			continue;
+		}
+		if (NULL != modem->modem_plugin) {
+			modem_plugin_list = g_slist_append(modem_plugin_list, modem->modem_plugin);
+		}
+	}
+
+	return modem_plugin_list;
+}
+

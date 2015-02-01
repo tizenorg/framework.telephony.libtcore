@@ -43,6 +43,7 @@
 #include <type/sap.h>
 #include <type/phonebook.h>
 #include <type/gps.h>
+#include <util.h>
 
 typedef struct tcore_object_type CoreObject;
 typedef struct tcore_hal_type TcoreHal;

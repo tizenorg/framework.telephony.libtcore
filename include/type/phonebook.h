@@ -24,9 +24,9 @@
 __BEGIN_DECLS
 
 #include <glib.h>
-#define PHONEBOOK_NAME_BYTE_MAX		256
-#define PHONEBOOK_NUMBER_BYTE_MAX	256
-#define PHONEBOOK_EMAIL_BYTE_MAX   	256
+#define PHONEBOOK_NAME_BYTE_MAX		256		//Samsung IPC defined
+#define PHONEBOOK_NUMBER_BYTE_MAX	256		//Samsung IPC defined
+#define PHONEBOOK_EMAIL_BYTE_MAX   	256		//Samsung IPC defined
 
 enum tel_phonebook_type {
 	PB_TYPE_FDN, /**< Fixed Dialing Number */
@@ -87,6 +87,12 @@ struct tel_phonebook_support_list {
 	gboolean b_usim; /**< USIM - 3G phonebook */
 	gboolean b_aas; /**< Additional number Alpha String phonebook */
 	gboolean b_gas; /**< Grouping information Alpha String phonebook */
+};
+
+struct tel_phonebook_field_support_list {
+	gboolean b_field_list[13];
+	//supported fields are 12 according to 'enum tel_phonebook_field_type'. each index number means enum value.
+	//it is used from index 1. (index 0 doesn't match to any enum value. (no meaning))
 };
 
 struct treq_phonebook_get_count {
@@ -161,6 +167,7 @@ struct tresp_phonebook_get_info {
 	unsigned short index_max;
 	unsigned short number_length_max;
 	unsigned short text_length_max;
+	unsigned short used_count;
 };
 
 struct tel_phonebook_usim_meta {

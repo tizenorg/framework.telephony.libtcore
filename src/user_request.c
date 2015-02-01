@@ -30,8 +30,9 @@
 
 struct tcore_user_request_type {
 	int ref;
-	struct tcore_user_info ui;
 
+	/* Communicator information */
+	void *user_info;
 	Communicator *comm;
 
 	char *modem_name;
@@ -45,8 +46,12 @@ struct tcore_user_request_type {
 	unsigned int metainfo_len;
 
 	UserRequestFreeHook free_hook;
-	UserRequestResponseHook response_hook;
-	void *response_hook_user_data;
+	GSList *response_hook;
+};
+
+struct hook_response_type {
+	UserRequestResponseHook func;
+	void *user_data;
 };
 
 UserRequest *tcore_user_request_new(Communicator *comm, const char *modem_name)
@@ -76,6 +81,8 @@ void tcore_user_request_free(UserRequest *ur)
 		ur->ref--;
 		return;
 	}
+
+	g_slist_free_full(ur->response_hook, free);
 
 	if (ur->free_hook)
 		ur->free_hook(ur);
@@ -131,11 +138,19 @@ TReturn tcore_user_request_set_free_hook(UserRequest *ur,
 TReturn tcore_user_request_set_response_hook(UserRequest *ur,
 		UserRequestResponseHook resp_hook, void *user_data)
 {
+	struct hook_response_type *hook;
+
 	if (!ur)
 		return TCORE_RETURN_EINVAL;
 
-	ur->response_hook = resp_hook;
-	ur->response_hook_user_data = user_data;
+	hook = calloc(1, sizeof(struct hook_response_type));
+	if (!hook)
+		return TCORE_RETURN_ENOMEM;
+
+	hook->func = resp_hook;
+	hook->user_data = user_data;
+
+	ur->response_hook = g_slist_append(ur->response_hook, hook);
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -159,53 +174,46 @@ char *tcore_user_request_get_modem_name(UserRequest *ur)
 	return strdup(ur->modem_name);
 }
 
-TReturn tcore_user_request_set_user_info(UserRequest *ur,
-		const struct tcore_user_info *ui)
+TReturn tcore_user_request_set_user_info(UserRequest *ur, void *user_info)
 {
-	if (!ur || !ui)
+	if (!ur)
 		return TCORE_RETURN_EINVAL;
 
-	ur->ui.uid = ui->uid;
-	ur->ui.gid = ui->gid;
-	ur->ui.pid = ui->pid;
-	ur->ui.channel_id = ui->channel_id;
-	ur->ui.client_cmd = ui->client_cmd;
-	ur->ui.user_data = ui->user_data;
-
-	if (ur->ui.appname) {
-		dbg("free old appname (%s)", ur->ui.appname);
-		free(ur->ui.appname);
-		ur->ui.appname = NULL;
-	}
-
-	if (ui->appname) {
-		ur->ui.appname = strdup(ui->appname);
-		dbg("alloc appname(%s, %s)", ur->ui.appname, ui->appname);
-	}
+	ur->user_info = user_info;
 
 	return TCORE_RETURN_SUCCESS;
 }
 
-const struct tcore_user_info *tcore_user_request_ref_user_info(UserRequest *ur)
+void *tcore_user_request_ref_user_info(UserRequest *ur)
 {
 	if (!ur)
 		return NULL;
 
-	return &(ur->ui);
+	return ur->user_info;
 }
 
 TReturn tcore_user_request_send_response(UserRequest *ur,
 		enum tcore_response_command command,
 		unsigned int data_len, const void *data)
 {
+	GSList *list;
+	struct hook_response_type *hook;
+
 	if (!ur) {
 		dbg("ur is NULL");
 		return TCORE_RETURN_EINVAL;
 	}
 
-	if (ur->response_hook) {
-		ur->response_hook(ur, command, data_len, data,
-				ur->response_hook_user_data);
+	for (list = ur->response_hook; list;) {
+		hook = list->data;
+		list = list->next;
+
+		if (!hook) {
+			continue;
+		}
+
+		if (hook->func)
+			hook->func(ur, command, data_len, data, hook->user_data);
 	}
 
 	if (ur->comm) {
@@ -241,14 +249,25 @@ TReturn tcore_user_request_set_data(UserRequest *ur,
 	if (!ur)
 		return TCORE_RETURN_EINVAL;
 
+	if (ur->data != NULL) {
+		free(ur->data);
+		ur->data = NULL;
+	}
+
 	ur->data_len = data_len;
 
-	if (data_len > 0 && data != NULL) {
-		ur->data = calloc(data_len, 1);
-		if (!ur->data)
-			return TCORE_RETURN_ENOMEM;
+	if (data_len > 0) {
+		if (data != NULL) {
+			ur->data = calloc(data_len, 1);
+			if (!ur->data) {
+				ur->data_len = 0;
+				return TCORE_RETURN_ENOMEM;
+			}
 
-		memcpy(ur->data, data, data_len);
+			memcpy(ur->data, data, data_len);
+		}
+		else
+			ur->data_len = 0;
 	}
 	else {
 		ur->data = NULL;
@@ -263,17 +282,28 @@ TReturn tcore_user_request_set_metainfo(UserRequest *ur,
 	if (!ur)
 		return TCORE_RETURN_EINVAL;
 
-	if (metainfo_len > 0 && metainfo != NULL) {
-		ur->metainfo = calloc(metainfo_len, 1);
-		if (!ur->metainfo)
-			return TCORE_RETURN_ENOMEM;
+	if (ur->metainfo != NULL) {
+		free(ur->metainfo);
+		ur->metainfo = NULL;
+	}
 
-		ur->metainfo_len = metainfo_len;
-		memcpy(ur->metainfo, metainfo, metainfo_len);
+	ur->metainfo_len = metainfo_len;
+
+	if (metainfo_len > 0) {
+		if (metainfo != NULL) {
+			ur->metainfo = calloc(metainfo_len, 1);
+			if (!ur->metainfo) {
+				ur->metainfo_len = 0;
+				return TCORE_RETURN_ENOMEM;
+			}
+
+			memcpy(ur->metainfo, metainfo, metainfo_len);
+		}
+		else
+			ur->metainfo_len = 0;
 	}
 	else {
 		ur->metainfo = NULL;
-		ur->metainfo_len = 0;
 	}
 
 	return TCORE_RETURN_SUCCESS;

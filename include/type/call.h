@@ -59,6 +59,7 @@ enum telephony_call_error {
 	CALL_ERROR_REJECT,					/**< Rejected */								//30
 	CALL_ERROR_REJ_FAIL,				/**< Rejection failed */
 	CALL_ERROR_REJ_SRVC_NOT_AVL,		/**< Rejection service not available  */
+	CALL_ERROR_REJ_SAT_CALL_CTRL,		/**< Rejection by SAT call control  */
 	CALL_ERROR_REMOTE_CKTUNAVAIL,		/**< Remote Circuit channel unavailable */
 	CALL_ERROR_RESOURCEUNAVAIL,			/**< Resource not available */
 	CALL_ERROR_SERVICEID_ERROR,			/**< Service id error */
@@ -137,6 +138,16 @@ enum telephony_call_type {
 	CALL_TYPE_E911
 };
 
+enum telephony_call_emergency_category {
+	CALL_EMERGENCY_CATEGORY_DEFAULT = 0x00,
+	CALL_EMERGENCY_CATEGORY_POLICE = 0x01,
+	CALL_EMERGENCY_CATEGORY_AMBULANCE = 0x02,
+	CALL_EMERGENCY_CATEGORY_FIRE_BRIGADE = 0x04,
+	CALL_EMERGENCY_CATEGORY_MARINE_GUARD = 0x08,
+	CALL_EMERGENCY_CATEGORY_MOUNTAIN_RESCUE = 0x10,
+	CALL_EMERGENCY_CATEGORY_NONE = 0xff,
+};
+
 enum telephony_call_status {
 	CALL_STATUS_IDLE,
 	CALL_STATUS_ACTIVE,
@@ -153,6 +164,12 @@ enum telephony_call_end_type {
 	CALL_END_TYPE_ACTIVE_ALL,
 	CALL_END_TYPE_HOLD_ALL,
 };
+
+enum telephony_call_rec_type {
+	CALL_REC_NAME_INFO,
+	CALL_REC_NUMBER_INFO,
+};
+
 
 enum telephony_call_end_cause {
 	CALL_END_CAUSE_NONE = 0x00,				/**< No Cause */
@@ -214,6 +231,7 @@ enum telephony_call_end_cause {
 	CALL_END_CAUSE_RECOVERY_ON_TIMER_EXPIRY,	/**< Recovery on timer expiry */
 	CALL_END_CAUSE_PROTOCOL_ERROR_UNSPECIFIED,	/**< Protocol error unspecified */
 	CALL_END_CAUSE_INTERWORKING_UNSPECIFIED,	/**< Interworking unspecified */
+	CALL_END_CAUSE_REORDER,				/**< Reorder */
 
 	CALL_END_CAUSE_END = 128,
 
@@ -290,10 +308,19 @@ enum telephony_call_end_cause {
 	CALL_END_CAUSE_CNM_INVALID_USER_DATA,	/**< Invalid user data */
 };
 
+enum telephony_call_no_cli_cause {
+	CALL_NO_CLI_CAUSE_NONE = -1,			/**< None value - Infers NO CLI Cause */
+	CALL_NO_CLI_CAUSE_UNAVAILABLE,			/**< Unavailable */
+	CALL_NO_CLI_CAUSE_USER_REJECTED,		/**< Rejected by user */
+	CALL_NO_CLI_CAUSE_OTHERS,				/**< Interaction with other services */
+	CALL_NO_CLI_CAUSE_PAY_PHONE			/**< Coin line/ Pay phone */
+};
+
 enum telephony_call_cli_mode {
-	CALL_CLI_MODE_DEFAULT,
 	CALL_CLI_MODE_PRESENT,
 	CALL_CLI_MODE_RESTRICT,
+	CALL_CLI_MODE_UNAVAILABLE,
+	CALL_CLI_MODE_DEFAULT,
 };
 
 enum telephony_call_cna_mode {
@@ -346,15 +373,147 @@ enum telephony_call_sound_volume_level {
 	CALL_SOUND_VOLUME_LEVEL_9,
 };
 
+enum telephony_call_sound_mute_path {
+	CALL_SOUND_MUTE_PATH_TX = 0x00,
+	CALL_SOUND_MUTE_PATH_RX = 0x02,
+	CALL_SOUND_MUTE_PATH_ALL = 0x04,
+};
+
+enum telephony_call_sound_mute_status {
+	CALL_SOUND_MUTE_STATUS_OFF = 0x00,
+	CALL_SOUND_MUTE_STATUS_ON = 0x01,
+};
+
 enum telephony_call_sound_ringback_tone_status {
-	CALL_SOUND_RINGBACK_TONE_START,
 	CALL_SOUND_RINGBACK_TONE_END,
+	CALL_SOUND_RINGBACK_TONE_START,
 };
 
 enum telephony_call_sound_direction {
 	CALL_SOUND_DIRECTION_LEFT,
 	CALL_SOUND_DIRECTION_RIGHT,
 };
+
+enum telephony_call_preferred_voice_subs {
+	CALL_PREFERRED_VOICE_SUBS_UNKNOWN = -1,  /**<  Unknown status **/
+	CALL_PREFERRED_VOICE_SUBS_CURRENT_NETWORK = 0, /**< Current network **/
+	CALL_PREFERRED_VOICE_SUBS_ASK_ALWAYS, /**< ASK Always **/
+	CALL_PREFERRED_VOICE_SUBS_SIM1, /**< SIM 1 **/
+	CALL_PREFERRED_VOICE_SUBS_SIM2 /**<  SIM 2 **/
+};
+
+enum telephony_call_voice_privacy_mode {
+	CALL_PRIVACY_MODE_STANDARD,
+	CALL_PRIVACY_MODE_ENHANCED,
+};
+
+enum  telephony_call_otasp_status{
+	CALL_OTASP_OK_SPL_UNLOCKED = 0x01,
+	CALL_OTASP_OK_AKEY_EXCESS,
+	CALL_OTASP_OK_SSD_UPDATE,
+	CALL_OTASP_OK_NAM_DWNLD,
+	CALL_OTASP_OK_MDN_DWNLD,
+	CALL_OTASP_OK_IMSI_DWNLD,
+	CALL_OTASP_OK_PRL_DWNLD,
+	CALL_OTASP_OK_COMMIT,
+	CALL_OTASP_OK_PROGRAMMING,
+	CALL_OTASP_SUCCESS,
+	CALL_OTASP_UNSUCCESS,
+	CALL_OTASP_OK_OTAPA_VERIFY,
+	CALL_OTASP_PROGRESS,
+	CALL_OTASP_FAILURES_EXCESS_SPC,
+	CALL_OTASP_LOCK_CODE_PW_SET,
+};
+
+enum telephony_call_otapa_status{
+	CALL_OTAPA_STOP = 0x00,
+	CALL_OTAPA_START,
+	CALL_OTAPA_ABORTED,
+	CALL_OTAPA_COMMITTED,
+};
+
+enum  telephony_call_otasp_result{
+	CALL_OTASP_FAIL = 0x00,
+	CALL_OTASP_PASS,
+};
+
+enum telephony_call_alert_signal_type{
+	CALL_SIGNAL_TYPE_TONE = 0x00,
+	CALL_SIGNAL_TYPE_ISDN_ALERTING,
+	CALL_SIGNAL_TYPE_IS54B_ALERTING,
+	CALL_SIGNAL_TYPE_RESERVED,
+};
+
+enum telephony_call_alert_pitch_type{
+	CALL_ALERT_PITCH_MED = 0x00,
+	CALL_ALERT_PITCH_HIGH,
+	CALL_ALERT_PITCH_LOW,
+	CALL_ALERT_PITCH_RESERVED,
+};
+
+// SIGNAL : SIGNAL TYPE SIGNAL_TONE
+enum telephony_call_tone_signal{
+	CALL_SIGNAL_TONE_DIAL = 0x00,
+	CALL_SIGNAL_TONE_RINGBACK_TONE_ON,
+	CALL_SIGNAL_TONE_INTERCEPT_TONE_ON,
+	CALL_SIGNAL_TONE_ABBREV_TONE,
+	CALL_SIGNAL_TONE_NETWORK_CONGESTION_TONE_ON,
+	CALL_SIGNAL_TONE_ABBREV_NETWORK_CONGESTION,
+	CALL_SIGNAL_TONE_BUSY_TONE_ON,
+	CALL_SIGNAL_TONE_CFRM_TONE_ON,
+	CALL_SIGNAL_TONE_ANSWER_TONE_ON,
+	CALL_SIGNAL_TONE_CALL_WAITING_TONE_ON,
+	CALL_SINGNAL_TONE_PIPE_TONE_ON,
+	CALL_SIGNAL_TONE_OFF,
+};
+
+// SIGNAL : SIGNAL TYPE SIGNAL_ISDNALERT
+enum telephony_call_isdn_alert_signal{
+	CALL_SIGNAL_ISDN_ALERT_NORMAL = 0x00,
+	CALL_SIGNAL_ISDN_ALERT_INTER_GROUP,
+	CALL_SIGNAL_ISDN_ALERT_SPECIAL_PRIORITY,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED1,
+	CALL_SIGNAL_ISDN_ALERT_PING_RING,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED2,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED3,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED4,
+	CALL_SIGNAL_ISDN_ALERT_OFF,
+};
+
+// SIGNAL : SIGNAL TYPE IS- SIGNAL_IS54BALERT
+enum telephony_call_is54b_alert_signal{
+	CALL_SIGNAL_IS54B_ALERT_NOTONE = 0x00,
+	CALL_SIGNAL_IS54B_ALERT_LONG,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT_LONG,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT_2,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_LONG_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PBX_LONG,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_SHORT_LONG,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_LONG_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_SHORT_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PIP_PIP_PIP_PIP,
+};
+
+enum telephony_call_dtmf_inter_digit_interval{
+	CALL_DTMF_OFFLENGTH_60MS,
+	CALL_DTMF_OFFLENGTH_100MS,
+	CALL_DTMF_OFFLENGTH_150MS,
+	CALL_DTMF_OFFLENGTH_200MS,
+};
+
+enum telephony_call_dtmf_pulse_width{
+	CALL_DTMF_ONLENGTH_95MS,
+	CALL_DTMF_ONLENGTH_150MS,
+	CALL_DTMF_ONLENGTH_200MS,
+	CALL_DTMF_ONLENGTH_250MS,
+	CALL_DTMF_ONLENGTH_300MS,
+	CALL_DTMF_ONLENGTH_350MS,
+	CALL_DTMF_ONLENGTH_SMS
+};
+
 
 /**********
   Struct
@@ -364,14 +523,18 @@ enum telephony_call_sound_direction {
 
 #define MAX_CALL_NUMBER_LEN 83
 #define MAX_CALL_DIAL_NUM_LEN MAX_CALL_NUMBER_LEN
-#define MAX_CALL_DTMF_DIGITS_LEN 32
+#define MAX_CALL_BURST_DTMF_STRING_LEN 32
 
+#define MAX_ALPHA_INFO_LEN 64
 
 #define MAX_CALL_CLI_NUM_LEN MAX_CALL_NUMBER_LEN
 #define MAX_CALL_CNA_NAME_LEN 83
 
+#define MAX_CALL_DISPLAY_INFORMATION 182
+
 struct telephony_call_cli_info {
 	enum telephony_call_cli_mode mode;
+	enum telephony_call_no_cli_cause no_cli_cause;
 	char number[ MAX_CALL_CLI_NUM_LEN ];
 };
 
@@ -380,10 +543,18 @@ struct telephony_call_cna_info {
 	char name[ MAX_CALL_CNA_NAME_LEN ];
 };
 
-
+struct telephony_call_rec_info {
+	unsigned int id;
+	enum telephony_call_rec_type type;
+	union {
+		char name[ MAX_ALPHA_INFO_LEN ];
+		char number[ MAX_CALL_NUMBER_LEN ];
+	} data;
+};
 
 struct treq_call_dial {
 	enum telephony_call_type type;
+	enum telephony_call_emergency_category ecc;
 	char number[ MAX_CALL_DIAL_NUM_LEN ];
 };
 
@@ -397,8 +568,14 @@ struct treq_call_end {
 	enum telephony_call_end_type type;
 };
 
-struct treq_call_dtmf {
-	char digits[ MAX_CALL_DTMF_DIGITS_LEN ];
+struct treq_call_start_cont_dtmf {
+	unsigned char dtmf_digit;
+};
+
+struct treq_call_send_burst_dtmf {
+	char dtmf_string[ MAX_CALL_BURST_DTMF_STRING_LEN + 1];
+	enum telephony_call_dtmf_pulse_width pulse_width;
+	enum telephony_call_dtmf_inter_digit_interval inter_digit_interval;
 };
 
 struct treq_call_active {
@@ -430,39 +607,55 @@ struct treq_call_deflect {
 	char number[MAX_CALL_NUMBER_LEN];
 };
 
-struct treq_call_sound_set_path {
+struct treq_call_set_sound_path {
 	enum telephony_call_sound_path path;
 	gboolean extra_volume_on;
 };
 
-struct treq_call_sound_set_volume_level {
+struct treq_call_set_sound_volume_level {
 	enum telephony_call_sound_type sound;
 	enum telephony_call_sound_device device;
 	enum telephony_call_sound_volume_level volume;
 };
 
-struct treq_call_sound_get_volume_level {
+struct treq_call_get_sound_volume_level {
 	enum telephony_call_sound_type sound;
 	enum telephony_call_sound_device device;
 };
 
-struct treq_call_sound_set_recording {
+struct treq_call_set_sound_mute_status {
+	enum telephony_call_sound_mute_path path;
+	enum telephony_call_sound_mute_status status;
+};
+
+struct treq_call_set_sound_recording {
 	gboolean state;
 };
 
 #define MAX_CALL_EQ_PARAMETER_SIZE 6
-struct treq_call_sound_set_equalization {
-	gboolean mode;
+struct treq_call_set_sound_equalization {
+	int mode;
 	enum telephony_call_sound_direction direction;
 	unsigned short parameter[ MAX_CALL_EQ_PARAMETER_SIZE ];
 };
 
-struct treq_call_sound_set_noise_reduction {
+struct treq_call_set_sound_noise_reduction {
 	gboolean status;
 };
 
-struct treq_call_sound_set_clock_status {
+struct treq_call_set_sound_clock_status {
 	gboolean status;
+};
+
+struct treq_call_set_voice_privacy_mode {
+	enum telephony_call_voice_privacy_mode privacy_mode;
+};
+
+struct treq_call_set_preferred_voice_subscription {
+	enum telephony_call_preferred_voice_subs preferred_subs;
+};
+
+struct treq_call_get_preferred_voice_subscription {
 };
 
 
@@ -522,52 +715,66 @@ struct tresp_call_dtmf {
 	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_path {
-	gboolean err;
+struct tresp_call_set_sound_path {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_volume_level {
-	gboolean err;
+struct tresp_call_set_sound_volume_level {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_get_volume_level {
+struct tresp_call_get_sound_volume_level {
+	enum telephony_call_error err;
 	int record_num;
 	struct volume_info {
 		enum telephony_call_sound_type sound;
 		enum telephony_call_sound_volume_level volume;
 	} *record;
-	gboolean err;
 };
 
-struct tresp_call_mute {
-	gboolean err;
+struct tresp_call_set_sound_mute_status {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_unmute {
-	gboolean err;
+struct tresp_call_get_sound_mute_status {
+	enum telephony_call_error err;
+	enum telephony_call_sound_mute_path path;
+	enum telephony_call_sound_mute_status status;
 };
 
-struct tresp_call_get_mute_status {
-	int status;
-	gboolean err;
+struct tresp_call_set_sound_recording {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_recording {
-	gboolean err;
+struct tresp_call_set_sound_equalization {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_equalization {
-	gboolean err;
+struct tresp_call_set_sound_noise_reduction {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_noise_reduction {
-	gboolean err;
+struct tresp_call_set_sound_clock_status {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_clock_status {
-	gboolean err;
+struct tresp_call_set_preferred_voice_subscription {
+	enum telephony_call_error err;
 };
 
+struct tresp_call_get_preferred_voice_subscription {
+	enum telephony_call_error err;
+	enum telephony_call_preferred_voice_subs preferred_subs;
+};
+
+struct tresp_call_set_voice_privacy_mode {
+	enum telephony_call_error err;
+};
+
+struct tresp_call_get_voice_privacy_mode {
+	enum telephony_call_error err;
+	enum telephony_call_voice_privacy_mode privacy_mode;
+};
 
 // Notification
 
@@ -624,7 +831,7 @@ struct tnoti_call_sound_wbamr {
 };
 
 struct tnoti_call_sound_equalization {
-	gboolean mode;
+	int mode;
 	enum telephony_call_sound_direction direction;
 };
 
@@ -636,7 +843,49 @@ struct tnoti_call_sound_clock_status {
 	gboolean status;
 };
 
+struct tnoti_call_info_extra_information {
+	int type;
+	int data_len;
+	void *data;
+};
 
+struct tnoti_call_preferred_voice_subscription {
+	enum telephony_call_preferred_voice_subs preferred_subs;
+};
+
+struct tnoti_call_info_voice_privacy_mode {
+	enum telephony_call_voice_privacy_mode privacy_mode;
+};
+
+struct tnoti_call_signal_info {
+	enum telephony_call_alert_signal_type signal_type;
+	enum telephony_call_alert_pitch_type pitch_type;
+	union {
+		enum telephony_call_tone_signal sig_tone_type;
+		enum telephony_call_isdn_alert_signal sig_isdn_alert_type;
+		enum telephony_call_is54b_alert_signal sig_is54b_alert_type;
+	} signal;
+};
+
+struct tnoti_call_otasp_status {
+	enum telephony_call_otasp_status otasp_status ;
+};
+
+struct tnoti_call_otapa_status {
+	enum telephony_call_otapa_status otapa_status;
+};
+
+struct tnoti_call_otasp_result {
+	enum telephony_call_otasp_result otasp_result ;
+};
+
+struct tnoti_call_display_information {
+	unsigned char display_information[ MAX_CALL_DISPLAY_INFORMATION + 1];
+};
+
+struct tnoti_call_info_rec {
+	struct telephony_call_rec_info rec_info;
+};
 __END_DECLS
 
 #endif

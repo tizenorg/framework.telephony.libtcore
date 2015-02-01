@@ -43,56 +43,31 @@
 #include "co_phonebook.h"
 #include "co_gps.h"
 
-#define INIT_CORE_OBJECT(initializer, plugin, type, hal)	do { \
-	if (initializer != NULL) { \
-		co = tcore_object_clone_template_object(plugin, type); \
-		if (co == NULL) { \
-			break; \
-		} \
-		\
-		tcore_object_set_hal(co, hal); \
-		\
-		ret = initializer(plugin, co); \
-	} \
-} while(0);
-
-#define DEINIT_CORE_OBJECT(deinitializer, plugin, type)		do { \
-	if (deinitializer != NULL) { \
-		/* Assuming only one Core Object is present of a specific TYPE */ \
-		co = tcore_plugin_ref_core_object(plugin, type); \
-		if (co == NULL) { \
-			break; \
-		} \
-		\
-		deinitializer(plugin, co); \
-		\
-		tcore_object_free(co); \
-	} \
-} while(0);
-
-
 struct callback_type {
 	CoreObject *co;
 	char *event;
-	tcore_object_callback callback;
+	CoreObjectCallback callback;
 	void *user_data;
 };
 
 struct tcore_object_type {
 	unsigned int type;
+	char *name;
 
 	TcorePlugin *parent_plugin;
 
 	void *object;
 	void *user_data;
 
-	tcore_object_free_hook free_hook;
-	tcore_object_clone_hook clone_hook;
-	tcore_object_dispatcher dispatcher;
+	CoreObjectFreeHook free_hook;
+	CoreObjectCloneHook clone_hook;
+	CoreObjectDispatcher dispatcher;
 	GSList *callbacks;
+	GHashTable *property;
 
 	TcoreHal *hal;
 };
+
 
 /* Mapping Table */
 struct tcore_object_mapping_tbl {
@@ -139,18 +114,18 @@ static void _free_tbl_entry(gpointer data)
 	/* Free Table entry */
 	g_free(tbl_entry);
 }
-
 static CoreObject *_object_new(TcorePlugin *plugin, unsigned int type)
 {
 	CoreObject *co;
 
-	co = g_try_new0(struct tcore_object_type, 1);
-	if (co == NULL)
+	co = calloc(1, sizeof(struct tcore_object_type));
+	if (!co)
 		return NULL;
 
 	co->parent_plugin = plugin;
 
 	co->type = type;
+	co->property = g_hash_table_new_full(g_str_hash, g_str_equal, free, free);
 
 	return co;
 }
@@ -220,75 +195,153 @@ static object_mapping_table_t *_object_search_mapping_tbl_entry_by_type(
 	return tbl_entry;
 }
 
-
-static gboolean _init_core_object_by_type(unsigned int type,
-	TcorePlugin *plugin, TcoreHal *hal, struct object_initializer *initializer_list)
+static CoreObject *_create_core_object_by_type(guint type,
+	TcorePlugin *plugin, TcoreHal *hal)
 {
-	CoreObject *co;
-	gboolean ret = FALSE;
+	CoreObject *co = NULL;
 
 	switch (type) {
 	case CORE_OBJECT_TYPE_MODEM:
-		INIT_CORE_OBJECT(initializer_list->modem_init,
-						plugin, type, hal);
-
-		/* Send Notification for MODEM ADDED */
-		if (ret == TRUE)
-			tcore_server_send_notification(tcore_plugin_ref_server(plugin),
-							co, TNOTI_MODEM_ADDED, 0, NULL);
+		/* Create Core Object */
+		co = tcore_modem_new(plugin, "modem", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_CALL:
-		INIT_CORE_OBJECT(initializer_list->call_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_call_new(plugin, "call", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_SS:
-		INIT_CORE_OBJECT(initializer_list->ss_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_ss_new(plugin, "ss", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_NETWORK:
-		INIT_CORE_OBJECT(initializer_list->network_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_network_new(plugin, "network", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_PS:
-		INIT_CORE_OBJECT(initializer_list->ps_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_ps_new(plugin, "ps", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_SIM:
-		INIT_CORE_OBJECT(initializer_list->sim_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_sim_new(plugin, "sim", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_SAT:
-		INIT_CORE_OBJECT(initializer_list->sat_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_sat_new(plugin, "sat", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_SAP:
-		INIT_CORE_OBJECT(initializer_list->sap_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_sap_new(plugin, "sap", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_SMS:
-		INIT_CORE_OBJECT(initializer_list->sms_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_sms_new(plugin, "sms", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_PHONEBOOK:
-		INIT_CORE_OBJECT(initializer_list->phonebook_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_phonebook_new(plugin, "phonebook", NULL, hal);
 	break;
 
 	case CORE_OBJECT_TYPE_GPS:
-		INIT_CORE_OBJECT(initializer_list->gps_init,
-						plugin, type, hal);
+		/* Create Core Object */
+		co = tcore_gps_new(plugin, "gps", NULL, hal);
 	break;
 
-	case CORE_OBJECT_TYPE_SOUND:		/* Fall through */
+	case CORE_OBJECT_TYPE_CUSTOM:		/* Fall through */
+	default:
+		err("Unsupport/Invalid Core Object Type [0x%x]", type);
+	}
+
+	return co;
+}
+
+
+static gboolean _init_core_object_by_type(unsigned int type,
+	TcorePlugin *plugin, struct object_initializer *initializer_list)
+{
+	gboolean ret = FALSE;
+	CoreObject *co = tcore_plugin_ref_core_object(plugin, type);
+	if (co == NULL) {
+		err("No Core Object of type: [0x%x]", type);
+		return FALSE;
+	}
+
+	switch (type) {
+	case CORE_OBJECT_TYPE_MODEM: {
+		/* Invoke initializer */
+		if (initializer_list->modem_init)
+			ret = initializer_list->modem_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_CALL: {
+		/* Invoke initializer */
+		if (initializer_list->call_init)
+			ret = initializer_list->call_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_SS: {
+		/* Invoke initializer */
+		if (initializer_list->ss_init)
+			ret = initializer_list->ss_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_NETWORK: {
+		/* Invoke initializer */
+		if (initializer_list->network_init)
+			ret = initializer_list->network_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_PS: {
+		/* Invoke initializer */
+		if (initializer_list->ps_init)
+			ret = initializer_list->ps_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_SIM: {
+		/* Invoke initializer */
+		if (initializer_list->sim_init)
+			ret = initializer_list->sim_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_SAT: {
+		/* Invoke initializer */
+		if (initializer_list->sat_init)
+			ret = initializer_list->sat_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_SAP: {
+		/* Invoke initializer */
+		if (initializer_list->sap_init)
+			ret = initializer_list->sap_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_SMS:{
+		/* Invoke initializer */
+		if (initializer_list->sms_init)
+			ret = initializer_list->sms_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_PHONEBOOK: {
+		/* Invoke initializer */
+		if (initializer_list->phonebook_init)
+			ret = initializer_list->phonebook_init(plugin, co);
+	} break;
+
+	case CORE_OBJECT_TYPE_GPS:{
+		/* Invoke initializer */
+		if (initializer_list->gps_init)
+			ret = initializer_list->gps_init(plugin, co);
+	} break;
+
 	case CORE_OBJECT_TYPE_CUSTOM:		/* Fall through */
 	default:
 		dbg("Unsupport/Invalid Core Object Type [0x%x]", type);
@@ -297,83 +350,118 @@ static gboolean _init_core_object_by_type(unsigned int type,
 	return ret;
 }
 
+
 static void _deinit_core_object_by_type(unsigned int type,
 			TcorePlugin *plugin, struct object_deinitializer *deinitializer_list)
 {
 	CoreObject *co;
 
+	co = tcore_plugin_ref_core_object(plugin, type);
+	if (co == NULL) {
+		err("No Core Object of type: [0x%x]", type);
+		return;
+	}
+
 	switch (type) {
-	case CORE_OBJECT_TYPE_MODEM:
-		DEINIT_CORE_OBJECT(deinitializer_list->modem_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_MODEM: {
+		if (deinitializer_list->modem_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->modem_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_CALL:
-		DEINIT_CORE_OBJECT(deinitializer_list->call_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_CALL: {
+		if (deinitializer_list->call_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->call_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_SS:
-		DEINIT_CORE_OBJECT(deinitializer_list->ss_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_SS: {
+		if (deinitializer_list->ss_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->ss_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_NETWORK:
-		DEINIT_CORE_OBJECT(deinitializer_list->network_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_NETWORK: {
+		if (deinitializer_list->network_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->network_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_PS:
-		DEINIT_CORE_OBJECT(deinitializer_list->ps_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_PS: {
+		if (deinitializer_list->ps_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->ps_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_SIM:
-		DEINIT_CORE_OBJECT(deinitializer_list->sim_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_SIM: {
+		if (deinitializer_list->sim_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->sim_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_SAT:
-		DEINIT_CORE_OBJECT(deinitializer_list->sat_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_SAT: {
+		if (deinitializer_list->sat_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->sat_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_SAP:
-		DEINIT_CORE_OBJECT(deinitializer_list->sap_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_SAP: {
+		if (deinitializer_list->sap_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->sap_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_SMS:
-		DEINIT_CORE_OBJECT(deinitializer_list->sms_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_SMS:{
+		if (deinitializer_list->sms_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->sms_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_PHONEBOOK:
-		DEINIT_CORE_OBJECT(deinitializer_list->phonebook_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_PHONEBOOK: {
+		if (deinitializer_list->phonebook_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->phonebook_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_GPS:
-		DEINIT_CORE_OBJECT(deinitializer_list->gps_deinit,
-							plugin, type);
-	break;
+	case CORE_OBJECT_TYPE_GPS:{
+		if (deinitializer_list->gps_deinit) {
+			/* Invoke deinitializer */
+			deinitializer_list->gps_deinit(plugin, co);
+		}
+	} break;
 
-	case CORE_OBJECT_TYPE_SOUND:		/* Fall through */
 	case CORE_OBJECT_TYPE_CUSTOM:		/* Fall through */
 	default:
 		dbg("Unsupport/Invalid Core Object Type [0x%x]", type);
+		return;
 	}
+
+	/* Free Core Object */
+	tcore_object_free(co);
 }
 
-CoreObject *tcore_object_new(TcorePlugin *plugin, TcoreHal *hal)
+
+CoreObject *tcore_object_new(TcorePlugin *plugin,
+		const char *name, TcoreHal *hal)
 {
 	CoreObject *co;
 
 	co = _object_new(plugin, CORE_OBJECT_TYPE_DEFAULT);
-	if (co == NULL)
+	if (!co)
 		return NULL;
 
 	tcore_object_set_hal(co, hal);
+	tcore_object_set_name(co, name);
 
 	if (plugin)
 		tcore_plugin_add_core_object(plugin, co);
@@ -386,40 +474,57 @@ void tcore_object_free(CoreObject *co)
 	GSList *l = NULL;
 	struct callback_type *cb = NULL;
 
-	if (co == NULL)
+	if (!co)
 		return;
 
-	dbg("Type: [0x%x]", co->type);
+	dbg("co_name=%s", co->name);
 
 	if (co->free_hook)
 		co->free_hook(co);
+	else {
+		if (co->object)
+			warn("free_hook is null, private-object couldn't be freed!!");
+	}
+
+	if (co->property) {
+		g_hash_table_destroy(co->property);
+	}
 
 	if (co->callbacks) {
 		for (l = co->callbacks; l; l = l->next) {
 			cb = l->data;
-			if (cb == NULL)
+			if (!cb)
 				continue;
 
-			/* Freeing 'event' and 'cb' node */
-			g_free(cb->event);
-			g_free(cb);
+			if (cb->event)
+				free(cb->event);
+
+			free(cb);
 		}
 
 		g_slist_free(co->callbacks);
 		co->callbacks = NULL;
 	}
 
-	g_free(co);
+	if (co->parent_plugin)
+		tcore_plugin_remove_core_object(co->parent_plugin, co);
+
+	if (co->name)
+		free(co->name);
+
+	memset(co, 0, sizeof(CoreObject));
+	free(co);
 }
 
 CoreObject *tcore_object_clone(CoreObject *src, TcorePlugin *new_parent)
 {
 	CoreObject *dest;
 	TcorePlugin *p;
-	GSList *l;
+
+	GSList *l = NULL;
 	struct callback_type *cb = NULL;
 
-	if (src == NULL)
+	if (!src)
 		return NULL;
 
 	if (new_parent)
@@ -428,7 +533,7 @@ CoreObject *tcore_object_clone(CoreObject *src, TcorePlugin *new_parent)
 		p = src->parent_plugin;
 
 	dest = _object_new(p, src->type);
-	if (dest == NULL)
+	if (!dest)
 		return NULL;
 
 	dest->object = src->object;
@@ -440,7 +545,7 @@ CoreObject *tcore_object_clone(CoreObject *src, TcorePlugin *new_parent)
 
 	for (l = src->callbacks; l; l = l->next) {
 		cb = l->data;
-		if (cb == NULL)
+		if (!cb)
 			continue;
 
 		tcore_object_add_callback(dest, cb->event, cb->callback, cb->user_data);
@@ -467,10 +572,18 @@ CoreObject *tcore_object_clone_template_object(TcorePlugin *p,
 
 }
 
-TReturn tcore_object_set_free_hook(CoreObject *co,
-		tcore_object_free_hook free_hook)
+const char *tcore_object_ref_name(CoreObject *co)
 {
-	if (co == NULL)
+	if (!co)
+		return NULL;
+
+	return co->name;
+}
+
+TReturn tcore_object_set_free_hook(CoreObject *co,
+		CoreObjectFreeHook free_hook)
+{
+	if (!co)
 		return TCORE_RETURN_EINVAL;
 
 	co->free_hook = free_hook;
@@ -480,9 +593,9 @@ TReturn tcore_object_set_free_hook(CoreObject *co,
 
 
 TReturn tcore_object_set_clone_hook(CoreObject *co,
-		tcore_object_clone_hook clone_hook)
+		CoreObjectCloneHook clone_hook)
 {
-	if (co == NULL)
+	if (!co)
 		return TCORE_RETURN_EINVAL;
 
 	co->clone_hook = clone_hook;
@@ -490,9 +603,25 @@ TReturn tcore_object_set_clone_hook(CoreObject *co,
 	return TCORE_RETURN_SUCCESS;
 }
 
+TReturn tcore_object_set_name(CoreObject *co, const char *name)
+{
+	if (!co)
+		return TCORE_RETURN_EINVAL;
+
+	if (co->name) {
+		free(co->name);
+		co->name = NULL;
+	}
+
+	if (name)
+		co->name = strdup(name);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
 TcorePlugin *tcore_object_ref_plugin(CoreObject *co)
 {
-	if (co == NULL)
+	if (!co)
 		return NULL;
 
 	return co->parent_plugin;
@@ -500,7 +629,7 @@ TcorePlugin *tcore_object_ref_plugin(CoreObject *co)
 
 TReturn tcore_object_link_object(CoreObject *co, void *object)
 {
-	if (co == NULL)
+	if (!co)
 		return TCORE_RETURN_EINVAL;
 
 	co->object = object;
@@ -510,7 +639,7 @@ TReturn tcore_object_link_object(CoreObject *co, void *object)
 
 void *tcore_object_ref_object(CoreObject *co)
 {
-	if (co == NULL)
+	if (!co)
 		return NULL;
 
 	return co->object;
@@ -518,19 +647,17 @@ void *tcore_object_ref_object(CoreObject *co)
 
 TReturn tcore_object_set_type(CoreObject *co, unsigned int type)
 {
-	if (co == NULL)
+	if (!co)
 		return TCORE_RETURN_EINVAL;
 
 	co->type = type;
-
-	dbg("Set core_object to type: [0x%x])", type);
 
 	return TCORE_RETURN_SUCCESS;
 }
 
 unsigned int tcore_object_get_type(CoreObject *co)
 {
-	if (co == NULL)
+	if (!co)
 		return 0;
 
 	return co->type;
@@ -542,44 +669,39 @@ TReturn tcore_object_set_hal(CoreObject *co, TcoreHal *hal)
 	struct callback_type *cb = NULL;
 	GSList *l = NULL;
 
-	if (co == NULL)
+	if (!co)
 		return TCORE_RETURN_EINVAL;
 
-	dbg("Core Object Type: [0x%x] HAL: [0x%x]", co->type, hal);
-
 	if (co->hal) {
-		/* Remove unsolicited callbacks */
+		// remove unsolicited callbacks
 		if (tcore_hal_get_mode(co->hal) == TCORE_HAL_MODE_AT) {
 			at = tcore_hal_get_at(co->hal);
-			for (l = co->callbacks; l != NULL; l = l->next) {
+			for (l = co->callbacks; l; l = l->next) {
 				cb = l->data;
-				if (cb == NULL)
+				if (!cb)
 					continue;
 
-				tcore_at_remove_notification_full(
-					at, cb->event, _on_at_event, cb);
+				tcore_at_remove_notification_full(at, cb->event, _on_at_event, cb);
 			}
 		}
 	}
 
 	co->hal = hal;
-	if (hal == NULL)
+	if (!hal)
 		return TCORE_RETURN_SUCCESS;
 
-	/* Register unsolicited callbacks */
+	// register unsolicited callbacks
 	if (tcore_hal_get_mode(hal) == TCORE_HAL_MODE_AT) {
 		at = tcore_hal_get_at(hal);
-		for (l = co->callbacks; l != NULL; l = l->next) {
+		for (l = co->callbacks; l; l = l->next) {
 			cb = l->data;
-			if (cb == NULL)
+			if (!cb)
 				continue;
 
 			if (cb->event[0] == 27)
-				tcore_at_add_notification(at, cb->event + 1,
-						TRUE, _on_at_event, cb);
+				tcore_at_add_notification(at, cb->event + 1, TRUE, _on_at_event, cb);
 			else
-				tcore_at_add_notification(at, cb->event,
-						FALSE, _on_at_event, cb);
+				tcore_at_add_notification(at, cb->event, FALSE, _on_at_event, cb);
 		}
 	}
 
@@ -588,7 +710,7 @@ TReturn tcore_object_set_hal(CoreObject *co, TcoreHal *hal)
 
 TcoreHal *tcore_object_get_hal(CoreObject *co)
 {
-	if (co == NULL)
+	if (!co)
 		return NULL;
 
 	return co->hal;
@@ -597,7 +719,7 @@ TcoreHal *tcore_object_get_hal(CoreObject *co)
 TReturn tcore_object_link_user_data(CoreObject *co,
 		void *user_data)
 {
-	if (co == NULL)
+	if (!co)
 		return TCORE_RETURN_EINVAL;
 
 	co->user_data = user_data;
@@ -607,7 +729,7 @@ TReturn tcore_object_link_user_data(CoreObject *co,
 
 void *tcore_object_ref_user_data(CoreObject *co)
 {
-	if (co == NULL)
+	if (!co)
 		return NULL;
 
 	return co->user_data;
@@ -616,21 +738,19 @@ void *tcore_object_ref_user_data(CoreObject *co)
 TReturn tcore_object_dispatch_request(CoreObject *co,
 		UserRequest *ur)
 {
-	if ((co == NULL) || (ur == NULL))
+	if (!co || !ur)
 		return TCORE_RETURN_EINVAL;
 
-	if (co->dispatcher == NULL) {
-		err("Dispatcher is NULL");
+	if (!co->dispatcher)
 		return TCORE_RETURN_ENOSYS;
-	}
 
 	return co->dispatcher(co, ur);
 }
 
 TReturn tcore_object_set_dispatcher(CoreObject *co,
-		tcore_object_dispatcher func)
+		CoreObjectDispatcher func)
 {
-	if ((co == NULL) || (func == NULL))
+	if (!co || !func)
 		return TCORE_RETURN_EINVAL;
 
 	co->dispatcher = func;
@@ -676,23 +796,24 @@ TReturn tcore_object_override_callback(CoreObject *co,
 }
 
 TReturn tcore_object_add_callback(CoreObject *co,
-		const char *event, tcore_object_callback callback, void *user_data)
+		const char *event,
+		CoreObjectCallback callback, void *user_data)
 {
 	struct callback_type *cb = NULL;
 	TcoreAT *at = NULL;
 
-	if ((co == NULL) || (event == NULL) || (callback == NULL))
+	if (!co || !event || !callback)
 		return TCORE_RETURN_EINVAL;
 
 	if (strlen(event) < 1)
 		return TCORE_RETURN_EINVAL;
 
-	cb = g_try_new0(struct callback_type, 1);
-	if (cb == NULL)
+	cb = calloc(1, sizeof(struct callback_type));
+	if (!cb)
 		return TCORE_RETURN_ENOMEM;
 
 	cb->co = co;
-	cb->event = g_strdup(event);
+	cb->event = strdup(event);
 	cb->callback = callback;
 	cb->user_data = user_data;
 
@@ -713,16 +834,16 @@ TReturn tcore_object_add_callback(CoreObject *co,
 }
 
 TReturn tcore_object_del_callback(CoreObject *co,
-		const char *event, tcore_object_callback callback)
+		const char *event, CoreObjectCallback callback)
 {
 	struct callback_type *cb = NULL;
 	GSList *l = NULL;
 	TcoreAT *at = NULL;
 
-	if ((co == NULL) || (event == NULL) || (callback == NULL) || (co->callbacks == NULL))
+	if (!co || !event || !callback || !co->callbacks)
 		return TCORE_RETURN_EINVAL;
 
-	if (strlen(event) < 1)
+	if (strlen(event) == 0)
 		return TCORE_RETURN_EINVAL;
 
 	if (co->hal) {
@@ -730,23 +851,31 @@ TReturn tcore_object_del_callback(CoreObject *co,
 			at = tcore_hal_get_at(co->hal);
 	}
 
-	for (l = co->callbacks; l; l = l->next) {
+	l = co->callbacks;
+	while (l) {
 		cb = l->data;
-		if (cb == NULL)
+		if (!cb) {
+			l = l->next;
 			continue;
+		}
 
-		if (cb->callback != callback)
+		if (cb->callback != callback) {
+			l = l->next;
 			continue;
+		}
 
-		if (g_strcmp0(cb->event, event) != 0)
+		if (g_strcmp0(cb->event, event) != 0) {
+			l = l->next;
 			continue;
+		}
 
 		if (at)
 			_remove_at_callback(at, cb);
 
-		g_free(cb->event);
+		l = l->next;
 		co->callbacks = g_slist_remove(co->callbacks, cb);
-		g_free(cb);
+		free(cb->event);
+		free(cb);
 	}
 
 	return TCORE_RETURN_SUCCESS;
@@ -759,13 +888,13 @@ TReturn tcore_object_emit_callback(CoreObject *co,
 	GSList *l = NULL;
 	TReturn ret;
 
-	if ((co == NULL) || (event == NULL))
+	if (!co || !event)
 		return TCORE_RETURN_EINVAL;
 
 	l = co->callbacks;
 	while (l) {
 		cb = l->data;
-		if (cb == NULL) {
+		if (!cb) {
 			l = l->next;
 			continue;
 		}
@@ -790,6 +919,90 @@ TReturn tcore_object_emit_callback(CoreObject *co,
 	return TCORE_RETURN_SUCCESS;
 }
 
+static GSList *_set_property_real (CoreObject *co, const char *key,
+		const char *value, GSList *list)
+{
+	char *prev;
+
+	if (!co || !key)
+		return list;
+
+	if (!value) {
+		g_hash_table_remove (co->property, key);
+		return g_slist_append (list, (char *)key);
+	}
+
+	prev = g_hash_table_lookup(co->property, key);
+	if (prev != NULL) {
+		/*
+		 * If same data, no change & no callback emit
+		 */
+		if (strcmp (prev, value) == 0)
+			return list;
+
+		g_hash_table_replace(co->property, strdup(key), strdup(value));
+	}
+	else {
+		g_hash_table_insert(co->property, strdup(key), strdup(value));
+	}
+
+	return g_slist_append (list, (char *)key);
+}
+
+TReturn tcore_object_set_property_full(CoreObject *co, const char *first_property, ...)
+{
+	va_list argptr;
+	GSList *list = NULL;
+	const char *k;
+	const char *v;
+
+	if (!co || !first_property)
+		return TCORE_RETURN_EINVAL;
+
+	va_start (argptr, first_property);
+
+	k = first_property;
+	v = va_arg (argptr, char *);
+	list = _set_property_real (co, k, v, list);
+
+	while (1) {
+		k = va_arg (argptr, char *);
+		if (!k)
+			break;
+
+		v = va_arg (argptr, char *);
+		list = _set_property_real (co, k, v, list);
+	}
+
+	va_end (argptr);
+
+	if (!list)
+		return TCORE_RETURN_SUCCESS;
+
+	if (g_slist_length(list) > 0)
+		tcore_object_emit_callback (co,
+				CORE_OBJECT_EVENT_PROPERTY_CHANGED, list);
+
+	g_slist_free (list);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+const char *tcore_object_ref_property(CoreObject *co, const char *key)
+{
+	if (!co || !key)
+		return NULL;
+
+	return g_hash_table_lookup(co->property, key);
+}
+
+GHashTable *tcore_object_ref_property_hash(CoreObject *co)
+{
+	if (!co)
+		return NULL;
+
+	return co->property;
+}
 void *tcore_object_add_mapping_tbl_entry(void *mapping_tbl,
 						unsigned int object_type, TcoreHal *hal)
 {
@@ -948,42 +1161,60 @@ TReturn tcore_object_init_objects(TcorePlugin *plugin,
 	 */
 	if (mapping_tbl_list != NULL) {
 		object_mapping_table_t *tbl_entry;
+		GSList *mtbl_list;
 		GSList *object_type_list;
 		unsigned int type;
 
-		/* Initialize each Core Object based on the Mapping Table entries */
-		for ( ; mapping_tbl_list ; mapping_tbl_list = mapping_tbl_list->next) {
-			tbl_entry = mapping_tbl_list->data;
-			if (tbl_entry == NULL)
-				continue;
+		/* Create each Core Object based on the Mapping Table entries */
+		mtbl_list = mapping_tbl_list;
+		for ( ; mtbl_list ; mtbl_list = mtbl_list->next) {
+			tbl_entry = mtbl_list->data;
+			if (tbl_entry != NULL) {
+				CoreObject *co;
 
-			/* To handle NULL 'init' function case */
-			ret = FALSE;
+				object_type_list = tbl_entry->object_type;
+				for ( ; object_type_list ; object_type_list = object_type_list->next) {
+					type = (guint)object_type_list->data;
 
-			object_type_list = tbl_entry->object_type;
-
-			for ( ; object_type_list ; object_type_list = object_type_list->next) {
-				type = (unsigned int)object_type_list->data;
-				dbg("Core Object type: [0x%x]", type);
-
-				ret = _init_core_object_by_type(type, plugin, tbl_entry->hal, initializer_list);
-				if (ret == FALSE) {
-					err("Failed to initialize Core Object Type [0x%x]", type);
-
-					/*
-					 * Will stop initializing other Modules in case of Error,
-					 * but we need to check if we need to continue OR not as we cannot
-					 * define which Modules are Mandatory and which are NOT.
-					 */
-					break;
+					co = _create_core_object_by_type(type, plugin, tbl_entry->hal);
+					if (co == NULL) {
+						err("Failed to create Core Object - Type: [0x%x]", type);
+						return TCORE_RETURN_FAILURE;
+					}
+					dbg("Created Core Object - Type: [0x%x]", type);
 				}
 			}
 		}
-	} else
-		err("Mapping Table is NOT present");
 
+
+		/* Initialize each Core Object based on the Mapping Table entries */
+		mtbl_list = mapping_tbl_list;
+		for ( ; mtbl_list ; mtbl_list = mtbl_list->next) {
+			tbl_entry = mtbl_list->data;
+			if (tbl_entry != NULL) {
+				/* To handle NULL 'init' function case */
+				ret = FALSE;
+
+				object_type_list = tbl_entry->object_type;
+
+				for ( ; object_type_list ; object_type_list = object_type_list->next) {
+					type = (unsigned int)object_type_list->data;
+					dbg("Core Object type: [0x%x]", type);
+
+					ret = _init_core_object_by_type(type, plugin, initializer_list);
+					if (ret == FALSE) {
+						err("Failed to initialize Core Object Type [0x%x]", type);
+						return TCORE_RETURN_FAILURE;
+					}
+					dbg("Initialized Core Object - Type: [0x%x]", type);
+				}
+			}
+		}
+	} else {
+		err("Mapping Table is NOT present");
+	}
 	if (ret == FALSE) {
-		err("Failed to initialize Core Objects");
+		err("Failed to create/initialize Core Objects");
 		return TCORE_RETURN_FAILURE;
 	}
 
