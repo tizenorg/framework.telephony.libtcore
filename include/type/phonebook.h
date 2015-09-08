@@ -24,6 +24,9 @@
 __BEGIN_DECLS
 
 #include <glib.h>
+#define PHONEBOOK_NAME_BYTE_MAX		256		//Samsung IPC defined
+#define PHONEBOOK_NUMBER_BYTE_MAX	256		//Samsung IPC defined
+#define PHONEBOOK_EMAIL_BYTE_MAX   	256		//Samsung IPC defined
 
 enum tel_phonebook_type {
 	PB_TYPE_FDN, /**< Fixed Dialing Number */
@@ -72,18 +75,24 @@ enum tel_phonebook_ton {
 
 enum tel_phonebook_dcs {
 	PB_TEXT_ASCII, /**< ASCII Encoding */
-	PB_TEXT_GSM7BIT, /**< GSM 7 Bit Encoding */
+	PB_TEXT_GSM7BIT, /**< GSM 7 Bit with bit 8 set to 0 Encoding */
 	PB_TEXT_UCS2, /**< UCS2 Encoding */
 	PB_TEXT_HEX, /**< HEX Encoding */
 };
 
 struct tel_phonebook_support_list {
 	gboolean b_fdn; /**< Fixed Dialing Number */
-	gboolean b_adn; /**< SIM - ADN(2G phonebook	 */
+	gboolean b_adn; /**< SIM - ADN(2G phonebook, Under DF phonebook */
 	gboolean b_sdn; /**< Service Dialing Number  */
 	gboolean b_usim; /**< USIM - 3G phonebook */
 	gboolean b_aas; /**< Additional number Alpha String phonebook */
 	gboolean b_gas; /**< Grouping information Alpha String phonebook */
+};
+
+struct tel_phonebook_field_support_list {
+	gboolean b_field_list[13];
+	//supported fields are 12 according to 'enum tel_phonebook_field_type'. each index number means enum value.
+	//it is used from index 1. (index 0 doesn't match to any enum value. (no meaning))
 };
 
 struct treq_phonebook_get_count {
@@ -107,24 +116,33 @@ struct treq_phonebook_update_record {
 	enum tel_phonebook_type phonebook_type;
 	unsigned short index;
 
-	unsigned char name[60];
+	unsigned char name[PHONEBOOK_NAME_BYTE_MAX+1];		// +1 is for Null termination
+	unsigned short name_len;
 	enum tel_phonebook_dcs dcs;
 
-	unsigned char number[40];
+	unsigned char number[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton ton;
 
-	/* following field is valid in only USIM*/
-	unsigned char anr1[40];
+	/* following fields are valid in only USIM*/
+	unsigned char sne[PHONEBOOK_NAME_BYTE_MAX+1];		// +1 is for Null termination
+	unsigned short sne_len;
+	enum tel_phonebook_dcs sne_dcs;
+
+	unsigned char anr1[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton anr1_ton;
-	unsigned char anr2[40];
+	unsigned char anr2[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton anr2_ton;
-	unsigned char anr3[40];
+	unsigned char anr3[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton anr3_ton;
 
-	unsigned char email1[60];
-	unsigned char email2[60];
-	unsigned char email3[60];
-	unsigned char email4[60];
+	unsigned char email1[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email1_len;
+	unsigned char email2[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email2_len;
+	unsigned char email3[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email3_len;
+	unsigned char email4[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email4_len;
 
 	unsigned short group_index; //GRP
 	unsigned short pb_control; //PBC
@@ -134,11 +152,7 @@ struct treq_phonebook_delete_record {
 	enum tel_phonebook_type phonebook_type;
 	unsigned short index;
 };
-/*WILL BE REMOVED - START*/
-struct tresp_phonebook_select {
-	enum tel_phonebook_result result;
-};
-/*WILL BE REMOVED - END*/
+
 struct tresp_phonebook_get_count {
 	enum tel_phonebook_result result;
 	enum tel_phonebook_type type;
@@ -153,6 +167,7 @@ struct tresp_phonebook_get_info {
 	unsigned short index_max;
 	unsigned short number_length_max;
 	unsigned short text_length_max;
+	unsigned short used_count;
 };
 
 struct tel_phonebook_usim_meta {
@@ -174,24 +189,33 @@ struct tresp_phonebook_read_record {
 	unsigned short index;
 	unsigned short next_index;
 
-	unsigned char name[60];
+	unsigned char name[PHONEBOOK_NAME_BYTE_MAX+1];		// +1 is for Null termination
+	unsigned short name_len;
 	enum tel_phonebook_dcs dcs;
 
-	unsigned char number[40];
+	unsigned char number[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton ton;
 
-	/* following field is valid in only USIM*/
-	unsigned char anr1[40];
+	/* following fields are valid in only USIM*/
+	unsigned char sne[PHONEBOOK_NAME_BYTE_MAX+1];		// +1 is for Null termination
+	unsigned short sne_len;
+	enum tel_phonebook_dcs sne_dcs;
+
+	unsigned char anr1[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton anr1_ton;
-	unsigned char anr2[40];
+	unsigned char anr2[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton anr2_ton;
-	unsigned char anr3[40];
+	unsigned char anr3[PHONEBOOK_NUMBER_BYTE_MAX+1];	// +1 is for Null termination
 	enum tel_phonebook_ton anr3_ton;
 
-	unsigned char email1[60];
-	unsigned char email2[60];
-	unsigned char email3[60];
-	unsigned char email4[60];
+	unsigned char email1[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email1_len;
+	unsigned char email2[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email2_len;
+	unsigned char email3[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email3_len;
+	unsigned char email4[PHONEBOOK_EMAIL_BYTE_MAX+1];	// +1 is for Null termination
+	unsigned short email4_len;
 
 	unsigned short group_index; //GRP
 	unsigned short pb_control; //PBC

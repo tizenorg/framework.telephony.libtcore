@@ -25,102 +25,104 @@ __BEGIN_DECLS
 
 #include <glib.h>
 
-enum telephony_call_error_cause {
-	CALL_CAUSE_NONE,					/**< Success  */
-	CALL_CAUSE_ACCESSDISCARD,			/**< Access discarded  */
-	CALL_CAUSE_BARR_BYOPERATOR,			/**< Barred by operator */
-	CALL_CAUSE_BEARERMODE_NOTIMPL,		/**< Bearer mode not implemented */
-	CALL_CAUSE_BEARERMODE_RESTRICTED,	/**< Bearer mode restricted */
-	CALL_CAUSE_BEARERMODE_UNAUTH,		/**< Bearer mode un authorized */
-	CALL_CAUSE_BEARERMODE_UNAVAIL,		/**< Bearer mode not available */
-	CALL_CAUSE_BUSY,					/**< (Network/Server) busy */
-	CALL_CAUSE_CALLMETER_EXPIRED,		/**< Call meter expired */
-	CALL_CAUSE_CALLNO_ERROR,			/**< Call number error */
-	CALL_CAUSE_CKTUNAVAIL,				/**< Circuit channel unavailable */			//10
-	CALL_CAUSE_CONGESTION,				/**< Congestion happened */
-	CALL_CAUSE_NO_CIRCUIT_AVAIL,		/**< Circuit  not available */
-	CALL_CAUSE_DESTIN_INCOMPAT,			/**< Destination incompatibility */
-	CALL_CAUSE_DTMF_NOSPEECH,			/**< No speech in DTMF */
-	CALL_CAUSE_DTMF_REJECTED,			/**< DTMF rejected */
-	CALL_CAUSE_FACILITY_NOTIMPL,		/**< Facility not implemented */
-	CALL_CAUSE_FACILITY_NOTSUBSCRIBED,	/**< Facility not subscribed */
-	CALL_CAUSE_INCOMINGCUGCALLS_BARRED, /**< Incoming CUG Calls barred */
-	CALL_CAUSE_INVALNUM,				/**< Invalid number */
-	CALL_CAUSE_MPTY_ERROR,				/**< Multiparty error */						//20
-	CALL_CAUSE_NOANSWER,				/**< No answer  */
-	CALL_CAUSE_NONCUGMEMBER,			/**< Non CUG member */
-	CALL_CAUSE_NUMBERCHANGED,			/**< Number changed */
-	CALL_CAUSE_NUMBER_ERROR,			/**< Number error */
-	CALL_CAUSE_NWFAILURE,				/**< Network failure */
-	CALL_CAUSE_OPERATIONUNAVAIL,		/**< Operation not available */
-	CALL_CAUSE_OUTOFORDER,				/**< Out of order */
-	CALL_CAUSE_PROTOCOL_ERROR,			/**< Protocol error */
-	CALL_CAUSE_QOSUNAVAIL,				/**< QOS unavailable */
-	CALL_CAUSE_REJECT,					/**< Rejected */								//30
-	CALL_CAUSE_REJ_FAIL,				/**< Rejection failed */
-	CALL_CAUSE_REJ_SRVC_NOT_AVL,		/**< Rejection service not available  */
-	CALL_CAUSE_REMOTE_CKTUNAVAIL,		/**< Remote Circuit channel unavailable */
-	CALL_CAUSE_RESOURCEUNAVAIL,			/**< Resource not available */
-	CALL_CAUSE_SERVICEID_ERROR,			/**< Service id error */
-	CALL_CAUSE_SERVICE_NOTIMPL,			/**< Service not implemented */
-	CALL_CAUSE_SERVICE_UNAVAIL,			/**< Service not available */
-	CALL_CAUSE_MODIFY_SAME_BEARER,		/**< Modify same bearer */
-	CALL_CAUSE_MODIFY_NOT_PERMITTED,	/**< Modification not permitted */
-	CALL_CAUSE_HOLD_FAIL,				/**< Call hold fail */							//40
-	CALL_CAUSE_TEMPFAILURE,				/**< Temporary failure */
-	CALL_CAUSE_WRONGNUM,				/**< Wrong number */
-	CALL_CAUSE_NORMAL_UNSPECIFIED,		/**< Normal but unspecified */
-	CALL_CAUSE_SSERRINVALIDTIVALUE,		/**< SS invalid Transaction ID Value */
-	CALL_CAUSE_SSERRINVALIDTI,			/**< SS Invalid transaction ID */
-	CALL_CAUSE_SSINCOMPATIBLESTATE,		/**< SS incompatible state */
-	CALL_CAUSE_SSERRSYNTAXERROR,		/**< SS syntax error */
-	CALL_CAUSE_SSPROTOCOLERROR,			/**< Protocol error */
-	CALL_CAUSE_SSNEGATIVEPASSWORDCHECK, /**< Negative password check */
-	CALL_CAUSE_SSSENTASPHASE1,			/**< SS sent as phase1 message */				//50
-	CALL_CAUSE_SSERROR,					/**< Supplementary service error */
-	CALL_CAUSE_SS_USSD_BUSY,			/**< Second USSD request will be rejected when already USSD transaction is ongoing. */
-	CALL_CAUSE_IDLE,					/**< Idle */
-	CALL_CAUSE_NETWORK_SPECIFIC,		/**< Network specific error */
-	CALL_CAUSE_FADE,					/**< voice call was dropped e.g. because of a loss of signal */
-	CALL_CAUSE_UNKNOWN,					/**< unknown no details available */
-	CALL_CAUSE_INCOM_CALL,				/**< terminated by incoming call */
-	CALL_CAUSE_ALERT_STOP,				/**< terminated by alert stop */
-	CALL_CAUSE_INTERCEPT,				/**< voice call was dropped by interception */
-	CALL_CAUSE_REORDER,					/**< voice call was dropped by reordering */	//60
-	CALL_CAUSE_CLIENT_END,				/**< client ended the call */
-	CALL_CAUSE_ACCESS_CLASS_BLOCKED,	/**< access class blocked */
-	CALL_CAUSE_MEMCAPEXCEEDED,			/**< Memory capacity exceeded */
-	CALL_CAUSE_TYPENOTSUPPORTED,		/**< Type not supported */
-	CALL_CAUSE_REPLACENOTSUPPORTED,		/**< Replace not supported */
-	CALL_CAUSE_PROTOCOLID_ERROR,		/**< Protocol id error */
-	CALL_CAUSE_CLASSNOTSUPPORTED,		/**< Class not supported */
-	CALL_CAUSE_DATACODING_ERROR,		/**< Data coding error */
-	CALL_CAUSE_INVAL_MSG,				/**< Invalid message */
-	CALL_CAUSE_CALL_BARRED,			/**< Call barred */							//70
-	CALL_CAUSE_SIM_CALL_CONTROL_CHANGED_TO_SS,		/**< Sim call control changed to SS */
-	CALL_CAUSE_SIM_CALL_CONTROL_CHANGED_TO_CALL,	/**< SIM Call control changed to call */
-	CALL_CAUSE_SIM_ERROR,				/**< SIM error */
-	CALL_CAUSE_SIM_CALL_CONTROL_MODIFIED,			/**< SIM call control modified */
-	CALL_CAUSE_RANDOM_ACCESS_FAILURE,	/**< Random access error */
-	CALL_CAUSE_LOWER_LAYER_FAILURE,		/**< Lower layer error */
-	CALL_CAUSE_ACCESS_REJECTED,			/**< Access rejected */
-	CALL_CAUSE_RESET_NOT_ALLOWED,		/**< Reset not allowed */
-	CALL_CAUSE_EMERGENCY_CALL_NOT_ALLOWED,			/**< Emergency call not allowed */
-	CALL_CAUSE_ACCESS_NOT_ALLOWED,		/**< Access not allowed */						//80
-	CALL_CAUSE_RADIO_LINK_FAILURE,		/**< Radio link failure */
-	CALL_CAUSE_INVALID_IDENTITY,		/**< Invalid identity */
-	CALL_CAUSE_UNKNOWN_IDENTITY,		/**< Unknown identity */
-	CALL_CAUSE_UNACCEPTABLE_IDENTITY,	/**< Un acceptable identity */
-	CALL_CAUSE_NO_SERVICE_HERE,			/**< No service here */
-	CALL_CAUSE_SERVICE_NOT_ALLOWED,		/**< Service not allowed */
-	CALL_CAUSE_SERVICE_NOT_AVAIL,		/**< Service not available */
-	CALL_CAUSE_SERVICE_NOT_WORKING,		/**< Service not working */
-	CALL_CAUSE_CANNOT_IDENTIFY_CALL,	/**< Cannot identify the call */
-	CALL_CAUSE_DEACTIVATION,			/**< Deactivation */							//90
-	CALL_CAUSE_FATAL_ERROR,				/**< Fatal error */
-	CALL_CAUSE_SEND_DTMF_SUCCESS,		/**< Sending DTMF Success */
-	CALL_CAUSE_SEND_DTMF_FAIL,			/**< Sending DTMF Failed */
-	CALL_CAUSE_TIMER_EXPIRED,			/**< Call Timer Expired */
+enum telephony_call_error {
+	CALL_ERROR_NONE,					/**< Success  */
+	CALL_ERROR_ACCESSDISCARD,			/**< Access discarded  */
+	CALL_ERROR_BARR_BYOPERATOR,			/**< Barred by operator */
+	CALL_ERROR_BEARERMODE_NOTIMPL,		/**< Bearer mode not implemented */
+	CALL_ERROR_BEARERMODE_RESTRICTED,	/**< Bearer mode restricted */
+	CALL_ERROR_BEARERMODE_UNAUTH,		/**< Bearer mode un authorized */
+	CALL_ERROR_BEARERMODE_UNAVAIL,		/**< Bearer mode not available */
+	CALL_ERROR_BUSY,					/**< (Network/Server) busy */
+	CALL_ERROR_CALLMETER_EXPIRED,		/**< Call meter expired */
+	CALL_ERROR_CALLNO_ERROR,			/**< Call number error */
+	CALL_ERROR_CKTUNAVAIL,				/**< Circuit channel unavailable */			//10
+	CALL_ERROR_CONGESTION,				/**< Congestion happened */
+	CALL_ERROR_NO_CIRCUIT_AVAIL,		/**< Circuit  not available */
+	CALL_ERROR_DESTIN_INCOMPAT,			/**< Destination incompatibility */
+	CALL_ERROR_DTMF_NOSPEECH,			/**< No speech in DTMF */
+	CALL_ERROR_DTMF_REJECTED,			/**< DTMF rejected */
+	CALL_ERROR_FACILITY_NOTIMPL,		/**< Facility not implemented */
+	CALL_ERROR_FACILITY_NOTSUBSCRIBED,	/**< Facility not subscribed */
+	CALL_ERROR_INCOMINGCUGCALLS_BARRED, /**< Incoming CUG Calls barred */
+	CALL_ERROR_INVALNUM,				/**< Invalid number */
+	CALL_ERROR_MPTY_ERROR,				/**< Multiparty error */						//20
+	CALL_ERROR_NOANSWER,				/**< No answer  */
+	CALL_ERROR_NONCUGMEMBER,			/**< Non CUG member */
+	CALL_ERROR_NUMBERCHANGED,			/**< Number changed */
+	CALL_ERROR_NUMBER_ERROR,			/**< Number error */
+	CALL_ERROR_NWFAILURE,				/**< Network failure */
+	CALL_ERROR_OPERATIONUNAVAIL,		/**< Operation not available */
+	CALL_ERROR_OUTOFORDER,				/**< Out of order */
+	CALL_ERROR_PROTOCOL_ERROR,			/**< Protocol error */
+	CALL_ERROR_QOSUNAVAIL,				/**< QOS unavailable */
+	CALL_ERROR_REJECT,					/**< Rejected */								//30
+	CALL_ERROR_REJ_FAIL,				/**< Rejection failed */
+	CALL_ERROR_REJ_SRVC_NOT_AVL,		/**< Rejection service not available  */
+	CALL_ERROR_REJ_SAT_CALL_CTRL,		/**< Rejection by SAT call control  */
+	CALL_ERROR_REMOTE_CKTUNAVAIL,		/**< Remote Circuit channel unavailable */
+	CALL_ERROR_RESOURCEUNAVAIL,			/**< Resource not available */
+	CALL_ERROR_SERVICEID_ERROR,			/**< Service id error */
+	CALL_ERROR_SERVICE_NOTIMPL,			/**< Service not implemented */
+	CALL_ERROR_SERVICE_UNAVAIL,			/**< Service not available */
+	CALL_ERROR_MODIFY_SAME_BEARER,		/**< Modify same bearer */
+	CALL_ERROR_MODIFY_NOT_PERMITTED,	/**< Modification not permitted */
+	CALL_ERROR_HOLD_FAIL,				/**< Call hold fail */							//40
+	CALL_ERROR_TEMPFAILURE,				/**< Temporary failure */
+	CALL_ERROR_WRONGNUM,				/**< Wrong number */
+	CALL_ERROR_NORMAL_UNSPECIFIED,		/**< Normal but unspecified */
+	CALL_ERROR_SSERRINVALIDTIVALUE,		/**< SS invalid Transaction ID Value */
+	CALL_ERROR_SSERRINVALIDTI,			/**< SS Invalid transaction ID */
+	CALL_ERROR_SSINCOMPATIBLESTATE,		/**< SS incompatible state */
+	CALL_ERROR_SSERRSYNTAXERROR,		/**< SS syntax error */
+	CALL_ERROR_SSPROTOCOLERROR,			/**< Protocol error */
+	CALL_ERROR_SSNEGATIVEPASSWORDCHECK, /**< Negative password check */
+	CALL_ERROR_SSSENTASPHASE1,			/**< SS sent as phase1 message */				//50
+	CALL_ERROR_SSERROR,					/**< Supplementary service error */
+	CALL_ERROR_SS_USSD_BUSY,			/**< Second USSD request will be rejected when already USSD transaction is ongoing. */
+	CALL_ERROR_IDLE,					/**< Idle */
+	CALL_ERROR_NETWORK_SPECIFIC,		/**< Network specific error */
+	CALL_ERROR_FADE,					/**< voice call was dropped e.g. because of a loss of signal */
+	CALL_ERROR_UNKNOWN,					/**< unknown no details available */
+	CALL_ERROR_INCOM_CALL,				/**< terminated by incoming call */
+	CALL_ERROR_ALERT_STOP,				/**< terminated by alert stop */
+	CALL_ERROR_INTERCEPT,				/**< voice call was dropped by interception */
+	CALL_ERROR_REORDER,					/**< voice call was dropped by reordering */	//60
+	CALL_ERROR_CLIENT_END,				/**< client ended the call */
+	CALL_ERROR_ACCESS_CLASS_BLOCKED,	/**< access class blocked */
+	CALL_ERROR_MEMCAPEXCEEDED,			/**< Memory capacity exceeded */
+	CALL_ERROR_TYPENOTSUPPORTED,		/**< Type not supported */
+	CALL_ERROR_REPLACENOTSUPPORTED,		/**< Replace not supported */
+	CALL_ERROR_PROTOCOLID_ERROR,		/**< Protocol id error */
+	CALL_ERROR_CLASSNOTSUPPORTED,		/**< Class not supported */
+	CALL_ERROR_DATACODING_ERROR,		/**< Data coding error */
+	CALL_ERROR_INVAL_MSG,				/**< Invalid message */
+	CALL_ERROR_CALL_BARRED,			/**< Call barred */							//70
+	CALL_ERROR_SIM_CALL_CONTROL_CHANGED_TO_SS,		/**< Sim call control changed to SS */
+	CALL_ERROR_SIM_CALL_CONTROL_CHANGED_TO_CALL,	/**< SIM Call control changed to call */
+	CALL_ERROR_SIM_ERROR,				/**< SIM error */
+	CALL_ERROR_SIM_CALL_CONTROL_MODIFIED,			/**< SIM call control modified */
+	CALL_ERROR_RANDOM_ACCESS_FAILURE,	/**< Random access error */
+	CALL_ERROR_LOWER_LAYER_FAILURE,		/**< Lower layer error */
+	CALL_ERROR_ACCESS_REJECTED,			/**< Access rejected */
+	CALL_ERROR_RESET_NOT_ALLOWED,		/**< Reset not allowed */
+	CALL_ERROR_EMERGENCY_CALL_NOT_ALLOWED,			/**< Emergency call not allowed */
+	CALL_ERROR_ACCESS_NOT_ALLOWED,		/**< Access not allowed */						//80
+	CALL_ERROR_RADIO_LINK_FAILURE,		/**< Radio link failure */
+	CALL_ERROR_INVALID_IDENTITY,		/**< Invalid identity */
+	CALL_ERROR_UNKNOWN_IDENTITY,		/**< Unknown identity */
+	CALL_ERROR_UNACCEPTABLE_IDENTITY,	/**< Un acceptable identity */
+	CALL_ERROR_NO_SERVICE_HERE,			/**< No service here */
+	CALL_ERROR_SERVICE_NOT_ALLOWED,		/**< Service not allowed */
+	CALL_ERROR_SERVICE_NOT_AVAIL,		/**< Service not available */
+	CALL_ERROR_SERVICE_NOT_WORKING,		/**< Service not working */
+	CALL_ERROR_CANNOT_IDENTIFY_CALL,	/**< Cannot identify the call */
+	CALL_ERROR_DEACTIVATION,			/**< Deactivation */							//90
+	CALL_ERROR_FATAL_ERROR,				/**< Fatal error */
+	CALL_ERROR_SEND_DTMF_SUCCESS,		/**< Sending DTMF Success */
+	CALL_ERROR_SEND_DTMF_FAIL,			/**< Sending DTMF Failed */
+	CALL_ERROR_FIXED_DIALING_NUMBER_ONLY,/**< Fixed Dialing Number Only */
+	CALL_ERROR_TIMER_EXPIRED,			/**< Call Timer Expired */
 };
 
 enum telephony_call_answer_type {
@@ -134,6 +136,16 @@ enum telephony_call_type {
 	CALL_TYPE_VOICE,
 	CALL_TYPE_VIDEO,
 	CALL_TYPE_E911
+};
+
+enum telephony_call_emergency_category {
+	CALL_EMERGENCY_CATEGORY_DEFAULT = 0x00,
+	CALL_EMERGENCY_CATEGORY_POLICE = 0x01,
+	CALL_EMERGENCY_CATEGORY_AMBULANCE = 0x02,
+	CALL_EMERGENCY_CATEGORY_FIRE_BRIGADE = 0x04,
+	CALL_EMERGENCY_CATEGORY_MARINE_GUARD = 0x08,
+	CALL_EMERGENCY_CATEGORY_MOUNTAIN_RESCUE = 0x10,
+	CALL_EMERGENCY_CATEGORY_NONE = 0xff,
 };
 
 enum telephony_call_status {
@@ -152,6 +164,12 @@ enum telephony_call_end_type {
 	CALL_END_TYPE_ACTIVE_ALL,
 	CALL_END_TYPE_HOLD_ALL,
 };
+
+enum telephony_call_rec_type {
+	CALL_REC_NAME_INFO,
+	CALL_REC_NUMBER_INFO,
+};
+
 
 enum telephony_call_end_cause {
 	CALL_END_CAUSE_NONE = 0x00,				/**< No Cause */
@@ -213,6 +231,7 @@ enum telephony_call_end_cause {
 	CALL_END_CAUSE_RECOVERY_ON_TIMER_EXPIRY,	/**< Recovery on timer expiry */
 	CALL_END_CAUSE_PROTOCOL_ERROR_UNSPECIFIED,	/**< Protocol error unspecified */
 	CALL_END_CAUSE_INTERWORKING_UNSPECIFIED,	/**< Interworking unspecified */
+	CALL_END_CAUSE_REORDER,				/**< Reorder */
 
 	CALL_END_CAUSE_END = 128,
 
@@ -289,10 +308,19 @@ enum telephony_call_end_cause {
 	CALL_END_CAUSE_CNM_INVALID_USER_DATA,	/**< Invalid user data */
 };
 
+enum telephony_call_no_cli_cause {
+	CALL_NO_CLI_CAUSE_NONE = -1,			/**< None value - Infers NO CLI Cause */
+	CALL_NO_CLI_CAUSE_UNAVAILABLE,			/**< Unavailable */
+	CALL_NO_CLI_CAUSE_USER_REJECTED,		/**< Rejected by user */
+	CALL_NO_CLI_CAUSE_OTHERS,				/**< Interaction with other services */
+	CALL_NO_CLI_CAUSE_PAY_PHONE			/**< Coin line/ Pay phone */
+};
+
 enum telephony_call_cli_mode {
-	CALL_CLI_MODE_DEFAULT,
 	CALL_CLI_MODE_PRESENT,
 	CALL_CLI_MODE_RESTRICT,
+	CALL_CLI_MODE_UNAVAILABLE,
+	CALL_CLI_MODE_DEFAULT,
 };
 
 enum telephony_call_cna_mode {
@@ -345,15 +373,147 @@ enum telephony_call_sound_volume_level {
 	CALL_SOUND_VOLUME_LEVEL_9,
 };
 
+enum telephony_call_sound_mute_path {
+	CALL_SOUND_MUTE_PATH_TX = 0x00,
+	CALL_SOUND_MUTE_PATH_RX = 0x02,
+	CALL_SOUND_MUTE_PATH_ALL = 0x04,
+};
+
+enum telephony_call_sound_mute_status {
+	CALL_SOUND_MUTE_STATUS_OFF = 0x00,
+	CALL_SOUND_MUTE_STATUS_ON = 0x01,
+};
+
 enum telephony_call_sound_ringback_tone_status {
-	CALL_SOUND_RINGBACK_TONE_START,
 	CALL_SOUND_RINGBACK_TONE_END,
+	CALL_SOUND_RINGBACK_TONE_START,
 };
 
 enum telephony_call_sound_direction {
 	CALL_SOUND_DIRECTION_LEFT,
 	CALL_SOUND_DIRECTION_RIGHT,
 };
+
+enum telephony_call_preferred_voice_subs {
+	CALL_PREFERRED_VOICE_SUBS_UNKNOWN = -1,  /**<  Unknown status **/
+	CALL_PREFERRED_VOICE_SUBS_CURRENT_NETWORK = 0, /**< Current network **/
+	CALL_PREFERRED_VOICE_SUBS_ASK_ALWAYS, /**< ASK Always **/
+	CALL_PREFERRED_VOICE_SUBS_SIM1, /**< SIM 1 **/
+	CALL_PREFERRED_VOICE_SUBS_SIM2 /**<  SIM 2 **/
+};
+
+enum telephony_call_voice_privacy_mode {
+	CALL_PRIVACY_MODE_STANDARD,
+	CALL_PRIVACY_MODE_ENHANCED,
+};
+
+enum  telephony_call_otasp_status{
+	CALL_OTASP_OK_SPL_UNLOCKED = 0x01,
+	CALL_OTASP_OK_AKEY_EXCESS,
+	CALL_OTASP_OK_SSD_UPDATE,
+	CALL_OTASP_OK_NAM_DWNLD,
+	CALL_OTASP_OK_MDN_DWNLD,
+	CALL_OTASP_OK_IMSI_DWNLD,
+	CALL_OTASP_OK_PRL_DWNLD,
+	CALL_OTASP_OK_COMMIT,
+	CALL_OTASP_OK_PROGRAMMING,
+	CALL_OTASP_SUCCESS,
+	CALL_OTASP_UNSUCCESS,
+	CALL_OTASP_OK_OTAPA_VERIFY,
+	CALL_OTASP_PROGRESS,
+	CALL_OTASP_FAILURES_EXCESS_SPC,
+	CALL_OTASP_LOCK_CODE_PW_SET,
+};
+
+enum telephony_call_otapa_status{
+	CALL_OTAPA_STOP = 0x00,
+	CALL_OTAPA_START,
+	CALL_OTAPA_ABORTED,
+	CALL_OTAPA_COMMITTED,
+};
+
+enum  telephony_call_otasp_result{
+	CALL_OTASP_FAIL = 0x00,
+	CALL_OTASP_PASS,
+};
+
+enum telephony_call_alert_signal_type{
+	CALL_SIGNAL_TYPE_TONE = 0x00,
+	CALL_SIGNAL_TYPE_ISDN_ALERTING,
+	CALL_SIGNAL_TYPE_IS54B_ALERTING,
+	CALL_SIGNAL_TYPE_RESERVED,
+};
+
+enum telephony_call_alert_pitch_type{
+	CALL_ALERT_PITCH_MED = 0x00,
+	CALL_ALERT_PITCH_HIGH,
+	CALL_ALERT_PITCH_LOW,
+	CALL_ALERT_PITCH_RESERVED,
+};
+
+// SIGNAL : SIGNAL TYPE SIGNAL_TONE
+enum telephony_call_tone_signal{
+	CALL_SIGNAL_TONE_DIAL = 0x00,
+	CALL_SIGNAL_TONE_RINGBACK_TONE_ON,
+	CALL_SIGNAL_TONE_INTERCEPT_TONE_ON,
+	CALL_SIGNAL_TONE_ABBREV_TONE,
+	CALL_SIGNAL_TONE_NETWORK_CONGESTION_TONE_ON,
+	CALL_SIGNAL_TONE_ABBREV_NETWORK_CONGESTION,
+	CALL_SIGNAL_TONE_BUSY_TONE_ON,
+	CALL_SIGNAL_TONE_CFRM_TONE_ON,
+	CALL_SIGNAL_TONE_ANSWER_TONE_ON,
+	CALL_SIGNAL_TONE_CALL_WAITING_TONE_ON,
+	CALL_SINGNAL_TONE_PIPE_TONE_ON,
+	CALL_SIGNAL_TONE_OFF,
+};
+
+// SIGNAL : SIGNAL TYPE SIGNAL_ISDNALERT
+enum telephony_call_isdn_alert_signal{
+	CALL_SIGNAL_ISDN_ALERT_NORMAL = 0x00,
+	CALL_SIGNAL_ISDN_ALERT_INTER_GROUP,
+	CALL_SIGNAL_ISDN_ALERT_SPECIAL_PRIORITY,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED1,
+	CALL_SIGNAL_ISDN_ALERT_PING_RING,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED2,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED3,
+	CALL_SIGNAL_ISDN_ALERT_ISDN_RESERVED4,
+	CALL_SIGNAL_ISDN_ALERT_OFF,
+};
+
+// SIGNAL : SIGNAL TYPE IS- SIGNAL_IS54BALERT
+enum telephony_call_is54b_alert_signal{
+	CALL_SIGNAL_IS54B_ALERT_NOTONE = 0x00,
+	CALL_SIGNAL_IS54B_ALERT_LONG,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT_LONG,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT_2,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_LONG_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_SHORT_SHORT_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PBX_LONG,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_SHORT_LONG,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_LONG_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PBX_SHORT_SHORT_SHORT_SHORT,
+	CALL_SIGNAL_IS54B_ALERT_PIP_PIP_PIP_PIP,
+};
+
+enum telephony_call_dtmf_inter_digit_interval{
+	CALL_DTMF_OFFLENGTH_60MS,
+	CALL_DTMF_OFFLENGTH_100MS,
+	CALL_DTMF_OFFLENGTH_150MS,
+	CALL_DTMF_OFFLENGTH_200MS,
+};
+
+enum telephony_call_dtmf_pulse_width{
+	CALL_DTMF_ONLENGTH_95MS,
+	CALL_DTMF_ONLENGTH_150MS,
+	CALL_DTMF_ONLENGTH_200MS,
+	CALL_DTMF_ONLENGTH_250MS,
+	CALL_DTMF_ONLENGTH_300MS,
+	CALL_DTMF_ONLENGTH_350MS,
+	CALL_DTMF_ONLENGTH_SMS
+};
+
 
 /**********
   Struct
@@ -363,14 +523,18 @@ enum telephony_call_sound_direction {
 
 #define MAX_CALL_NUMBER_LEN 83
 #define MAX_CALL_DIAL_NUM_LEN MAX_CALL_NUMBER_LEN
-#define MAX_CALL_DTMF_DIGITS_LEN 32
+#define MAX_CALL_BURST_DTMF_STRING_LEN 32
 
+#define MAX_ALPHA_INFO_LEN 64
 
 #define MAX_CALL_CLI_NUM_LEN MAX_CALL_NUMBER_LEN
 #define MAX_CALL_CNA_NAME_LEN 83
 
+#define MAX_CALL_DISPLAY_INFORMATION 182
+
 struct telephony_call_cli_info {
 	enum telephony_call_cli_mode mode;
+	enum telephony_call_no_cli_cause no_cli_cause;
 	char number[ MAX_CALL_CLI_NUM_LEN ];
 };
 
@@ -379,10 +543,18 @@ struct telephony_call_cna_info {
 	char name[ MAX_CALL_CNA_NAME_LEN ];
 };
 
-
+struct telephony_call_rec_info {
+	unsigned int id;
+	enum telephony_call_rec_type type;
+	union {
+		char name[ MAX_ALPHA_INFO_LEN ];
+		char number[ MAX_CALL_NUMBER_LEN ];
+	} data;
+};
 
 struct treq_call_dial {
 	enum telephony_call_type type;
+	enum telephony_call_emergency_category ecc;
 	char number[ MAX_CALL_DIAL_NUM_LEN ];
 };
 
@@ -396,8 +568,14 @@ struct treq_call_end {
 	enum telephony_call_end_type type;
 };
 
-struct treq_call_dtmf {
-	char digits[ MAX_CALL_DTMF_DIGITS_LEN ]; 
+struct treq_call_start_cont_dtmf {
+	unsigned char dtmf_digit;
+};
+
+struct treq_call_send_burst_dtmf {
+	char dtmf_string[ MAX_CALL_BURST_DTMF_STRING_LEN + 1];
+	enum telephony_call_dtmf_pulse_width pulse_width;
+	enum telephony_call_dtmf_inter_digit_interval inter_digit_interval;
 };
 
 struct treq_call_active {
@@ -429,135 +607,174 @@ struct treq_call_deflect {
 	char number[MAX_CALL_NUMBER_LEN];
 };
 
-struct treq_call_sound_set_path {
+struct treq_call_set_sound_path {
 	enum telephony_call_sound_path path;
 	gboolean extra_volume_on;
 };
 
-struct treq_call_sound_set_volume_level {
+struct treq_call_set_sound_volume_level {
 	enum telephony_call_sound_type sound;
 	enum telephony_call_sound_device device;
 	enum telephony_call_sound_volume_level volume;
 };
 
-struct treq_call_sound_get_volume_level {
+struct treq_call_get_sound_volume_level {
 	enum telephony_call_sound_type sound;
 	enum telephony_call_sound_device device;
 };
 
-struct treq_call_sound_set_recording {
+struct treq_call_set_sound_mute_status {
+	enum telephony_call_sound_mute_path path;
+	enum telephony_call_sound_mute_status status;
+};
+
+struct treq_call_set_sound_recording {
 	gboolean state;
 };
 
 #define MAX_CALL_EQ_PARAMETER_SIZE 6
-struct treq_call_sound_set_equalization {
-	gboolean mode;
+struct treq_call_set_sound_equalization {
+	int mode;
 	enum telephony_call_sound_direction direction;
 	unsigned short parameter[ MAX_CALL_EQ_PARAMETER_SIZE ];
 };
 
-struct treq_call_sound_set_noise_reduction {
+struct treq_call_set_sound_noise_reduction {
 	gboolean status;
 };
+
+struct treq_call_set_sound_clock_status {
+	gboolean status;
+};
+
+struct treq_call_set_voice_privacy_mode {
+	enum telephony_call_voice_privacy_mode privacy_mode;
+};
+
+struct treq_call_set_preferred_voice_subscription {
+	enum telephony_call_preferred_voice_subs preferred_subs;
+};
+
+struct treq_call_get_preferred_voice_subscription {
+};
+
 
 // Response
 
 struct tresp_call_dial {
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_answer {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_end {
 	enum telephony_call_end_type type;
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_hold {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_active {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_swap {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_join {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_split {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_deflect {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_transfer {
 	unsigned int id;
-	gboolean err;
+	enum telephony_call_error err;
 };
 
 struct tresp_call_dtmf {
-	gboolean err;
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_path {
-	gboolean err;
+struct tresp_call_set_sound_path {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_volume_level {
-	gboolean err;
+struct tresp_call_set_sound_volume_level {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_get_volume_level {
+struct tresp_call_get_sound_volume_level {
+	enum telephony_call_error err;
 	int record_num;
 	struct volume_info {
 		enum telephony_call_sound_type sound;
 		enum telephony_call_sound_volume_level volume;
 	} *record;
-	gboolean err;
 };
 
-struct tresp_call_mute {
-	gboolean err;
+struct tresp_call_set_sound_mute_status {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_unmute {
-	gboolean err;
+struct tresp_call_get_sound_mute_status {
+	enum telephony_call_error err;
+	enum telephony_call_sound_mute_path path;
+	enum telephony_call_sound_mute_status status;
 };
 
-struct tresp_call_get_mute_status {
-	int status;
-	gboolean err;
+struct tresp_call_set_sound_recording {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_recording {
-	gboolean err;
+struct tresp_call_set_sound_equalization {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_equalization {
-	gboolean err;
+struct tresp_call_set_sound_noise_reduction {
+	enum telephony_call_error err;
 };
 
-struct tresp_call_sound_set_noise_reduction {
-	gboolean err;
+struct tresp_call_set_sound_clock_status {
+	enum telephony_call_error err;
 };
 
+struct tresp_call_set_preferred_voice_subscription {
+	enum telephony_call_error err;
+};
+
+struct tresp_call_get_preferred_voice_subscription {
+	enum telephony_call_error err;
+	enum telephony_call_preferred_voice_subs preferred_subs;
+};
+
+struct tresp_call_set_voice_privacy_mode {
+	enum telephony_call_error err;
+};
+
+struct tresp_call_get_voice_privacy_mode {
+	enum telephony_call_error err;
+	enum telephony_call_voice_privacy_mode privacy_mode;
+};
 
 // Notification
 
@@ -614,7 +831,7 @@ struct tnoti_call_sound_wbamr {
 };
 
 struct tnoti_call_sound_equalization {
-	gboolean mode;
+	int mode;
 	enum telephony_call_sound_direction direction;
 };
 
@@ -622,6 +839,53 @@ struct tnoti_call_sound_noise_reduction {
 	gboolean status;
 };
 
+struct tnoti_call_sound_clock_status {
+	gboolean status;
+};
+
+struct tnoti_call_info_extra_information {
+	int type;
+	int data_len;
+	void *data;
+};
+
+struct tnoti_call_preferred_voice_subscription {
+	enum telephony_call_preferred_voice_subs preferred_subs;
+};
+
+struct tnoti_call_info_voice_privacy_mode {
+	enum telephony_call_voice_privacy_mode privacy_mode;
+};
+
+struct tnoti_call_signal_info {
+	enum telephony_call_alert_signal_type signal_type;
+	enum telephony_call_alert_pitch_type pitch_type;
+	union {
+		enum telephony_call_tone_signal sig_tone_type;
+		enum telephony_call_isdn_alert_signal sig_isdn_alert_type;
+		enum telephony_call_is54b_alert_signal sig_is54b_alert_type;
+	} signal;
+};
+
+struct tnoti_call_otasp_status {
+	enum telephony_call_otasp_status otasp_status ;
+};
+
+struct tnoti_call_otapa_status {
+	enum telephony_call_otapa_status otapa_status;
+};
+
+struct tnoti_call_otasp_result {
+	enum telephony_call_otasp_result otasp_result ;
+};
+
+struct tnoti_call_display_information {
+	unsigned char display_information[ MAX_CALL_DISPLAY_INFORMATION + 1];
+};
+
+struct tnoti_call_info_rec {
+	struct telephony_call_rec_info rec_info;
+};
 __END_DECLS
 
 #endif

@@ -25,6 +25,7 @@ __BEGIN_DECLS
 
 typedef void (*TcoreHalReceiveCallback)(TcoreHal *hal, unsigned int data_len, const void *data, void *user_data);
 typedef enum tcore_hook_return (*TcoreHalSendHook)(TcoreHal *hal, unsigned int data_len, void *data, void *user_data);
+typedef void (*TcoreHalSetupNetifCallback)(CoreObject *co, int result, const char* devname, void *user_data);
 
 enum tcore_hal_recv_data_type {
 	TCORE_HAL_RECV_INDICATION,
@@ -43,6 +44,10 @@ enum tcore_hal_mode {
 struct tcore_hal_operations {
 	TReturn (*power)(TcoreHal *hal, gboolean flag);
 	TReturn (*send)(TcoreHal *hal, unsigned int data_len, void *data);
+	TReturn (*setup_netif)(CoreObject *co,
+				TcoreHalSetupNetifCallback func,
+				void *user_data, unsigned int cid,
+				gboolean enable);
 };
 
 TcoreHal*    tcore_hal_new(TcorePlugin *plugin, const char *name,
@@ -55,7 +60,7 @@ char*        tcore_hal_get_name(TcoreHal *hal);
 
 TcoreAT*     tcore_hal_get_at(TcoreHal *hal);
 enum tcore_hal_mode tcore_hal_get_mode(TcoreHal *hal);
-TReturn 	tcore_hal_set_mode(TcoreHal *hal, enum tcore_hal_mode mode);
+TReturn      tcore_hal_set_mode(TcoreHal *hal, enum tcore_hal_mode mode);
 
 TReturn      tcore_hal_set_power(TcoreHal *hal, gboolean flag);
 
@@ -66,6 +71,8 @@ TReturn      tcore_hal_send_data(TcoreHal *hal, unsigned int data_len, void *dat
 TReturn      tcore_hal_send_request(TcoreHal *hal, TcorePending *pending);
 TReturn      tcore_hal_send_force(TcoreHal *hal);
 
+TReturn      tcore_hal_free_timeout_pending_request(TcoreHal *hal, TcorePending *p,
+	          unsigned int data_len, const void *data);
 TReturn      tcore_hal_dispatch_response_data(TcoreHal *hal, int id,
                  unsigned int data_len, const void *data);
 
@@ -85,6 +92,11 @@ gboolean     tcore_hal_get_power_state(TcoreHal *hal);
 
 TcoreQueue*  tcore_hal_ref_queue(TcoreHal *hal);
 TcorePlugin* tcore_hal_ref_plugin(TcoreHal *hal);
+
+TReturn tcore_hal_setup_netif(TcoreHal *hal, CoreObject *co,
+					TcoreHalSetupNetifCallback func,
+					void *user_data, unsigned int cid,
+					gboolean enable);
 
 __END_DECLS
 

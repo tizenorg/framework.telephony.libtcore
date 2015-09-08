@@ -169,6 +169,7 @@ struct tcore_ss_operations {
 	TReturn (*waiting_get_status)(CoreObject *o, UserRequest *ur);
 	TReturn (*cli_activate)(CoreObject *o, UserRequest *ur);
 	TReturn (*cli_deactivate)(CoreObject *o, UserRequest *ur);
+	TReturn (*cli_set_status)(CoreObject *o, UserRequest *ur);
 	TReturn (*cli_get_status)(CoreObject *o, UserRequest *ur);
 	TReturn (*send_ussd)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_aoc)(CoreObject *o, UserRequest *ur);
@@ -179,12 +180,15 @@ struct tcore_ss_operations {
 CoreObject* tcore_ss_new(TcorePlugin *p, const char *name, struct tcore_ss_operations *ops, TcoreHal *hal);
 void        tcore_ss_free(CoreObject *o);
 
+void tcore_ss_set_ops(CoreObject *o, struct tcore_ss_operations *ops);
+
 struct ussd_session*	tcore_ss_ussd_create_session( CoreObject *o, enum tcore_ss_ussd_type type, void *data, int data_len );
 void					tcore_ss_ussd_destroy_session( struct ussd_session *ussd_s );
 struct ussd_session*	tcore_ss_ussd_get_session( CoreObject *o );
 enum tcore_ss_ussd_type tcore_ss_ussd_get_session_type( struct ussd_session* ussd_s );
 void					tcore_ss_ussd_set_session_type( struct ussd_session* ussd_s, enum tcore_ss_ussd_type type );
 int						tcore_ss_ussd_get_session_data( struct ussd_session* ussd_s, void** data );
+void					tcore_ss_ussd_set_session_data( struct ussd_session* ussd_s, void* data, int data_len );
 
 __END_DECLS
 

@@ -73,21 +73,22 @@ static gboolean _hal_idle_send(void *user_data)
 	void *data = NULL;
 	unsigned int data_len = 0;
 	gboolean renew = FALSE;
-
 	if (!h)
 		return FALSE;
-
+#ifdef TCORE_HAL_DEBUG
 	msg("--[Queue SEND]-------------------");
-
+#endif
 	p = tcore_queue_ref_next_pending(h->queue);
 	if (!p) {
+#ifdef TCORE_HAL_DEBUG
 		dbg("next pending is NULL. no send, queue len=%d", tcore_queue_get_length(h->queue));
+#endif
 		goto out;
 	}
 
 	data = tcore_pending_ref_request_data(p, &data_len);
-	dbg("queue len=%d, pending=0x%x, id=0x%x, data_len=%d",
-			tcore_queue_get_length(h->queue), (unsigned int)p, tcore_pending_get_id(p), data_len);
+	dbg("queue(%p) len=%d, pending(%p) id=0x%x data_len=%d",
+			h->queue, tcore_queue_get_length(h->queue), p, tcore_pending_get_id(p), data_len);
 
 	if (h->mode == TCORE_HAL_MODE_AT) {
 		ret = tcore_at_set_request(h->at, data, TRUE);
@@ -98,6 +99,7 @@ static gboolean _hal_idle_send(void *user_data)
 
 	if (ret == TCORE_RETURN_SUCCESS) {
 		tcore_pending_emit_send_callback(p, TRUE);
+		tcore_pending_start_timer(p);
 	}
 	else {
 		tcore_pending_emit_send_callback(p, FALSE);
@@ -122,9 +124,10 @@ static gboolean _hal_idle_send(void *user_data)
 			}
 		}
 	}
-
 out:
+#ifdef TCORE_HAL_DEBUG
 	msg("--[Queue SEND FINISH]------------\n");
+#endif
 	return renew;
 }
 
@@ -137,7 +140,7 @@ TcoreHal *tcore_hal_new(TcorePlugin *plugin, const char *name,
 	if (!name)
 		return NULL;
 
-	h = calloc(sizeof(struct tcore_hal_type), 1);
+	h = calloc(1, sizeof(struct tcore_hal_type));
 	if (!h)
 		return NULL;
 
@@ -153,6 +156,8 @@ TcoreHal *tcore_hal_new(TcorePlugin *plugin, const char *name,
 	if (plugin)
 		tcore_server_add_hal(tcore_plugin_ref_server(plugin), h);
 
+	dbg("HAL [%s] <==> Queue [%p]", h->name, h->queue);
+
 	return h;
 }
 
@@ -162,6 +167,10 @@ void tcore_hal_free(TcoreHal *hal)
 		return;
 
 	dbg("hal=%s", hal->name);
+
+	/* Remove HAL from Server */
+	if (hal->parent_plugin)
+		tcore_server_remove_hal(tcore_plugin_ref_server(hal->parent_plugin), hal);
 
 	if (hal->name)
 		free(hal->name);
@@ -225,7 +234,7 @@ TReturn tcore_hal_set_mode(TcoreHal *hal, enum tcore_hal_mode mode)
 {
 	if (!hal)
 		return TCORE_RETURN_EINVAL;
-	
+
 	hal->mode = mode;
 
 	return TCORE_RETURN_SUCCESS;
@@ -275,14 +284,20 @@ TReturn tcore_hal_send_data(TcoreHal *hal, unsigned int data_len, void *data)
 /* Send data by Queue */
 TReturn tcore_hal_send_request(TcoreHal *hal, TcorePending *pending)
 {
-	int qlen = 0;
+	int ret = 0;
 	enum tcore_pending_priority priority;
 
 	if (!hal || !pending)
 		return TCORE_RETURN_EINVAL;
 
-	qlen = tcore_queue_get_length(hal->queue);
-	tcore_queue_push(hal->queue, pending);
+	if (hal->power_state == FALSE)
+		return TCORE_RETURN_FAILURE;
+
+	ret = tcore_queue_push(hal->queue, pending);
+	if( ret != TCORE_RETURN_SUCCESS ) {
+		dbg("Pushing pending fails : return [ %d ]", ret);
+		return ret;
+	}
 
 	tcore_pending_get_priority(pending, &priority);
 	if (priority == TCORE_PENDING_PRIORITY_IMMEDIATELY) {
@@ -290,7 +305,7 @@ TReturn tcore_hal_send_request(TcoreHal *hal, TcorePending *pending)
 		_hal_idle_send(hal);
 	}
 	else {
-		if (tcore_queue_get_length(hal->queue) == 1) {
+		if (tcore_queue_get_normal_length(hal->queue) <= 1) {
 			g_idle_add_full(IDLE_SEND_PRIORITY, _hal_idle_send, hal, NULL);
 		}
 	}
@@ -308,6 +323,50 @@ TReturn tcore_hal_send_force(TcoreHal *hal)
 	return TCORE_RETURN_SUCCESS;
 }
 
+TReturn tcore_hal_free_timeout_pending_request(TcoreHal *hal, TcorePending *p,
+	unsigned int data_len, const void *data)
+{
+	if (!hal)
+		return TCORE_RETURN_EINVAL;
+
+	if (data_len > 0 && data == NULL)
+		return TCORE_RETURN_EINVAL;
+
+	if (hal->mode == TCORE_HAL_MODE_AT) {
+		dbg("TCORE_HAL_MODE_AT");
+		tcore_free_pending_timeout_at_request(hal->at);
+		p = tcore_queue_pop_by_pending(hal->queue, p);
+		if (!p) {
+			dbg("no pending");
+		}
+		tcore_user_request_free(tcore_pending_ref_user_request(p));
+		tcore_pending_free(p);
+	}
+	else {
+		if(hal->mode == TCORE_HAL_MODE_CUSTOM) {
+			dbg("TCORE_HAL_MODE_CUSTOM");
+			p = tcore_queue_pop_by_pending(hal->queue, p);
+			if (!p) {
+				dbg("no pending");
+			}
+			tcore_user_request_free(tcore_pending_ref_user_request(p));
+			tcore_pending_free(p);
+		}
+		else if(hal->mode == TCORE_HAL_MODE_TRANSPARENT) {
+			dbg("TCORE_HAL_MODE_TRANSPARENT");
+
+			/* TODO : Need to free resources */
+
+			/* Invoke CMUX receive API for decoding */
+			tcore_cmux_rcv_from_hal(hal, (unsigned char *)data, data_len);
+		}
+	}
+	/* Send next request in queue */
+	g_idle_add_full(IDLE_SEND_PRIORITY, _hal_idle_send, hal, NULL );
+
+	return TCORE_RETURN_SUCCESS;
+}
+
 TReturn tcore_hal_dispatch_response_data(TcoreHal *hal, int id,
 		unsigned int data_len, const void *data)
 {
@@ -321,6 +380,9 @@ TReturn tcore_hal_dispatch_response_data(TcoreHal *hal, int id,
 
 	if (hal->mode == TCORE_HAL_MODE_AT) {
 		gboolean ret;
+#ifdef TCORE_HAL_DEBUG
+		dbg("TCORE_HAL_MODE_AT");
+#endif
 		ret = tcore_at_process(hal->at, data_len, data);
 		if (ret) {
 			/* Send next request in queue */
@@ -342,9 +404,9 @@ TReturn tcore_hal_dispatch_response_data(TcoreHal *hal, int id,
 		}
 		else if(hal->mode == TCORE_HAL_MODE_TRANSPARENT) {
 			dbg("TCORE_HAL_MODE_TRANSPARENT");
-			
+
 			/* Invoke CMUX receive API for decoding */
-			tcore_cmux_rcv_from_hal((unsigned char *)data, data_len);
+			tcore_cmux_rcv_from_hal(hal, (unsigned char *)data, data_len);
 		}
 		/* Send next request in queue */
 		g_idle_add_full(IDLE_SEND_PRIORITY, _hal_idle_send, hal, NULL );
@@ -361,7 +423,7 @@ TReturn tcore_hal_add_recv_callback(TcoreHal *hal, TcoreHalReceiveCallback func,
 	if (!hal)
 		return TCORE_RETURN_EINVAL;
 
-	item = calloc(sizeof(struct recv_callback_item_type), 1);
+	item = calloc(1, sizeof(struct recv_callback_item_type));
 	if (!item)
 		return TCORE_RETURN_ENOMEM;
 
@@ -390,6 +452,9 @@ TReturn tcore_hal_remove_recv_callback(TcoreHal *hal, TcoreHalReceiveCallback fu
 		if (item->func == func) {
 			hal->callbacks = g_slist_remove(hal->callbacks, item);
 			free(item);
+			if (!hal->callbacks)
+				break;
+
 			list = hal->callbacks;
 		}
 	}
@@ -425,7 +490,7 @@ TReturn tcore_hal_add_send_hook(TcoreHal *hal, TcoreHalSendHook func, void *user
 	if (!hal || !func)
 		return TCORE_RETURN_EINVAL;
 
-	hook = calloc(sizeof(struct hook_send_type), 1);
+	hook = calloc(1, sizeof(struct hook_send_type));
 	if (!hook)
 		return TCORE_RETURN_ENOMEM;
 
@@ -501,4 +566,14 @@ TReturn tcore_hal_set_power(TcoreHal *hal, gboolean flag)
 		return TCORE_RETURN_EINVAL;
 
 	return hal->ops->power(hal, flag);
+}
+TReturn tcore_hal_setup_netif(TcoreHal *hal, CoreObject *co,
+				TcoreHalSetupNetifCallback func,
+				void *user_data, unsigned int cid,
+				gboolean enable)
+{
+	if ((hal == NULL) || (hal->ops == NULL) || (hal->ops->setup_netif == NULL))
+		return TCORE_RETURN_EINVAL;
+
+	return hal->ops->setup_netif(co, func, user_data, cid, enable);
 }

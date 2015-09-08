@@ -23,10 +23,22 @@
 
 __BEGIN_DECLS
 
+#define MODEM_DEVICE_SN_LEN_MAX 13
+#define MODEM_DEVICE_MEID_LEN_MAX 17
+#define MODEM_DEVICE_IMEI_LEN_MAX 17
+#define MODEM_DEVICE_IMEISV_LEN_MAX 17
+
 enum modem_state {
-	MODEM_STATE_ONLINE,
+	MODEM_STATE_UNKNOWN = -1,
+	MODEM_STATE_ONLINE = 0,
 	MODEM_STATE_OFFLINE,
+	MODEM_STATE_RESET,
+	MODEM_STATE_LOW,
+	MODEM_STATE_MAX = MODEM_STATE_LOW,
+
+	/* internal states (not to be published) */
 	MODEM_STATE_ERROR,
+	MODEM_STATE_RESUME
 };
 
 enum modem_dun_pincontrol_signal {
@@ -50,6 +62,9 @@ struct treq_modem_power_off {
 };
 
 struct treq_modem_power_reset {
+};
+
+struct treq_modem_power_low {
 };
 
 struct treq_modem_set_flightmode {
@@ -86,6 +101,10 @@ struct tresp_modem_power_reset {
 	TReturn result;
 };
 
+struct tresp_modem_power_low {
+	TReturn result;
+};
+
 struct tresp_modem_set_flightmode {
 	TReturn result;
 };
@@ -97,7 +116,7 @@ struct tresp_modem_get_flightmode {
 
 struct tresp_modem_get_imei {
 	TReturn result;
-	char imei[17];
+	char imei[MODEM_DEVICE_IMEI_LEN_MAX];
 };
 
 struct tresp_modem_get_version {
@@ -106,11 +125,16 @@ struct tresp_modem_get_version {
 	char hardware[33];
 	char calibration[33];
 	char product_code[33];
+	char prl_version[18];
+	char eri_version[18];
 };
 
 struct tresp_modem_get_sn {
 	TReturn result;
-	char sn[13];
+	char sn[MODEM_DEVICE_SN_LEN_MAX];
+	char meid[MODEM_DEVICE_MEID_LEN_MAX];
+	char imei[MODEM_DEVICE_IMEI_LEN_MAX];
+	char imeisv[MODEM_DEVICE_IMEISV_LEN_MAX];
 };
 
 struct tresp_modem_set_dun_pin_control {
@@ -131,6 +155,10 @@ struct tnoti_modem_dun_pin_control {
 };
 
 struct tnoti_modem_dun_external_call {
+};
+
+struct tnoti_modem_bootup {
+	void *plugin;
 };
 
 __END_DECLS

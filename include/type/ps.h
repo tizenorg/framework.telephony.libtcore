@@ -57,6 +57,7 @@ enum telephony_ps_protocol_status {
 	TELEPHONY_HSDPA_ON = 0x01,
 	TELEPHONY_HSUPA_ON = 0x02,
 	TELEPHONY_HSPA_ON = 0x03,
+	TELEPHONY_HSPAP_ON = 0x04
 };
 
 enum telephony_ps_state {
@@ -64,7 +65,8 @@ enum telephony_ps_state {
 	TELEPHONY_PS_3G_OFF,
 	TELEPHONY_PS_ROAMING_OFF,
 	TELEPHONY_PS_FLIGHT_MODE,
-	TELEPHONY_PS_NO_SERVICE
+	TELEPHONY_PS_NO_SERVICE,
+	TELEPHONY_PS_RESTRICTED_SERVICE
 };
 
 struct treq_ps_pdp_activate {
@@ -117,12 +119,19 @@ struct tnoti_ps_pdp_ipconfiguration {
 
 	enum telephony_ps_pdp_err err;
 	unsigned short field_flag;
+
+	char devname[16];
+
 	unsigned char ip_address[4];
 	unsigned char primary_dns[4];
 	unsigned char secondary_dns[4];
 	unsigned char gateway[4];
 	unsigned char subnet_mask[4];
-	char devname[16];
+
+	unsigned char ipv6_address[128];
+	unsigned char ipv6_primary_dns[128];
+	unsigned char ipv6_secondary_dns[128];
+	unsigned char ipv6_gateway[128];
 };
 
 struct tnoti_ps_external_call {

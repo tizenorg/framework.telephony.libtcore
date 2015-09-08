@@ -49,6 +49,7 @@ void*         tcore_pending_ref_request_data(TcorePending *pending,
                   unsigned int *data_len);
 TReturn       tcore_pending_set_timeout(TcorePending *pending,
                   unsigned int timeout);
+unsigned int  tcore_pending_get_timeout(TcorePending *pending);
 TcorePlugin*  tcore_pending_ref_plugin(TcorePending *pending);
 CoreObject*   tcore_pending_ref_core_object(TcorePending *pending);
 TReturn       tcore_pending_set_priority(TcorePending *pending,
@@ -60,6 +61,8 @@ TReturn       tcore_pending_get_send_status(TcorePending *pending,
 TReturn       tcore_pending_link_user_request(TcorePending *pending,
                   UserRequest *ur);
 UserRequest*  tcore_pending_ref_user_request(TcorePending *pending);
+
+TReturn tcore_pending_start_timer(TcorePending *pending);
 
 TReturn       tcore_pending_set_send_callback(TcorePending *pending,
                   TcorePendingSendCallback func, void *user_data);
@@ -88,6 +91,7 @@ TcorePending* tcore_queue_pop_by_id(TcoreQueue *queue, unsigned int id);
 TcorePending* tcore_queue_ref_pending_by_id(TcoreQueue *queue, unsigned int id);
 TcorePending* tcore_queue_ref_next_pending(TcoreQueue *queue);
 unsigned int  tcore_queue_get_length(TcoreQueue *queue);
+unsigned int  tcore_queue_get_normal_length(TcoreQueue *queue);
 TcoreHal*     tcore_queue_ref_hal(TcoreQueue *queue);
 TReturn       tcore_queue_cancel_pending_by_command(TcoreQueue *queue, enum tcore_request_command command);
 TcorePending* tcore_queue_search_by_command(TcoreQueue *queue, enum tcore_request_command command, gboolean flag_sent);

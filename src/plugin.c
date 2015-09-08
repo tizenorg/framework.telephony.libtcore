@@ -52,7 +52,7 @@ TcorePlugin *tcore_plugin_new(Server *server,
 {
 	TcorePlugin *p;
 
-	p = calloc(sizeof(struct tcore_plugin_type), 1);
+	p = calloc(1, sizeof(struct tcore_plugin_type));
 	if (!p)
 		return NULL;
 
@@ -79,9 +79,6 @@ void tcore_plugin_free(TcorePlugin *plugin)
 
 	if (plugin->list_co) {
 		for (list = plugin->list_co; list; list = list->next) {
-			if (!list)
-				continue;
-
 			o = list->data;
 			if (!o)
 				continue;
@@ -133,7 +130,7 @@ char *tcore_plugin_get_filename(TcorePlugin *plugin)
 	return strdup(plugin->filename);
 }
 
-char* tcore_plugin_ref_plugin_name(TcorePlugin *plugin)
+const char* tcore_plugin_ref_plugin_name(TcorePlugin *plugin)
 {
 	if (!plugin)
 		return NULL;
@@ -165,7 +162,7 @@ TReturn tcore_plugin_link_user_data(TcorePlugin *plugin, void *user_data)
 void *tcore_plugin_ref_user_data(TcorePlugin *plugin)
 {
 	if (!plugin)
-		return FALSE;
+		return NULL;
 
 	return plugin->user_data;
 }
@@ -182,7 +179,19 @@ TReturn tcore_plugin_add_core_object(TcorePlugin *plugin, CoreObject *co)
 	return TCORE_RETURN_SUCCESS;
 }
 
-CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, const char *name)
+TReturn tcore_plugin_remove_core_object(TcorePlugin *plugin, CoreObject *co)
+{
+	if (!plugin || !co)
+		return TCORE_RETURN_EINVAL;
+
+	dbg("remove core_object! (name=%s)", tcore_object_ref_name(co));
+
+	plugin->list_co = g_slist_remove(plugin->list_co, co);
+
+	return TCORE_RETURN_SUCCESS;
+}
+
+CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, unsigned int type)
 {
 	GSList *list;
 	CoreObject *co;
@@ -191,14 +200,11 @@ CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, const char *name)
 		return NULL;
 
 	for (list = plugin->list_co; list; list = list->next) {
-		if (!list)
-			continue;
-
 		co = list->data;
 		if (!co)
 			continue;
 
-		if (strcmp(tcore_object_ref_name(co), name) == 0) {
+		if (tcore_object_get_type(co) == type) {
 			return co;
 		}
 	}
@@ -206,6 +212,24 @@ CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, const char *name)
 	return NULL;
 }
 
+GSList *tcore_plugin_get_core_objects(TcorePlugin *plugin)
+{
+	GSList *list, *rlist = NULL;
+	CoreObject *co;
+
+	if (!plugin)
+		return NULL;
+
+	for (list = plugin->list_co; list; list = list->next) {
+		co = list->data;
+		if (!co)
+			continue;
+
+		rlist = g_slist_append(rlist, co);
+	}
+
+	return rlist;
+}
 
 GSList *tcore_plugin_get_core_objects_bytype(TcorePlugin *plugin, unsigned int type)
 {
@@ -216,16 +240,12 @@ GSList *tcore_plugin_get_core_objects_bytype(TcorePlugin *plugin, unsigned int t
 		return NULL;
 
 	for (list = plugin->list_co; list; list = list->next) {
-		if (!list)
-			continue;
-
 		co = list->data;
 		if (!co)
 			continue;
 
-		if (tcore_object_get_type(co) == type) {
+		if ((CORE_OBJECT_TYPE_DEFAULT |(tcore_object_get_type(co) & 0x0FF00000)) == type)
 			rlist = g_slist_append(rlist, co);
-		}
 	}
 
 	return rlist;
@@ -242,9 +262,6 @@ TReturn tcore_plugin_core_object_event_emit(TcorePlugin *plugin, const char *eve
 	dbg("event(%s) emit", event);
 
 	for (list = plugin->list_co; list; list = list->next) {
-		if (!list)
-			continue;
-
 		co = list->data;
 		if (!co)
 			continue;

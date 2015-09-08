@@ -40,6 +40,7 @@ GSList*       tcore_server_ref_plugins(Server *s);
 TcorePlugin*  tcore_server_find_plugin(Server *s, const char *name);
 
 TReturn       tcore_server_add_communicator(Server *s, Communicator *comm);
+TReturn       tcore_server_remove_communicator(Server *s, Communicator *comm);
 GSList*       tcore_server_ref_communicators(Server *s);
 Communicator* tcore_server_find_communicator(Server *s, const char *name);
 
@@ -48,8 +49,11 @@ GSList*       tcore_server_ref_storages(Server *s);
 Storage*      tcore_server_find_storage(Server *s, const char *name);
 
 TReturn       tcore_server_add_hal(Server *s, TcoreHal *hal);
+TReturn       tcore_server_remove_hal(Server *s, TcoreHal *hal);
 GSList*       tcore_server_ref_hals(Server *s);
 TcoreHal*     tcore_server_find_hal(Server *s, const char *name);
+
+CoreObject *tcore_server_find_template_object(Server *s, unsigned int type);
 
 TReturn       tcore_server_link_udev(Server *s, TcoreUdev *udev);
 TcoreUdev*    tcore_server_ref_udev(Server *s);
@@ -70,6 +74,27 @@ TReturn       tcore_server_add_notification_hook(Server *s,
 TReturn       tcore_server_remove_notification_hook(Server *s,
                   TcoreServerNotificationHook func);
 
+TcoreModem *tcore_server_register_modem(Server *s, TcorePlugin *modem_iface_plugin);
+void tcore_server_unregister_modem(Server *s, TcoreModem *modem);
+gboolean tcore_server_update_modem_plugin(TcorePlugin *modem_iface_plugin,
+							TcorePlugin *modem_plugin);
+GSList *tcore_server_get_cp_name_list(Server *s);
+const char *tcore_server_get_cp_name_by_plugin(TcorePlugin *modem_plugin);
+
+gboolean tcore_server_add_cp_mapping_tbl_entry(TcoreModem *modem,
+					unsigned int co_type, TcoreHal *hal);
+void tcore_server_remove_cp_mapping_tbl(TcoreModem *modem);
+void tcore_server_remove_cp_mapping_tbl_entry(TcoreModem *modem,
+					TcoreHal *hal);
+void *tcore_server_get_cp_mapping_tbl(TcorePlugin *modem_plugin);
+void tcore_server_print_modems(Server *s);
+
+TReturn tcore_server_load_modem_plugin(Server *s,
+					TcoreModem *modem,
+					const char *name)
+;
+void tcore_server_unload_modem_plugin(Server *s, TcoreModem *modem);
+GSList *tcore_server_get_modem_plugin_list(Server *s);
 __END_DECLS
 
 #endif

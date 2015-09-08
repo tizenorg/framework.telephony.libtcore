@@ -26,9 +26,6 @@
 __BEGIN_DECLS
 
 struct tcore_phonebook_operations {
-	/*WILL BE REMOVED - START*/
-	TReturn (*select)(CoreObject *o, UserRequest *ur);
-	/*WILL BE REMOVED - END*/
 	TReturn (*get_count)(CoreObject *o, UserRequest *ur);
 	TReturn (*get_info)(CoreObject *o, UserRequest *ur);
 	TReturn (*get_usim_info)(CoreObject *o, UserRequest *ur);
@@ -40,11 +37,16 @@ struct tcore_phonebook_operations {
 CoreObject* tcore_phonebook_new(TcorePlugin *p, const char *name, struct tcore_phonebook_operations *ops, TcoreHal *hal);
 void        tcore_phonebook_free(CoreObject *n);
 
+void tcore_phonebook_set_ops(CoreObject *o, struct tcore_phonebook_operations *ops);
+
 gboolean    tcore_phonebook_get_status(CoreObject *o);
 gboolean    tcore_phonebook_set_status(CoreObject *o, gboolean b_init);
 
 struct tel_phonebook_support_list* tcore_phonebook_get_support_list(CoreObject *o);
 gboolean    tcore_phonebook_set_support_list(CoreObject *o, struct tel_phonebook_support_list *list);
+
+struct tel_phonebook_field_support_list* tcore_phonebook_get_field_support_list(CoreObject *o);
+gboolean    tcore_phonebook_set_field_support_list(CoreObject *o, struct tel_phonebook_field_support_list *list);
 
 enum tel_phonebook_type tcore_phonebook_get_selected_type(CoreObject *o);
 gboolean tcore_phonebook_set_selected_type(CoreObject *o, enum tel_phonebook_type t);

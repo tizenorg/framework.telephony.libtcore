@@ -32,6 +32,8 @@ enum tcore_call_type {
 	TCORE_CALL_TYPE_VOICE,
 	TCORE_CALL_TYPE_VIDEO,
 	TCORE_CALL_TYPE_E911,
+	TCORE_CALL_TYPE_STDOTASP,
+	TCORE_CALL_TYPE_NONSTDOTASP,
 };
 
 enum tcore_call_direction {
@@ -50,10 +52,19 @@ enum tcore_call_status {
 	TCORE_CALL_STATUS_WAITING,
 };
 
+enum tcore_call_no_cli_cause {
+	TCORE_CALL_NO_CLI_CAUSE_NONE = -1,
+	TCORE_CALL_NO_CLI_CAUSE_UNAVAILABLE,
+	TCORE_CALL_NO_CLI_CAUSE_USER_REJECTED,
+	TCORE_CALL_NO_CLI_CAUSE_OTHERS,
+	TCORE_CALL_NO_CLI_CAUSE_PAY_PHONE
+};
+
 enum tcore_call_cli_mode {
-	TCORE_CALL_CLI_MODE_DEFAULT,
 	TCORE_CALL_CLI_MODE_PRESENT,
 	TCORE_CALL_CLI_MODE_RESTRICT,
+	TCORE_CALL_CLI_MODE_UNAVAILABLE,
+	TCORE_CALL_CLI_MODE_DEFAULT,
 };
 
 enum tcore_call_cna_mode {
@@ -89,19 +100,25 @@ struct tcore_call_operations {
 	TReturn (*split)(CoreObject *o, UserRequest *ur);
 	TReturn (*deflect)(CoreObject* o, UserRequest *ur);
 	TReturn (*transfer)(CoreObject* o, UserRequest *ur);
-	TReturn (*send_dtmf)(CoreObject *o, UserRequest *ur);
+	TReturn (*start_cont_dtmf)(CoreObject *o, UserRequest *ur);
+	TReturn (*stop_cont_dtmf)(CoreObject *o, UserRequest *ur);
+	TReturn (*send_burst_dtmf)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_sound_path)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_sound_volume_level)(CoreObject *o, UserRequest *ur);
 	TReturn (*get_sound_volume_level)(CoreObject *o, UserRequest *ur);
-	TReturn (*mute)(CoreObject *o, UserRequest *ur);
-	TReturn (*unmute)(CoreObject *o, UserRequest *ur);
-	TReturn (*get_mute_status)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_sound_mute_status)(CoreObject *o, UserRequest *ur);
+	TReturn (*get_sound_mute_status)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_sound_recording)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_sound_equalization)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_sound_noise_reduction)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_sound_clock_status)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_active_line)(CoreObject *o, UserRequest *ur);
 	TReturn (*get_active_line)(CoreObject *o, UserRequest *ur);
 	TReturn (*activate_ccbs)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_preferred_voice_subscription)(CoreObject *o, UserRequest *ur);
+	TReturn (*get_preferred_voice_subscription)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_privacy_mode)(CoreObject *o, UserRequest *ur);
+	TReturn (*get_privacy_mode)(CoreObject *o, UserRequest *ur);
 };
 
 struct tcore_call_information_operations {
@@ -152,11 +169,13 @@ struct tcore_call_control_operations {
 CoreObject*				tcore_call_new(TcorePlugin *p, const char *name, struct tcore_call_operations *ops, TcoreHal *hal);
 void					tcore_call_free( CoreObject *o);
 
+void tcore_call_set_ops(CoreObject *o, struct tcore_call_operations *ops);
 
 // Call Object API
 CallObject*				tcore_call_object_new( CoreObject *o, int id );
 gboolean				tcore_call_object_free( CoreObject *o, CallObject *co );
 
+int						tcore_call_object_total_length( CoreObject *o );
 CallObject*				tcore_call_object_current_on_mt_processing( CoreObject *o );
 CallObject*				tcore_call_object_current_on_mo_processing( CoreObject *o );
 CallObject*				tcore_call_object_find_by_id( CoreObject *o, int id );
@@ -174,8 +193,11 @@ enum tcore_call_direction tcore_call_object_get_direction( CallObject *co );
 gboolean				tcore_call_object_set_status( CallObject *co, enum tcore_call_status cs );
 enum tcore_call_status  tcore_call_object_get_status( CallObject *co );
 
-gboolean				tcore_call_object_set_cli_info( CallObject *co, enum tcore_call_cli_mode mode, char *num );
+gboolean tcore_call_object_set_cli_info(struct call_object *co,
+						enum tcore_call_cli_mode mode, enum tcore_call_no_cli_cause cause,
+						char *num, int num_len);
 enum tcore_call_cli_mode tcore_call_object_get_cli_mode( CallObject *co );
+enum tcore_call_no_cli_cause tcore_call_object_get_no_cli_cause(struct call_object *co);
 int						tcore_call_object_get_number( CallObject *co, char *num );
 
 gboolean				tcore_call_object_set_cna_info( CallObject *co, enum tcore_call_cna_mode mode, char *name, int dcs );

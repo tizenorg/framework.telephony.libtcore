@@ -64,74 +64,135 @@ static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 	command = tcore_user_request_get_command(ur);
 	switch (command) {
 		case TREQ_SS_BARRING_ACTIVATE:
+			if (!po->ops->barring_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_activate(o, ur);
 			break;
 
 		case TREQ_SS_BARRING_DEACTIVATE:
+			if (!po->ops->barring_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_deactivate(o, ur);
 			break;
 
 		case TREQ_SS_BARRING_CHANGE_PASSWORD:
+			if (!po->ops->barring_change_password)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_change_password(o, ur);
 			break;
 
 		case TREQ_SS_BARRING_GET_STATUS:
+			if (!po->ops->barring_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->barring_get_status(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_ACTIVATE:
+			if (!po->ops->forwarding_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_activate(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_DEACTIVATE:
+			if (!po->ops->forwarding_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_deactivate(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_REGISTER:
+			if (!po->ops->forwarding_register)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_register(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_DEREGISTER:
+			if (!po->ops->forwarding_deregister)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_deregister(o, ur);
 			break;
 
 		case TREQ_SS_FORWARDING_GET_STATUS:
+			if (!po->ops->forwarding_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->forwarding_get_status(o, ur);
 			break;
 
 		case TREQ_SS_WAITING_ACTIVATE:
+			if (!po->ops->waiting_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->waiting_activate(o, ur);
 			break;
 
 		case TREQ_SS_WAITING_DEACTIVATE:
+			if (!po->ops->waiting_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->waiting_deactivate(o, ur);
 			break;
 
 		case TREQ_SS_WAITING_GET_STATUS:
+			if (!po->ops->waiting_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->waiting_get_status(o, ur);
 			break;
 
 		case TREQ_SS_CLI_ACTIVATE:
+			if (!po->ops->cli_activate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->cli_activate(o, ur);
 			break;
 
 		case TREQ_SS_CLI_DEACTIVATE:
+			if (!po->ops->cli_deactivate)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->cli_deactivate(o, ur);
 			break;
 
+		case TREQ_SS_CLI_SET_STATUS:
+			if (!po->ops->cli_set_status)
+				return TCORE_RETURN_ENOSYS;
+
+			ret = po->ops->cli_set_status(o, ur);
+			break;
+
 		case TREQ_SS_CLI_GET_STATUS:
+			if (!po->ops->cli_get_status)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->cli_get_status(o, ur);
 			break;
 
 		case TREQ_SS_SEND_USSD:
+			if (!po->ops->send_ussd)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->send_ussd(o, ur);
 			break;
 
 		case TREQ_SS_SET_AOC:
+			if (!po->ops->set_aoc)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->set_aoc(o, ur);
 			break;
 
 		case TREQ_SS_GET_AOC:
+			if (!po->ops->get_aoc)
+				return TCORE_RETURN_ENOSYS;
+
 			ret = po->ops->get_aoc(o, ur);
 			break;
 
@@ -150,7 +211,7 @@ static void _clone_hook(CoreObject *src, CoreObject *dest)
 	if (!src || !dest)
 		return;
 
-	dest_po = calloc(sizeof(struct private_object_data), 1);
+	dest_po = calloc(1, sizeof(struct private_object_data));
 	if (!dest_po) {
 		tcore_object_link_object(dest, NULL);
 		return;
@@ -280,6 +341,21 @@ int tcore_ss_ussd_get_session_data(struct ussd_session* ussd_s, void **data)
 	}
 }
 
+void tcore_ss_ussd_set_session_data(struct ussd_session* ussd_s, void *data, int data_len)
+{
+	if (!ussd_s || !ussd_s->session) {
+		dbg("[ error ] there is no session");
+		return ;
+
+	}
+	else {
+
+		ussd_s->data = data;
+		ussd_s->data_len = data_len;
+	}
+}
+
+
 CoreObject *tcore_ss_new(TcorePlugin *p, const char *name,
 		struct tcore_ss_operations *ops, TcoreHal *hal)
 {
@@ -293,7 +369,7 @@ CoreObject *tcore_ss_new(TcorePlugin *p, const char *name,
 	if (!o)
 		return NULL;
 
-	po = calloc(sizeof(struct private_object_data), 1);
+	po = calloc(1, sizeof(struct private_object_data));
 	if (!po) {
 		tcore_object_free(o);
 		return NULL;
@@ -318,3 +394,18 @@ void tcore_ss_free(CoreObject *o)
 
 	tcore_object_free(o);
 }
+
+void tcore_ss_set_ops(CoreObject *o, struct tcore_ss_operations *ops)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_SS);
+
+	po = (struct private_object_data *)tcore_object_ref_object(o);
+	if (!po) {
+		return;
+	}
+
+	po->ops = ops;
+}
+

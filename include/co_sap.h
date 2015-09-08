@@ -38,6 +38,7 @@ struct tcore_sap_operations {
 
 CoreObject* tcore_sap_new(TcorePlugin *p, const char *name, struct tcore_sap_operations *ops, TcoreHal *hal);
 void        tcore_sap_free(CoreObject *o);
+void tcore_sap_set_ops(CoreObject *o, struct tcore_sap_operations *ops);
 
 __END_DECLS
 

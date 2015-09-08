@@ -53,32 +53,28 @@ __BEGIN_DECLS
 	TREQ_PS_DUN_PIN_CONTROL,
 */
 
-#define SMS_SMSP_ADDRESS_LEN					20		/* EF-SMSP digit length */
-#define SMS_SMDATA_SIZE_MAX					165		/* Maximum SMS data size that can be stored*/
-#define SMS_GSM_SMS_CBMI_LIST_SIZE_MAX		50		/* Maximum GSM SMS CBMI list size*/
-#define SMS_SMSP_ALPHA_ID_LEN_MAX			128		/* EF-SMSP alpha id length */
-#define SMS_MAXLENGTH_SMS_ADDRESS			32		/* MAX sms destination(or origination ) address /call back number */
-#define SMS_MAXLENGTH_SMS_MO_USER_DATA		160		/* Maximum MO user data  size*/
-#define SMS_MAXLENGTH_SMS_MT_USER_DATA		160		/* Maximum MT user data  size*/
-#define SMS_MAX_EFSMSP_RECORD_LENGTH		156		/* Maximum number of bytes SMSP Record size (Y + 28), y : 0 ~ 128 */
-
 /*==================================================================================================
                                             MACROS
 ==================================================================================================*/
 /* NetText */
-#define SMS_MSG_SIZE_MAX						918		/**< Maximum Message Size */
-#define SMS_CB_SIZE_MAX						93		/** Maximum CB Message Size */
-#define SMS_ETWS_SIZE_MAX					56		/** Maximum ETWS Message Size */
+
+#define SMS_SMSP_ADDRESS_LEN				20		/* EF-SMSP digit length */
+#define SMS_SMSP_ALPHA_ID_LEN_MAX			128		/* EF-SMSP alpha id length */
+#define SMS_MAX_EFSMSP_RECORD_LENGTH		156		/* Maximum number of bytes SMSP Record size (Y + 28), y : 0 ~ 128 */
+
+#define SMS_MSG_SIZE_MAX					918		/**< Maximum Message Size */
+#define SMS_CB_SIZE_MAX						1252		/** Maximum CB Message Size */
+#define SMS_ETWS_SIZE_MAX					1252	/** Maximum ETWS Message Size */
 
 #define SMS_ADDRESS_LEN_MAX					20		/* Nettext Address Length */
 #define SMS_SCADDRESS_LEN_MAX				18		/* SC Address Length */
 
-#define SMS_CB_PAGE_SIZE_MAX					9		/**< CB maximum page size*/
-#define SMS_GSM_SMS_MSG_NUM_MAX				90		/**< Maximum GSM SMS message number*/
+#define SMS_CB_PAGE_SIZE_MAX				9		/**< CB maximum page size*/
+#define SMS_GSM_SMS_MSG_NUM_MAX				255		/**< Maximum GSM SMS message number*/
 #define SMS_GSM_SMS_CBMI_LIST_SIZE_MAX		50		/**< Maximum GSM SMS CBMI list size*/
-#define SMS_SMDATA_SIZE_MAX					165		/**< Maximum SMS data size that can be stored*/
+#define SMS_SMDATA_SIZE_MAX					255		/**< Maximum SMS data size that can be stored*/
 #define SMS_MAX_SMS_SERVICE_CENTER_ADDR		12		/**<Maximum SMS service center address*/
-#define SMS_MAX_INDEX							25		/**< Maximum index value for SMS */
+#define SMS_MAX_INDEX						255		/**< Maximum index value for SMS */
 
 #define SMS_SMSP_PARAMS_MAX_LEN				28
 
@@ -213,10 +209,8 @@ enum telephony_sms_BearerType {
 * This enumeration defines the different CB message types.
 */
 enum telephony_sms_CbMsgType {
-	   SMS_CB_MSG_CBS = 1,		/**< Cell broadcast message */
-	   SMS_CB_MSG_SCHEDULE,	/**< CB Schedule message  */
-	   SMS_CB_MSG_CBS41,		/**< CBS41 type message  */
-	   SMS_CB_MSG_INVALID		/**< Invalid  CB message */
+		SMS_CB_MSG_GSM = 1,	 /**< GSM Cell broadcast message */
+		SMS_CB_MSG_UMTS      /**< UMTS Cell broadcast message */
 };
 
 /**
@@ -239,40 +233,40 @@ enum telephony_sms_Response {
 	SMS_ROUTING_NOT_AVAILABLE,					/**< Message routing not available*/
 	SMS_INVALID_PARAMETER,						/**< Invalid parameter present in TPDU*/
 	SMS_DEVICE_FAILURE,							/**< Device failure*/
-	SMS_SERVICE_RESERVED,							/**< Reserved Service*/
-	SMS_INVALID_LOCATION,							/**< Invalid location*/
-	SMS_NO_SIM,                           					/**< No SIM error*/
+	SMS_SERVICE_RESERVED,						/**< Reserved Service*/
+	SMS_INVALID_LOCATION,						/**< Invalid location*/
+	SMS_NO_SIM,									/**< No SIM error*/
 	SMS_SIM_NOT_READY,							/**< SIM not ready error*/
-	SMS_NO_NETWORK_RESP,							/**< No response from network*/
+	SMS_NO_NETWORK_RESP,						/**< No response from network*/
 	SMS_DEST_ADDRESS_FDN_RESTRICTED,			/**< Destination address restricted*/
 	SMS_SCADDRESS_FDN_RESTRICTED,				/**< Service center address restricted*/
 	SMS_RESEND_ALREADY_DONE,					/**< Resend a operation already done*/
 	SMS_SCADDRESS_NOT_AVAILABLE,				/**< SCA address not available*/
 	SMS_UNASSIGNED_NUMBER = 0x8001,				/**< Unassigned number*/
 	SMS_OPERATOR_DETERMINED_BARRING = 0x8008,	/**< Operator determined barring*/
-	SMS_CALL_BARRED = 0x800A,						/**< Call barred*/
+	SMS_CALL_BARRED = 0x800A,					/**< Call barred*/
 	SMS_MESSAGE_TRANSFER_REJECTED = 0x8015,		/**< Message transfer rejected*/
 	SMS_MEMORY_CAPACITY_EXCEEDED = 0x8016,		/**< Memory capacity exceeded/memory full*/
 	SMS_DESTINAITION_OUTOFSERVICE = 0x801B,		/**< Destination number/address out of service*/
-	SMS_UNSPECIFIED_SUBSCRIBER = 0x801C,			/**< Unspecified subscriber*/
+	SMS_UNSPECIFIED_SUBSCRIBER = 0x801C,		/**< Unspecified subscriber*/
 	SMS_FACILITY_REJECTED = 0x801D,				/**< Facility rejected*/
-	SMS_UNKNOWN_SUBSCRIBER = 0x801E,				/**< Unknown subscriber*/
+	SMS_UNKNOWN_SUBSCRIBER = 0x801E,			/**< Unknown subscriber*/
 	SMS_NETWORK_OUTOFORDER = 0x8026,			/**< Network out of order*/
 	SMS_TEMPORARY_FAILURE = 0x8029,				/**< Temporary failure*/
-	SMS_CONGESTION = 0x802A,						/**< Congestion happened*/
+	SMS_CONGESTION = 0x802A,					/**< Congestion happened*/
 	SMS_RESOURCES_UNAVAILABLE = 0x802F,			/**< Resource unavailable*/
-	SMS_FACILITY_NOT_SUBSCRIBED = 0x8032,			/**< Facility not subscribed by the user*/
+	SMS_FACILITY_NOT_SUBSCRIBED = 0x8032,		/**< Facility not subscribed by the user*/
 	SMS_FACILITY_NOT_IMPLEMENTED = 0x8045,		/**< Facility not implemented*/
 	SMS_INVALID_REF_VALUE = 0x8051,				/**< Invalid reference value*/
-	SMS_INVALID_MSG = 0x805F,						/**< Invalid message*/
-	SMS_INVALID_MANDATORY_INFO = 0x8060,			/**< Invalid Mandatory information*/
+	SMS_INVALID_MSG = 0x805F,					/**< Invalid message*/
+	SMS_INVALID_MANDATORY_INFO = 0x8060,		/**< Invalid Mandatory information*/
 	SMS_MESSAGE_TYPE_NOT_IMPLEMENTED = 0x8061,	/**< Message type not implemented*/
 	SMS_MESSAGE_NOT_COMPAT_PROTOCOL = 0x8062,	/**< Message not compact protocol*/
-	SMS_IE_NOT_IMPLEMENTED = 0x8063,         		 /**< Information element not implemented*/
-	SMS_PROTOCOL_ERROR = 0x806F,					/**< Protocol error*/
+	SMS_IE_NOT_IMPLEMENTED = 0x8063,			/**< Information element not implemented*/
+	SMS_PROTOCOL_ERROR = 0x806F,				/**< Protocol error*/
 	SMS_INTERWORKING = 0x807F,					/**< Networking error*/
-	SMS_ME_FULL = 0x8080,							/**< SMS ME FULL */
-	SMS_SIM_FULL = 0x8081,							/**< SMS SIM FULL */
+	SMS_ME_FULL = 0x8080,						/**< SMS ME FULL */
+	SMS_SIM_FULL = 0x8081,						/**< SMS SIM FULL */
 	SMS_TIMEOUT									/**< Timeout error */
 };
 
@@ -349,16 +343,16 @@ struct telephony_sms_AddressInfo {
  */
 struct telephony_sms_Params {
 
-	unsigned char 					recordIndex;						/**< Index*/
-	unsigned char 					recordLen;							/**< SMS Parameter Record length*/
-	unsigned long 						alphaIdLen;							/**< Alpha id length */
-	char 							szAlphaId[SMS_SMSP_ALPHA_ID_LEN_MAX + 1];	/**< Alpha id .It is a unique identifier for each row/record in EFsmsp */ //JYGU: TAPI_SIM_SMSP_ALPHA_ID_LEN_MAX 128
-	unsigned char 					paramIndicator;						/**< SMS parameter indicator is a 1 byte value. Each bit in this value indicates the presence/absence of the sms header parameters.If the parameter is present the corresponding bit value is set to 0.If the parameter is absent then it is set as 1.Refer 3GPP TS 31.02 :4.4.23 */
+	unsigned char					recordIndex;						/**< Index*/
+	unsigned char					recordLen;							/**< SMS Parameter Record length*/
+	unsigned long						alphaIdLen;							/**< Alpha id length */
+	char							szAlphaId[SMS_SMSP_ALPHA_ID_LEN_MAX + 1];	/**< Alpha id .It is a unique identifier for each row/record in EFsmsp */ //JYGU: TAPI_SIM_SMSP_ALPHA_ID_LEN_MAX 128
+	unsigned char					paramIndicator;						/**< SMS parameter indicator is a 1 byte value. Each bit in this value indicates the presence/absence of the sms header parameters.If the parameter is present the corresponding bit value is set to 0.If the parameter is absent then it is set as 1.Refer 3GPP TS 31.02 :4.4.23 */
 	struct telephony_sms_AddressInfo	tpDestAddr;							/**< TP-destination address (TP-DA) */
 	struct telephony_sms_AddressInfo	tpSvcCntrAddr;						/**< TP-service center address */
-	unsigned short 					tpProtocolId;						/**< TP-protocol Id */
-	unsigned short 					tpDataCodingScheme;				/**< TP-data coding scheme */
-	unsigned short 					tpValidityPeriod;						/**< TP-validity period */
+	unsigned short					tpProtocolId;						/**< TP-protocol Id */
+	unsigned short					tpDataCodingScheme;				/**< TP-data coding scheme */
+	unsigned short					tpValidityPeriod;						/**< TP-validity period */
 };
 
 /**
@@ -366,9 +360,9 @@ struct telephony_sms_Params {
  *in a particular memory(Phone/SIM)
  */
 struct telephony_sms_StoredMsgCountInfo {
-	unsigned int 	totalCount; 								/**< Total count of messages stored in SIM*/
-	int 			usedCount; 								/**< Stored message count in SIM in SIM*/
-	int 			indexList[SMS_GSM_SMS_MSG_NUM_MAX]; 	/**< Message index list stored in SIM. And the maximum size of this array can be of totalCount.This array contains the list of index values in which the messages are stored.i.e. index_list[totalcount] = [2,3] denotes that indexs 2 and 3 are stored(valid) and others not(empty).*/
+	unsigned int	totalCount;								/**< Total count of messages stored in SIM*/
+	int			usedCount;								/**< Stored message count in SIM in SIM*/
+	int			indexList[SMS_GSM_SMS_MSG_NUM_MAX];	/**< Message index list stored in SIM. And the maximum size of this array can be of totalCount.This array contains the list of index values in which the messages are stored.i.e. index_list[totalcount] = [2,3] denotes that indexs 2 and 3 are stored(valid) and others not(empty).*/
 };
 
 /**
@@ -377,15 +371,15 @@ struct telephony_sms_StoredMsgCountInfo {
 struct telephony_sms_CbMsg {
 
 	enum telephony_sms_CbMsgType	cbMsgType;							/**< Cell Broadcast  message type */
-	unsigned short 					length; 								/**<Size of array szMsgData (which is actual TPDU message) */
-	char 							msgData[SMS_CB_SIZE_MAX + 1]; /**<Cell broadcast message data[Refer 3GPP TS 23.041 9.4.1]*/
+	unsigned short					length;								/**<Size of array szMsgData (which is actual TPDU message) */
+	char							msgData[SMS_CB_SIZE_MAX + 1]; /**<Cell broadcast message data[Refer 3GPP TS 23.041 9.4.1]*/
 };
 
 struct telephony_sms_etws_msg {
 
 	enum telephony_sms_etws_type	etwsMsgType;							/**< ETWS  message type */
-	unsigned short 					length; 								/**<Size of array msgData (which is actual TPDU message) */
-	char 							msgData[SMS_ETWS_SIZE_MAX + 1]; /**< ETWS message data[Refer 3GPP TS 23.041 9.4.1.3]*/
+	unsigned short					length;								/**<Size of array msgData (which is actual TPDU message) */
+	char							msgData[SMS_ETWS_SIZE_MAX + 1]; /**< ETWS message data[Refer 3GPP TS 23.041 9.4.1.3]*/
 };
 
 struct telephony_sms_cb_msg_info_3gpp {
@@ -397,7 +391,7 @@ struct telephony_sms_cb_msg_info_3gpp {
 struct telephony_sms_cb_msg_info_3gpp2 {
  unsigned short cbCategory; /**< CB Service category */
  unsigned short cbLanguage; /**< Language indicator value
- 								. 0x00 . LANGUAGE_UNKNOWN .
+								. 0x00 . LANGUAGE_UNKNOWN .
 									Unknown or Unspecified
 								. 0x01 . LANGUAGE_ENGLISH . English
 								. 0x02 . LANGUAGE_FRENCH . French
@@ -607,7 +601,7 @@ enum telephony_sms_Is637SubAddressType {
  *  if so, whether the condition is considered temporary or permanent
  **/
 struct telephony_sms_Is637CauseCode {
-	unsigned char 						ReplySeqNumber;	/* Reply sequence number */
+	unsigned char						ReplySeqNumber;	/* Reply sequence number */
 	enum telephony_sms_Is637ErrorClass	ErrClass;			/* Error report class */
 	unsigned char							Cause;				/* Error cause identifier */
 };
@@ -616,12 +610,12 @@ struct telephony_sms_Is637CauseCode {
  * This structure defines the parameters of address and its type
  */
 struct telephony_sms_Is637Address {
-	enum telephony_sms_Is637DigitMode		Digit; 			/* Digit mode indicator (0x00:4bit_dtmf, 0x01:8bit_code) */
+	enum telephony_sms_Is637DigitMode		Digit;			/* Digit mode indicator (0x00:4bit_dtmf, 0x01:8bit_code) */
 	enum telephony_sms_Is637NumberMode	NumberMode;	/* Number mode indicator (0x00:ANSI TI607, 0x01:Data network) */
 	enum telephony_sms_Is637NumberType	NumberType;	/* Type of number */
 	enum telephony_sms_Is637NumberPlan	NumberPlan;	/* Numbering plan */
-	unsigned char 						szAddrLength;	/* The number of CHARi */
-	unsigned char 						szAddress[SMS_MAXLENGTH_SMS_ADDRESS]; /* The address digit or character */
+	unsigned char						szAddrLength;	/* The number of CHARi */
+	unsigned char						szAddress[SMS_MAXLENGTH_SMS_ADDRESS]; /* The address digit or character */
 };
 
 /**
@@ -629,9 +623,9 @@ struct telephony_sms_Is637Address {
  */
 struct telephony_sms_Is637SubAddress {
 	enum telephony_sms_Is637SubAddressType	SubType;		/* Subaddress type */
-	unsigned char 							Odd;			/* Odd/even indicator */
-	unsigned char 							szAddrLength;	/* The number of CHARi */
-	unsigned char 							szAddress[SMS_MAXLENGTH_SMS_ADDRESS]; /* A subaddress octet */
+	unsigned char							Odd;			/* Odd/even indicator */
+	unsigned char							szAddrLength;	/* The number of CHARi */
+	unsigned char							szAddress[SMS_MAXLENGTH_SMS_ADDRESS]; /* A subaddress octet */
 };
 
 /**
@@ -679,9 +673,9 @@ struct telephony_sms_Is637OutSubmit {
 struct telephony_sms_Is637OutAck {
 	struct telephony_sms_Is637Address		DstAddr; /* Destination address */
 	struct telephony_sms_Is637SubAddress	DstSubAddr; /* Destination subaddress */
-	unsigned short 						TeleService; /* Teleservice Identifier */
-	int 									bBearerReplySeqRequest; /* Bearer reply sequence request */
-	unsigned char 						ReplySeqNumber; /* Reply sequence number */
+	unsigned short						TeleService; /* Teleservice Identifier */
+	int									bBearerReplySeqRequest; /* Bearer reply sequence request */
+	unsigned char						ReplySeqNumber; /* Reply sequence number */
 	unsigned short						MsgId; /* Message identifier */
 	unsigned short						MsgEncoding; /* Message encoding (defined in TSB-58A) */
 	unsigned short						MsgLength; /* Message length */
@@ -817,13 +811,13 @@ struct telephony_sms_CdmaMsgInfo {
 /*                Structs of Requests              */
 /*---------------------------------*/
 struct treq_sms_send_umts_msg {
-	struct telephony_sms_DataPackageInfo	msgDataPackage;
-	int									more;
+	struct telephony_sms_DataPackageInfo msgDataPackage;
+	int more;
 };
 
 struct treq_sms_send_cdma_msg {
-	struct telephony_sms_CdmaMsgInfo	cdmaMsgInfo;
-	unsigned int						more;
+	struct telephony_sms_CdmaMsgInfo cdmaMsgInfo;
+	unsigned int more;
 };
 
 struct treq_sms_read_msg {
@@ -831,9 +825,9 @@ struct treq_sms_read_msg {
 };
 
 struct treq_sms_save_msg {
-	int									simIndex;			/* Index where SMS is stored. */
-	enum telephony_sms_MsgStatus			msgStatus;
-	struct telephony_sms_DataPackageInfo	msgDataPackage;
+	int simIndex;			/* Index where SMS is stored. */
+	enum telephony_sms_MsgStatus msgStatus;
+	struct telephony_sms_DataPackageInfo msgDataPackage;
 };
 
 struct treq_sms_delete_msg {
@@ -848,8 +842,8 @@ struct treq_sms_get_sca {
 };
 
 struct treq_sms_set_sca {
-	struct telephony_sms_AddressInfo	scaInfo;
-	int								index;
+	struct telephony_sms_AddressInfo scaInfo;
+	int index;
 };
 
 struct treq_sms_get_cb_config {
@@ -875,13 +869,13 @@ struct treq_sms_set_pref_bearer {
 };
 
 struct treq_sms_set_delivery_report {
-	struct telephony_sms_DataPackageInfo	dataInfo;
-	int									rspType;
+	struct telephony_sms_DataPackageInfo dataInfo;
+	int rspType;
 };
 
 struct treq_sms_set_msg_status {
-	int							index;
-	enum telephony_sms_MsgStatus	msgStatus;
+	int index;
+	enum telephony_sms_MsgStatus msgStatus;
 };
 
 struct treq_sms_get_params {
@@ -899,13 +893,12 @@ struct treq_sms_get_paramcnt {
 /*                Structs of Responses              */
 /*----------------------------------*/
 struct tresp_sms_send_umts_msg {
-	struct telephony_sms_DataPackageInfo	dataInfo;
-	int									result;
+	int	result;
 };
 
 struct tresp_sms_read_msg {
 	struct telephony_sms_Data	dataInfo;
-	int						result;
+	int	result;
 };
 
 struct tresp_sms_save_msg {
@@ -920,12 +913,12 @@ struct tresp_sms_delete_msg {
 
 struct tresp_sms_get_storedMsgCnt {
 	struct telephony_sms_StoredMsgCountInfo	storedMsgCnt;
-	int										result;
+	int result;
 };
 
 struct tresp_sms_get_sca {
 	struct telephony_sms_AddressInfo	scaAddress;
-	int								result;
+	int result;
 };
 
 struct tresp_sms_set_sca {
@@ -934,7 +927,7 @@ struct tresp_sms_set_sca {
 
 struct tresp_sms_get_cb_config {
 	struct telephony_sms_CbConfig	cbConfig;
-	int							result;
+	int result;
 };
 
 struct tresp_sms_set_cb_config {
@@ -964,7 +957,7 @@ struct tresp_sms_set_msg_status {
 
 struct tresp_sms_get_params {
 	struct telephony_sms_Params	paramsInfo;
-	int							result;
+	int result;
 };
 
 struct tresp_sms_set_params {
@@ -978,26 +971,26 @@ struct tresp_sms_get_paramcnt {
 
 struct tresp_sms_send_cdma_msg {
 	struct telephony_sms_Is637CauseCode	causeCode;
-	int									result;
+	int result;
 };
 
 /*-----------------------------------*/
 /*                Structs of Notifications              */
 /*-----------------------------------*/
 struct tnoti_sms_umts_msg {
-	struct telephony_sms_DataPackageInfo	msgInfo;
+	struct telephony_sms_DataPackageInfo msgInfo;
 };
 
 struct tnoti_sms_cdma_msg {
-	struct telephony_sms_CdmaMsgInfo	cdmaMsg;
+	struct telephony_sms_CdmaMsgInfo cdmaMsg;
 };
 
 struct tnoti_sms_cellBroadcast_msg {
-	struct telephony_sms_CbMsg	cbMsg;
+	struct telephony_sms_CbMsg cbMsg;
 };
 
 struct tnoti_sms_etws_msg {
-	struct telephony_sms_etws_msg	etwsMsg;
+	struct telephony_sms_etws_msg etwsMsg;
 };
 
 struct tnoti_sms_memory_status {
@@ -1005,7 +998,7 @@ struct tnoti_sms_memory_status {
 };
 
 struct tnoti_sms_ready_status {
-	gboolean	status;
+	gboolean status;
 };
 
 __END_DECLS

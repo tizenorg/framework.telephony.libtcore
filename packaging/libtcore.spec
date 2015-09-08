@@ -1,25 +1,27 @@
-#sbs-git:slp/pkgs/l/libtcore
-Name: libtcore
-Summary: Telephony-core library
-Version: 0.1.61
-Release:    1
-Group:      System/Libraries
-License:    Apache
-Source0:    libtcore-%{version}.tar.gz
-Requires(post): /sbin/ldconfig
-Requires(postun): /sbin/ldconfig
+%define major 0
+%define minor 2
+%define patchlevel 59
+
+Name:           libtcore
+Version:        %{major}.%{minor}.%{patchlevel}
+Release:        1
+License:        Apache-2.0
+Summary:        Telephony-core library
+Group:          System/Libraries
+Source0:        libtcore-%{version}.tar.gz
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(glib-2.0)
-BuildRequires:  pkgconfig(dlog)
 BuildRequires:  pkgconfig(gudev-1.0)
+Requires(post): /sbin/ldconfig
+Requires(postun): /sbin/ldconfig
 
 %description
 Telephony-core library
 
 %package devel
 Summary:        Telephony-core library (Development)
-Requires:       %{name} = %{version}
 Group:          Development/Libraries
+Requires:       %{name} = %{version}
 
 %description devel
 Telephony-core library (Development)
@@ -28,25 +30,32 @@ Telephony-core library (Development)
 %setup -q
 
 %build
-cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
-make %{?jobs:-j%jobs}
+cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix} -DVERSION=%{version} \
+%ifarch %{arm}
+%else
+	-DARCH_EMUL=1 \
+%endif
 
-%post
-/sbin/ldconfig
+make %{?_smp_mflags}
+
+%post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %install
-rm -rf %{buildroot}
 %make_install
+mkdir -p %{buildroot}%{_datadir}/license
 
 %files
+%manifest libtcore.manifest
 %defattr(-,root,root,-)
 #%doc COPYING
 %{_libdir}/libtcore*
 #%{_bindir}/*
+%{_datadir}/license/libtcore
 
 %files devel
 %defattr(-,root,root,-)
 %{_includedir}/*
 %{_libdir}/pkgconfig/tcore.pc
+

@@ -1,3 +1,22 @@
+/*
+ * libtcore
+ *
+ * Copyright (c) 2012 Samsung Electronics Co., Ltd. All rights reserved.
+ *
+ * Contact: Ja-young Gu <jygu@samsung.com>
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef __TCORE_AT_H__
 #define __TCORE_AT_H__
@@ -6,6 +25,8 @@ __BEGIN_DECLS
 
 #include <tcore.h>
 #include <queue.h>
+
+#define ZERO		0
 
 enum tcore_at_command_type {
     TCORE_AT_NO_RESULT,   /* no intermediate response expected */
@@ -93,6 +114,9 @@ TReturn          tcore_at_set_request(TcoreAT *at, TcoreATRequest *req, gboolean
 TcoreATRequest*  tcore_at_get_request(TcoreAT *at);
 TcoreATResponse* tcore_at_get_response(TcoreAT *at);
 
+void tcore_at_process_binary_data(TcoreAT *at, char *position, int data_len);
+gboolean tcore_at_add_hook(TcoreHal *hal, void *hook_func);
+
 TReturn          tcore_at_add_notification(TcoreAT *at, const char *prefix,
                      gboolean pdu, TcoreATNotificationCallback callback,
                      void *user_data);
@@ -117,7 +141,20 @@ GSList*          tcore_at_tok_new(const char *line);
 void             tcore_at_tok_free(GSList *tokens);
 char*            tcore_at_tok_extract(const char *src);
 char*            tcore_at_tok_nth(GSList *tokens, unsigned int token_index);
+void tcore_free_pending_timeout_at_request(TcoreAT *at);
 
+TReturn tcore_prepare_and_send_at_request(CoreObject *co,
+												const char *at_cmd,
+												const char *at_cmd_prefix,
+												enum tcore_at_command_type at_cmd_type,
+												UserRequest *ur,
+												TcorePendingResponseCallback resp_cb,
+												void *resp_cb_data,
+												TcorePendingSendCallback send_cb,
+												void *send_cb_data,
+												unsigned int timeout,
+												TcorePendingTimeoutCallback timeout_cb,
+												void *timeout_cb_data);
 
 __END_DECLS
 

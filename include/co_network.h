@@ -25,6 +25,42 @@
 
 __BEGIN_DECLS
 
+/*
+ * Manual PLMN property
+ *
+ * Value: MCC+MNC or Empty(Unknown mode)
+ */
+#define PROP_NET_MANUAL_PLMN  "manual_plmn"
+
+/*
+ * Manual Selection status property
+ *
+ * Value: 'waiting' / 'success' / 'failure' / Empty(Unknown state)
+ */
+#define PROP_NET_MANUAL_SELECTION_STATUS  "manual_selection_status"
+
+/*
+ * Network Registration Reject Cause Property
+ *
+ * Value: LU registration reject cause strings
+ */
+#define PROP_NET_REG_LU_REJECT_CAUSE  "reg_reject_cause"
+
+/*
+ * Read mdn Property
+ *
+ * Value: mdn strings
+ */
+#define PROP_NET_READ_MDN_FOR_ACTIVATION  "mdn_for_activation"
+
+/*
+ * Read pESN Property
+ *
+ * Value: pESN strings
+ */
+#define PROP_MODEM_READ_ESN_FOR_ACTIVATION  "esn_for_activation"
+
+
 
 enum tcore_network_service_domain_type {
 	TCORE_NETWORK_SERVICE_DOMAIN_TYPE_CIRCUIT,
@@ -44,7 +80,15 @@ enum tcore_network_name_priority {
 	TCORE_NETWORK_NAME_PRIORITY_ANY,
 };
 
+enum tcore_network_operator_info_type {
+	TCORE_NETWORK_OPERATOR_INFO_TYPE_TS25_DB = 0,
+	TCORE_NETWORK_OPERATOR_INFO_TYPE_DELTA_DB,
+	TCORE_NETWORK_OPERATOR_INFO_TYPE_NITZ,
+	TCORE_NETWORK_OPERATOR_INFO_TYPE_EONS,
+};
+
 struct tcore_network_operator_info {
+	enum tcore_network_operator_info_type type;
 	char mcc[4];
 	char mnc[4];
 	char name[41];
@@ -69,12 +113,24 @@ struct tcore_network_operations {
 	TReturn (*get_serving_network)(CoreObject *o, UserRequest *ur);
 	TReturn (*set_mode)(CoreObject *o, UserRequest *ur);
 	TReturn (*get_mode)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_neighboring_cell_info)(CoreObject *o, UserRequest *ur);
+	TReturn (*get_neighboring_cell_info)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_default_data_subscription)(CoreObject *o, UserRequest *ur);
+	TReturn (*get_default_data_subscription)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_default_subscription)(CoreObject *o, UserRequest *ur);
+	TReturn (*get_default_subscription)(CoreObject *o, UserRequest *ur);
+	TReturn (*set_emergency_callback_mode)(CoreObject *o, UserRequest *ur); /* 3GPP2 spcefic */
+	TReturn (*set_roaming_preference)(CoreObject *o, UserRequest *ur); /* 3GPP2 spcefic */
+	TReturn (*get_roaming_preference)(CoreObject *o, UserRequest *ur); /* 3GPP2 spcefic */
+	TReturn (*get_subscription_info)(CoreObject *o, UserRequest *ur); /* 3GPP2 spcefic */
 };
 
 
 CoreObject* tcore_network_new(TcorePlugin *plugin, const char *name,
                 struct tcore_network_operations *ops, TcoreHal *hal);
 void        tcore_network_free(CoreObject *co);
+
+void tcore_network_set_ops(CoreObject *co, struct tcore_network_operations *ops);
 
 TReturn     tcore_network_set_plmn(CoreObject *co, const char *plmn);
 char*       tcore_network_get_plmn(CoreObject *co);
@@ -91,6 +147,9 @@ TReturn     tcore_network_get_network_name_priority(CoreObject *co,
 
 TReturn     tcore_network_set_roaming_state(CoreObject *co, gboolean state);
 gboolean    tcore_network_get_roaming_state(CoreObject *co);
+
+TReturn     tcore_network_set_restricted_state(CoreObject *co, int state);
+int         tcore_network_get_restricted_state(CoreObject *co);
 
 TReturn     tcore_network_set_service_status(CoreObject *co,
                 enum tcore_network_service_domain_type type,
@@ -113,13 +172,16 @@ TReturn     tcore_network_get_rac(CoreObject *co, unsigned int *result);
 TReturn     tcore_network_set_cell_id(CoreObject *co, unsigned int cell_id);
 TReturn     tcore_network_get_cell_id(CoreObject *co, unsigned int *result);
 
+TReturn 	tcore_network_set_gsm_dtm_support(CoreObject *co, gboolean state);
+gboolean 	tcore_network_get_gsm_dtm_support(CoreObject *co);
+
 TReturn     tcore_network_set_service_type(CoreObject *co,
                 enum telephony_network_service_type service_type);
 TReturn     tcore_network_get_service_type(CoreObject *co,
                 enum telephony_network_service_type *result);
 
 TReturn     tcore_network_operator_info_add(CoreObject *co,
-                struct tcore_network_operator_info *noi);
+                const struct tcore_network_operator_info *noi);
 
 struct tcore_network_operator_info*
             tcore_network_operator_info_find(CoreObject *co,

@@ -34,56 +34,56 @@ __BEGIN_DECLS
 #define SAT_DIALING_NUMBER_LEN_MAX 200
 #define SAT_SS_STRING_LEN_MAX 160
 #define SAT_USSD_STRING_LEN_MAX 255
-#define SAT_ALPHA_ID_LEN_MAX 255		/**< 	max length of  alpha identifier		*/
-#define SAT_ITEM_TEXT_LEN_MAX 45		/**<	max length of item text 		*/
+#define SAT_ALPHA_ID_LEN_MAX 255		/**<	max length of  alpha identifier		*/
+#define SAT_ITEM_TEXT_LEN_MAX 255		/**<	max length of item text		*/
 #define SAT_SMS_TPDU_SMS_DATA_LEN_MAX 175
 #define SAT_ITEMS_NEXT_ACTION_INDI_LIST_MAX_COUNT 50	 /**<	max count of items next action indication list	*/
 #define SAT_IMG_DATA_FILE_PATH_LEN_MAX 50	 /**<   max length of image data file name (Icon, CLUT)		*/
-#define SAT_ICON_LIST_MAX_COUNT	50	 /**<	max count of icon list 		*/
+#define SAT_ICON_LIST_MAX_COUNT	50	 /**<	max count of icon list		*/
 #define SAT_DTMF_STRING_LEN_MAX 30	 /**<	max length of dtmf string		*/
-#define SAT_URL_LEN_MAX 129	 /**<	max length of URL 		*/
+#define SAT_URL_LEN_MAX 129	 /**<	max length of URL		*/
 #define SAT_ITEM_TEXT_ATTRIBUTES_LIST_MAX_COUNT	50	 /**<	max count of item text attributes list		*/
 #define SAT_EVENT_LIST_MAX	17	/**< max count of event list */
 #define SAT_FILE_ID_LIST_MAX_COUNT 255
 #define SAT_ENVELOPE_CMD_LEN_MAX 256
 #define SAT_AID_LEN_MAX 128
 #define SAT_SUB_ADDR_LEN_MAX 30
-#define SAT_CCP_DATA_LEN_MAX 30	 /**<	max length of ccp data 		*/
-#define SAT_URL_LEN_MAX 129	 /**<	max length of url 		*/
-#define SAT_BEARER_LIST_MAX_COUNT 5	 /**<	max count of bearer list 		*/
+#define SAT_CCP_DATA_LEN_MAX 30	 /**<	max length of ccp data		*/
+#define SAT_URL_LEN_MAX 129	 /**<	max length of url		*/
+#define SAT_BEARER_LIST_MAX_COUNT 5	 /**<	max count of bearer list		*/
 #define SAT_PROVISIONING_REF_MAX_COUNT 10	/**<	max count of sat provisioning reference	*/
-#define SAT_PROVISIONING_FILE_PATH_LEN_MAX 50	 /**<	max length of provisioning file path 	*/
-#define SAT_BEARER_PARAMS_LEN_MAX 10	 /**<	max length of bearer parameters 		*/
-#define SAT_OTHER_ADDR_LEN_MAX 30	 /**<	max length of other address 		*/
+#define SAT_PROVISIONING_FILE_PATH_LEN_MAX 50	 /**<	max length of provisioning file path	*/
+#define SAT_BEARER_PARAMS_LEN_MAX 10	 /**<	max length of bearer parameters		*/
+#define SAT_OTHER_ADDR_LEN_MAX 30	 /**<	max length of other address		*/
 #define SAT_NET_ACC_NAM_LEN_MAX 30	 /**<	max length of net acc name		*/
-#define SAT_REMOTE_ENTITY_ADDR_LEN_MAX 50	 /**<	max length of remote entity address 	*/
+#define SAT_REMOTE_ENTITY_ADDR_LEN_MAX 50	 /**<	max length of remote entity address	*/
 #define SAT_CHANNEL_DATA_STRING_LEN_MAX 255
 
 enum tel_sat_proactive_cmd_type {
-	SAT_PROATV_CMD_NONE = 0x00, /**<	command type - None 		*/
-	SAT_PROATV_CMD_REFRESH = 0x01, /**<	command type - refresh 		*/
+	SAT_PROATV_CMD_NONE = 0x00, /**<	command type - None		*/
+	SAT_PROATV_CMD_REFRESH = 0x01, /**<	command type - refresh		*/
 	SAT_PROATV_CMD_MORE_TIME = 0x02, /**<	command type - more time		*/
-	SAT_PROATV_CMD_SETUP_EVENT_LIST = 0x05, /**<	command type - setup event list 		*/
+	SAT_PROATV_CMD_SETUP_EVENT_LIST = 0x05, /**<	command type - setup event list		*/
 	SAT_PROATV_CMD_SETUP_CALL = 0x10, /**<	command type - setup call		*/
 	SAT_PROATV_CMD_SEND_SS = 0x11, /**<	command type - send ss		*/
 	SAT_PROATV_CMD_SEND_USSD = 0x12, /**<	command type - send ussd		*/
-	SAT_PROATV_CMD_SEND_SMS = 0x13, /**<	command type - send sms 		*/
-	SAT_PROATV_CMD_SEND_DTMF = 0x14, /**<	command type - send dtmf 		*/
-	SAT_PROATV_CMD_LAUNCH_BROWSER = 0x15, /**<	command type - launch browser 		*/
+	SAT_PROATV_CMD_SEND_SMS = 0x13, /**<	command type - send sms		*/
+	SAT_PROATV_CMD_SEND_DTMF = 0x14, /**<	command type - send dtmf		*/
+	SAT_PROATV_CMD_LAUNCH_BROWSER = 0x15, /**<	command type - launch browser		*/
 	SAT_PROATV_CMD_PLAY_TONE = 0x20, /**<	command type - play tone		*/
 	SAT_PROATV_CMD_DISPLAY_TEXT = 0x21, /**<	command type - display text		*/
 	SAT_PROATV_CMD_GET_INKEY = 0x22, /**<	command type - get inkey		*/
 	SAT_PROATV_CMD_GET_INPUT = 0x23, /**<	command type - get input		*/
 	SAT_PROATV_CMD_SELECT_ITEM = 0x24, /**<	command type - select item		*/
 	SAT_PROATV_CMD_SETUP_MENU = 0x25, /**<	command type - setup menu		*/
-	SAT_PROATV_CMD_PROVIDE_LOCAL_INFO = 0x26, /**<	command type - provide local info 		*/
+	SAT_PROATV_CMD_PROVIDE_LOCAL_INFO = 0x26, /**<	command type - provide local info		*/
 	SAT_PROATV_CMD_SETUP_IDLE_MODE_TEXT = 0x28, /**<	command type - setup idle mode text		*/
 	SAT_PROATV_CMD_LANGUAGE_NOTIFICATION = 0x35, /**<	command type - language notification		*/
 	SAT_PROATV_CMD_OPEN_CHANNEL = 0x40, /**<	command type - open channel -class e		*/
 	SAT_PROATV_CMD_CLOSE_CHANNEL = 0x41, /**<	command type - close channel - class e		*/
-	SAT_PROATV_CMD_RECEIVE_DATA = 0x42, /**<	command type - receive data -class e 		*/
-	SAT_PROATV_CMD_SEND_DATA = 0x43, /**<	command type - send data 		*/
-	SAT_PROATV_CMD_GET_CHANNEL_STATUS = 0x44, /**<	command type - get channel status -class e 		*/
+	SAT_PROATV_CMD_RECEIVE_DATA = 0x42, /**<	command type - receive data -class e		*/
+	SAT_PROATV_CMD_SEND_DATA = 0x43, /**<	command type - send data		*/
+	SAT_PROATV_CMD_GET_CHANNEL_STATUS = 0x44, /**<	command type - get channel status -class e		*/
 	SAT_PROATV_CMD_TYPE_END_PROACTIVE_SESSION = 0xFE,
 	SAT_PROATV_CMD_RESERVED = 0xFF /**<	command type - reserved		*/
 };
@@ -97,10 +97,10 @@ enum tel_sat_proactive_cmd_type {
  * Data Coding Scheme Object
  */
 enum alphabet_format{
-	ALPHABET_FROMAT_SMS_DEFAULT = 0x00,
-	ALPHABET_FROMAT_8BIT_DATA = 0x01,
-	ALPHABET_FROMAT_UCS2 = 0x02,
-	ALPHABET_FROMAT_RESERVED = 0x03
+	ALPHABET_FORMAT_SMS_DEFAULT = 0x00,
+	ALPHABET_FORMAT_8BIT_DATA = 0x01,
+	ALPHABET_FORMAT_UCS2 = 0x02,
+	ALPHABET_FORMAT_RESERVED = 0x03
 };
 
 enum msg_class{
@@ -130,7 +130,7 @@ enum type_of_number{
 	TON_DEDICATED_ACCESS = 4,	/*< subscriber number */
 	TON_ALPHA_NUMERIC = 5,		/*< alphanumeric, GSM 7-bit default alphabet) */
 	TON_ABBREVIATED_NUMBER = 6,	/*< abbreviated number */
-	TON_RESERVED_FOR_EXT = 7	/*< reserved for extension */
+	TON_RESERVED_FOR_EXT = 0xF	/*< reserved for extension */
 };
 
 enum numbering_plan_identifier{
@@ -159,8 +159,8 @@ struct tel_sat_address{
 struct tel_sat_alpha_identifier{
 	gboolean is_exist;
 	struct data_coding_scheme dcs;
-	unsigned char alpha_data_len; /**<	alpha identifier length 		*/
-	char alpha_data[SAT_ALPHA_ID_LEN_MAX]; /**<	alpha identifier info 	*/
+	unsigned char alpha_data_len; /**<	alpha identifier length		*/
+	char alpha_data[SAT_ALPHA_ID_LEN_MAX]; /**<	alpha identifier info	*/
 };
 
 /*
@@ -226,26 +226,15 @@ struct tel_sat_cmd_qualifier_get_input{
 
 enum vibration_alert{
 	VIBRATE_ALERT_OPTIONAL = 0, /**<	VIBRATE ALERT UPTO THE TERMINAL		*/
-	VIBRATE_ALERT_REQUIRED = 1 /**<	VIBRATE, IF AVAILABLE, WITH TONE. 		*/
+	VIBRATE_ALERT_REQUIRED = 1 /**<	VIBRATE, IF AVAILABLE, WITH TONE.		*/
 };
 
 struct tel_sat_cmd_qualifier_play_tone{
 	enum vibration_alert vibration_alert;
 };
 
-enum refresh_command{
-	REFRESH_SIM_INIT_AND_FULL_FCN = 0, /**<	command qualifier for REFRESH SIM INIT AND FULL FILE CHANGE_NOTIFICATION		*/
-	REFRESH_FCN = 1, /**<	command qualifier for REFRESH FILE CHANGE NOTIFICATION		*/
-	REFRESH_SIM_INIT_AND_FCN = 2, /**<	command qualifier for REFRESH SIM INIT AND FILE CHANGE NOTIFICATION		*/
-	REFRESH_SIM_INIT = 3, /**<	command qualifier for REFRESH SIM INIT		*/
-	REFRESH_SIM_RESET = 4, /**<	command qualifier for REFRESH SIM RESET		*/
-	REFRESH_3G_APPLICATION_RESET = 5, /**<	command qualifier for REFRESH 3G APPLICATION RESET		*/
-	REFRESH_3G_SESSION_RESET = 6, /**<	command qualifier for REFRESH 3G SESSION RESET		*/
-	REFRESH_RESERVED = 0xFF /**<	command qualifier for REFRESH RESERVED		*/
-};
-
 struct tel_sat_cmd_qualifier_refresh{
-	enum refresh_command refresh;
+	enum tel_sim_refresh_command refresh;
 };
 
 enum provide_local_info_command{
@@ -273,7 +262,7 @@ enum setup_call_command{
 	SETUP_CALL_PUT_ALL_OTHER_CALLS_ON_HOLD_WITH_REDIAL = 0x03, /**<	command qualifier for SETUP CALL PUTTING ALL OTHER CALLS ON HOLD WITH REDIAL		*/
 	SETUP_CALL_DISCONN_ALL_OTHER_CALLS = 0x04, /**<	command qualifier for SETUP CALL DISCONNECTING ALL OTHER CALLS		*/
 	SETUP_CALL_DISCONN_ALL_OTHER_CALLS_WITH_REDIAL = 0x05, /**<	command qualifier for SETUP CALL DISCONNECTING ALL OTHER CALLS WITH REDIAL		*/
-	SETUP_CALL_RESERVED = 0xFF /**<	command qualifier for SETUP CALL RESERVED 		*/
+	SETUP_CALL_RESERVED = 0xFF /**<	command qualifier for SETUP CALL RESERVED		*/
 };
 
 struct tel_sat_cmd_qualifier_setup_call{
@@ -310,7 +299,7 @@ enum launch_browser_command{
 	LAUNCH_BROWSER_IF_NOT_ALREADY_LAUNCHED = 0, /**<	command qualifier for  LAUNCH BROWSER		*/
 	LAUNCH_BROWSER_NOT_USED = 1, /**<	command qualifier for  NOT USED		*/
 	LAUNCH_BROWSER_USE_EXISTING_BROWSER = 2, /**<	command qualifier for  USE EXISTING BROWSER if secure session, do not use it.		*/
-	LAUNCH_BROWSER_CLOSE_AND_LAUNCH_NEW_BROWSER = 3, /**<	command qualifier for CLOSE AND LAUNCH NEW BROWSER  		*/
+	LAUNCH_BROWSER_CLOSE_AND_LAUNCH_NEW_BROWSER = 3, /**<	command qualifier for CLOSE AND LAUNCH NEW BROWSER		*/
 	LAUNCH_BROWSER_NOT_USED2 = 4, /**<	command qualifier for  NOT USED2		*/
 	LAUNCH_BROWSER_RESERVED = 0xFF /**<	reserved	*/
 };
@@ -352,7 +341,7 @@ struct tel_sat_cmd_detail_info{
 		struct tel_sat_cmd_qualifier_launch_browser launch_browser;
 		struct tel_sat_cmd_qualifier_open_channel open_channel;
 		struct tel_sat_cmd_qualifier_send_data send_data;
-	}cmd_qualifier; /**<	Union  	*/
+	}cmd_qualifier; /**<	Union	*/
 };
 
 /*
@@ -396,6 +385,7 @@ struct tel_sat_item_info{
 	unsigned char item_id;
 	unsigned char text_len;
 	unsigned char text[SAT_ITEM_TEXT_LEN_MAX + 1];
+	struct data_coding_scheme dcs;
 };
 
 /*
@@ -418,44 +408,44 @@ struct tel_sat_response_length{
  */
 enum tel_sat_result_type{
 	RESULT_SUCCESS = 0x0, /**<	command performed successfully */
-	RESULT_SUCCESS_WITH_PARTIAL_COMPREHENSION = 0x01, /**<	command performed with partial comprehension 	*/
-	RESULT_SUCCESS_WITH_MISSING_INFO = 0x02, /**<	command performed, with missing information 	*/
+	RESULT_SUCCESS_WITH_PARTIAL_COMPREHENSION = 0x01, /**<	command performed with partial comprehension	*/
+	RESULT_SUCCESS_WITH_MISSING_INFO = 0x02, /**<	command performed, with missing information	*/
 
-	RESULT_REFRESH_PERFORMED_WITH_ADDITIONAL_EFS_READ = 0x03, /**<	REFRESH PERFORMED WITH ADDITIONAL EFS READ 		*/
+	RESULT_REFRESH_PERFORMED_WITH_ADDITIONAL_EFS_READ = 0x03, /**<	REFRESH PERFORMED WITH ADDITIONAL EFS READ		*/
 	RESULT_SUCCESS_BUT_REQUESTED_ICON_NOT_DISPLAYED = 0x04, /**<	command performed but REQUESTED ICON NOT DISPLAYED			*/
 	RESULT_SUCCESS_BUT_MODIFIED_BY_CALL_CONTROL_BY_SIM = 0x05, /**<	command performed but MODIFIED BY CALL CONTROL BY SIM		*/
 	RESULT_SUCCESS_LIMITED_SERVICE = 0x06, /**<	command performed with LIMITED SERVICE		*/
 	RESULT_SUCCESS_WITH_MODIFICATION = 0x07, /**<	command performed with MODIFICATION		*/
-	RESULT_REFRESH_PRFRMD_BUT_INDICATED_USIM_NOT_ACTIVE = 0x08, /**<	REFRESH PERFORMED BUT INDICATED USIM NOT ACTIVE 		*/
+	RESULT_REFRESH_PRFRMD_BUT_INDICATED_USIM_NOT_ACTIVE = 0x08, /**<	REFRESH PERFORMED BUT INDICATED USIM NOT ACTIVE		*/
 	RESULT_SUCCESS_BUT_TONE_NOT_PLAYED = 0x09, /**< command performed successfully, tone not played*/
 
 	RESULT_PROACTIVE_SESSION_TERMINATED_BY_USER = 0x10, /**<	proactive sim application session terminated by user		*/
-	RESULT_BACKWARD_MOVE_BY_USER = 0x11, /**<	backward move in the proactive sim application session request by the user 		*/
+	RESULT_BACKWARD_MOVE_BY_USER = 0x11, /**<	backward move in the proactive sim application session request by the user		*/
 	RESULT_NO_RESPONSE_FROM_USER = 0x12, /**<	no response from user		*/
 
-	RESULT_HELP_INFO_REQUIRED_BY_USER = 0x13, /**<	HELP INFO REQUIRED BY USER 		*/
+	RESULT_HELP_INFO_REQUIRED_BY_USER = 0x13, /**<	HELP INFO REQUIRED BY USER		*/
 	RESULT_USSD_OR_SS_TRANSACTION_TERMINATED_BY_USER = 0x14, /**<	USSD OR SS TRANSACTION TERMINATED BY USER	*/
 
-	RESULT_ME_UNABLE_TO_PROCESS_COMMAND = 0x20, /**<	ME currently unable to process command 		*/
-	RESULT_NETWORK_UNABLE_TO_PROCESS_COMMAND = 0x21, /**<	Network currently unable to process command 		*/
-	RESULT_USER_DID_NOT_ACCEPT_CALL_SETUP_REQ = 0x22, /**<	User did not accept call setup request 		*/
+	RESULT_ME_UNABLE_TO_PROCESS_COMMAND = 0x20, /**<	ME currently unable to process command		*/
+	RESULT_NETWORK_UNABLE_TO_PROCESS_COMMAND = 0x21, /**<	Network currently unable to process command		*/
+	RESULT_USER_DID_NOT_ACCEPT_CALL_SETUP_REQ = 0x22, /**<	User did not accept call setup request		*/
 	RESULT_USER_CLEAR_DOWN_CALL_BEFORE_CONN = 0x23, /**<	User cleared down call before connection or network released		*/
 
-	RESULT_INTERACTION_WITH_CC_BY_SIM_IN_TMP_PRBLM = 0x25, /**<	INTERACTION WITH CALL CONTROL BY SIM IN TEMPORARY PROBLEM 		*/
-	RESULT_LAUNCH_BROWSER_GENERIC_ERROR_CODE = 0x26, /**<	LAUNCH BROWSER GENERIC ERROR CODE 		*/
+	RESULT_INTERACTION_WITH_CC_BY_SIM_IN_TMP_PRBLM = 0x25, /**<	INTERACTION WITH CALL CONTROL BY SIM IN TEMPORARY PROBLEM		*/
+	RESULT_LAUNCH_BROWSER_GENERIC_ERROR_CODE = 0x26, /**<	LAUNCH BROWSER GENERIC ERROR CODE		*/
 
-	RESULT_BEYOND_ME_CAPABILITIES = 0x30, /**<	command beyond ME's capabilities 		*/
-	RESULT_COMMAND_TYPE_NOT_UNDERSTOOD_BY_ME = 0x31, /**<	command type not understood by ME 		*/
+	RESULT_BEYOND_ME_CAPABILITIES = 0x30, /**<	command beyond ME's capabilities		*/
+	RESULT_COMMAND_TYPE_NOT_UNDERSTOOD_BY_ME = 0x31, /**<	command type not understood by ME		*/
 	RESULT_COMMAND_DATA_NOT_UNDERSTOOD_BY_ME = 0x32, /**<	command data not understood by ME		*/
-	RESULT_COMMAND_NUMBER_NOT_KNOWN_BY_ME = 0x33, /**<	command number not known by ME 		*/
+	RESULT_COMMAND_NUMBER_NOT_KNOWN_BY_ME = 0x33, /**<	command number not known by ME		*/
 	RESULT_SS_RETURN_ERROR = 0x34, /**<	SS return error		*/
 	RESULT_SMS_RP_ERROR = 0x35, /**<	SMS rp-error		*/
-	RESULT_ERROR_REQUIRED_VALUES_ARE_MISSING = 0x36, /**<	Error, required values are missing 		*/
+	RESULT_ERROR_REQUIRED_VALUES_ARE_MISSING = 0x36, /**<	Error, required values are missing	*/
 
-	RESULT_USSD_RETURN_ERROR = 0x37, /**<	USSD_RETURN_ERROR 		*/
-	RESULT_INTRCTN_WITH_CC_OR_SMS_CTRL_PRMNT_PRBLM = 0x39, /**<	INTERACTION WITH CALL CONTROL OR SMS CONTROL PERMANENT PROBLEM 		*/
-	RESULT_BEARER_INDEPENDENT_PROTOCOL_ERROR = 0x3A, /**<	BEARER INDEPENDENT PROTOCOL ERROR 		*/
-	RESULT_FRAMES_ERROR = 0x3C /**<	FRAMES ERROR 		*/
+	RESULT_USSD_RETURN_ERROR = 0x37, /**<	USSD_RETURN_ERROR		*/
+	RESULT_INTRCTN_WITH_CC_OR_SMS_CTRL_PRMNT_PRBLM = 0x39, /**<	INTERACTION WITH CALL CONTROL OR SMS CONTROL PERMANENT PROBLEM	*/
+	RESULT_BEARER_INDEPENDENT_PROTOCOL_ERROR = 0x3A, /**<	BEARER INDEPENDENT PROTOCOL ERROR		*/
+	RESULT_FRAMES_ERROR = 0x3C /**<	FRAMES ERROR		*/
 };
 
 enum tel_sat_me_problem_type{
@@ -469,12 +459,13 @@ enum tel_sat_me_problem_type{
 	ME_PROBLEM_NOT_IN_SPEECH_CALL = 0x07, /**<	ME problem with NOT IN SPEECH CALL	*/
 	ME_PROBLEM_ME_BUSY_ON_USSD = 0x08, /**<	ME problem with ME BUSY ON USSD		*/
 	ME_PROBLEM_ME_BUSY_ON_SEND_DTMF_CMD = 0x09, /**<	ME problem with ME BUSY ON SEND DTMF CMD	*/
-	ME_PROBLEM_NO_USIM_ACTIVE = 0x0A, /**<	ME problem with NO USIM ACTIVE 		*/
-	ME_PROBLEM_INVALID = 0xFF /**<	ME problem with INVALID 		*/
+	ME_PROBLEM_NO_USIM_ACTIVE = 0x0A, /**<	ME problem with NO USIM ACTIVE		*/
+	ME_PROBLEM_INVALID = 0xFF /**<	ME problem with INVALID		*/
 };
 
 enum tel_sat_user_confirm_type{
-	USER_CONFIRM_YES,						/**<This Enum Informs That user confirms yes */
+	USER_CONFIRM_NOT_SPECIFIED = -1,			/**<This Enum Informs That not specified */
+	USER_CONFIRM_YES = 0,						/**<This Enum Informs That user confirms yes */
 	USER_CONFIRM_NO_OR_CANCEL,				/**<This enum informs that user confirms no/cancel */
 	USER_CONFIRM_HELP_INFO,				/**<This enum informs that user wants help information */
 	USER_CONFIRM_END,						/**<This enum informs that user confirms end */
@@ -498,12 +489,12 @@ enum ussd_problem_type{
 };
 
 enum network_problem_type{
-	NETWORK_PROBLEM_NO_SPECIFIC_CAUSE = 0x0, /**<	Network problem with no specific cause 		*/
-	NETWORK_PROBLEM_USER_BUSY = 0x91 /**<	Network problem with USER BUSY 		*/
+	NETWORK_PROBLEM_NO_SPECIFIC_CAUSE = 0x0, /**<	Network problem with no specific cause		*/
+	NETWORK_PROBLEM_USER_BUSY = 0x91 /**<	Network problem with USER BUSY		*/
 };
 
 enum browser_problem_type{
-	BROWSER_PROBLEM_NO_SPECIFIC_CAUSE = 0, /**<	Browser problem with no specific cause 		*/
+	BROWSER_PROBLEM_NO_SPECIFIC_CAUSE = 0, /**<	Browser problem with no specific cause		*/
 	BROWSER_PROBLEM_BEARER_UNAVAILABLE = 1, /**<	Browser problem with bearer unavailable		*/
 	BROWSER_PROBLEM_BROWSER_UNAVAILABLE = 2, /**<	Browser problem with browser unavailable		*/
 	BROWSER_PRBLM_ME_UNABLE_TO_READ_PROV_DATA = 3 /**<	Browser problem with ME unable to read provisioning data		*/
@@ -512,14 +503,14 @@ enum browser_problem_type{
 enum bip_problem_type{
 	BIP_PROBLEM_NO_SPECIFIC_CAUSE = 0x00, /**<	BIP problem with no specific cause	*/
 	BIP_PROBLEM_NO_CHANNEL_AVAILABLE = 0x01, /**<	BIP problem with no channel available		*/
-	BIP_PROBLEM_CHANNEL_CLOSED = 0x02, /**<	BIP problem with channel closed 		*/
-	BIP_PROBLEM_CHANNEL_ID_NOT_VALID = 0x03, /**<	BIP problem with channel id not valid 		*/
-	BIP_PROBLEM_BUF_SIZE_NOT_AVAILABLE = 0x04, /**<	BIP problem with buffer size not available 		*/
-	BIP_PROBLEM_SECURITY_ERROR = 0x05, /**<	BIP problem with security error 		*/
+	BIP_PROBLEM_CHANNEL_CLOSED = 0x02, /**<	BIP problem with channel closed		*/
+	BIP_PROBLEM_CHANNEL_ID_NOT_VALID = 0x03, /**<	BIP problem with channel id not valid		*/
+	BIP_PROBLEM_BUF_SIZE_NOT_AVAILABLE = 0x04, /**<	BIP problem with buffer size not available		*/
+	BIP_PROBLEM_SECURITY_ERROR = 0x05, /**<	BIP problem with security error		*/
 	BIP_PRBLM_SIM_ME_IF_TRNSPRT_LEVEL_NOT_AVL = 0x06, /**<	BIP problem with SIM ME interface transport level not available		*/
 	BIP_REMOTE_DEV_NOT_REACHABLE = 0x07, /**<	BIP problem with remote device not reachable		*/
-	BIP_SERVICE_ERROR = 0x08, /**<	BIP service error 		*/
-	BIP_SERVICE_IDENTIFIER_UNKNOWN = 0x09 /**<	BIP service identifier unknown 		*/
+	BIP_SERVICE_ERROR = 0x08, /**<	BIP service error		*/
+	BIP_SERVICE_IDENTIFIER_UNKNOWN = 0x09 /**<	BIP service identifier unknown		*/
 };
 
 /*
@@ -565,7 +556,7 @@ struct tel_sat_text_string_object{
  */
 enum tone_type{
 	// standard supervisory tones
-	DIAL_TONE = 0x01, /**<	TONE TYPE DIAL TONE 		*/
+	DIAL_TONE = 0x01, /**<	TONE TYPE DIAL TONE		*/
 	CALLED_SUBSCRIBER_BUSY = 0x02, /**<	TONE TYPE CALLED SUBSCRIBER BUSY		*/
 	CONGESTION = 0x03, /**<	TONE TYPE CONGESTION	*/
 	RADIO_PATH_ACK = 0x04, /**<	TONE TYPE RADIO PATH ACK	*/
@@ -575,29 +566,29 @@ enum tone_type{
 	RINGING_TONE = 0x08, /**<	TONE TYPE RINGING TONE	*/
 
 	// ME proprietary tones
-	GENERAL_BEEP = 0x10, /**<	TONE TYPE GENERAL BEEP 		*/
-	POSITIVE_ACK_TONE = 0x11, /**<	TONE TYPE POSITIVE ACK TONE 		*/
-	NEGATIVE_ACK_OR_ERROR_TONE = 0x12, /**<	TONE TYPE NEGATIVE ACK OR ERROR TONE 		*/
-	RINGING_TONE_SLCTD_BY_USR_FOR_INCOM_SPEECH_CALL = 0x13, /**<	TONE TYPE RINGING TONE SELECTED BY USER FOR INCOMING SPEECH CALL 		*/
-	ALERT_TONE_SELECTED_BY_USER_FOR_INCOMING_SMS = 0x14, /**<	TONE TYPE ALERT TONE SELECTED BY USER FOR INCOMING SMS 		*/
-	CRITICAL_ALERT = 0x15, /**<	TONE TYPE CRITICAL ALERT 		*/
+	GENERAL_BEEP = 0x10, /**<	TONE TYPE GENERAL BEEP		*/
+	POSITIVE_ACK_TONE = 0x11, /**<	TONE TYPE POSITIVE ACK TONE		*/
+	NEGATIVE_ACK_OR_ERROR_TONE = 0x12, /**<	TONE TYPE NEGATIVE ACK OR ERROR TONE		*/
+	RINGING_TONE_SLCTD_BY_USR_FOR_INCOM_SPEECH_CALL = 0x13, /**<	TONE TYPE RINGING TONE SELECTED BY USER FOR INCOMING SPEECH CALL	*/
+	ALERT_TONE_SELECTED_BY_USER_FOR_INCOMING_SMS = 0x14, /**<	TONE TYPE ALERT TONE SELECTED BY USER FOR INCOMING SMS		*/
+	CRITICAL_ALERT = 0x15, /**<	TONE TYPE CRITICAL ALERT		*/
 
 	//Themed tones
 	HAPPY_TONE = 0x30, /**<	TONE TYPE HAPPY TONE		*/
-	SAD_TONE = 0x31, /**<	TONE TYPE SAD TONE	 		*/
-	URGENT_ACTION_TONE = 0x32, /**<	TONE TYPE URGENT ACTION TONE 		*/
-	QUESTION_TONE = 0x33, /**<	TONE TYPE QUESTION TONE 		*/
-	MESSAGE_RECEIVED_TONE = 0x34, /**<	TONE TYPE MESSAGE RECEIVED TONE 		*/
+	SAD_TONE = 0x31, /**<	TONE TYPE SAD TONE			*/
+	URGENT_ACTION_TONE = 0x32, /**<	TONE TYPE URGENT ACTION TONE		*/
+	QUESTION_TONE = 0x33, /**<	TONE TYPE QUESTION TONE		*/
+	MESSAGE_RECEIVED_TONE = 0x34, /**<	TONE TYPE MESSAGE RECEIVED TONE		*/
 
 	//Melody tones
-	MELODY_1 = 0x40, /**<	TONE TYPE MELODY 1 		*/
-	MELODY_2 = 0x41, /**<	TONE TYPE MELODY 2 		*/
-	MELODY_3 = 0x42, /**<	TONE TYPE MELODY 3 		*/
-	MELODY_4 = 0x43, /**<	TONE TYPE MELODY 4 		*/
-	MELODY_5 = 0x44, /**<	TONE TYPE MELODY 5 		*/
-	MELODY_6 = 0x45, /**<	TONE TYPE MELODY 6 		*/
+	MELODY_1 = 0x40, /**<	TONE TYPE MELODY 1		*/
+	MELODY_2 = 0x41, /**<	TONE TYPE MELODY 2		*/
+	MELODY_3 = 0x42, /**<	TONE TYPE MELODY 3		*/
+	MELODY_4 = 0x43, /**<	TONE TYPE MELODY 4		*/
+	MELODY_5 = 0x44, /**<	TONE TYPE MELODY 5		*/
+	MELODY_6 = 0x45, /**<	TONE TYPE MELODY 6		*/
 	MELODY_7 = 0x46, /**<	TONE TYPE MELODY 7		*/
-	MELODY_8 = 0x47, /**<	TONE TYPE MELODY 8 		*/
+	MELODY_8 = 0x47, /**<	TONE TYPE MELODY 8		*/
 
 	TONE_TYPE_RESERVED = 0xFF /**<	TONE TYPE RESERVED		*/
 };
@@ -676,7 +667,7 @@ enum event_list{
 	EVENT_CARD_READER_STATUS = 6,
 	EVENT_LANGUAGE_SELECTION = 7, /**<	data download type - LANGUAGE SELECTION		*/
 	EVENT_BROWSER_TERMINATION = 8, /**<	data download type - BROWSER TERMINATION		*/
-	EVENT_DATA_AVAILABLE = 9, /**<	data download type -DATA AVAILABLE 		*/
+	EVENT_DATA_AVAILABLE = 9, /**<	data download type -DATA AVAILABLE		*/
 	EVENT_CHANNEL_STATUS = 0x0A, /**<	data download type - CHANNEL STATUS		*/
 	EVENT_ACCESS_TECHNOLOGY_CHANGED = 0x0B,
 	EVENT_DISPLAY_PARAMETERS_CHANGED = 0x0C,
@@ -721,11 +712,11 @@ struct tel_sat_call_ctrl_req_action{
 /*
  * 8.31 Icon identifier
  */
-enum img_coding_scheme{
+/*enum img_coding_scheme{
 	IMAGE_CODING_SCHEME_BASIC = 0x11,
 	IMAGE_CODING_SCHEME_COLOUR = 0x21,
 	IMAGE_CODING_SCHEME_RESERVED = 0xFF
-};
+};*/
 
 enum icon_qualifier{
 	ICON_QUALI_SELF_EXPLANATORY = 0,
@@ -793,7 +784,7 @@ struct tel_sat_dtmf_string{
  * 8.47 Browser Identity
  */
 enum browser_identity{
-	BROWSER_ID_DEFAULT = 0, /**<	DEFAULT BROWSER 		*/
+	BROWSER_ID_DEFAULT = 0, /**<	DEFAULT BROWSER		*/
 	BROWSER_ID_WML, /**<	BROWSER WML	*/
 	BROWSER_ID_HTML, /**<	BROWSER HTML	*/
 	BROWSER_ID_XHTML, /**<	BROWSER XHTML	*/
@@ -814,8 +805,8 @@ struct tel_sat_url{
  * 8.49 Bear
  */
 enum bearer_list_type{
-	BEARER_LIST_SMS = 0, /**<	BEARER SMS 		*/
-	BEARER_LIST_CSD = 1, /**<	BEARER CSD 		*/
+	BEARER_LIST_SMS = 0, /**<	BEARER SMS		*/
+	BEARER_LIST_CSD = 1, /**<	BEARER CSD		*/
 	BEARER_LIST_USSD = 2, /**<	BEARER USSD		*/
 	BEARER_LIST_GPRS = 3, /**<	BEARER GPRS		*/
 	BEARER_LIST_RESERVED = 0xFF /**<	BEARER RESERVED		*/
@@ -839,7 +830,7 @@ struct tel_sat_provisioning_file_ref{
  * 8.51 Browser termination cause
  */
 enum browser_termination_cause{
-	BROWSER_TERMINATED_BY_USER = 0, /**<	BROWSER TERMINATED BY USER 		*/
+	BROWSER_TERMINATED_BY_USER = 0, /**<	BROWSER TERMINATED BY USER		*/
 	BROWSER_TERMINATED_BY_ERROR = 1, /**<	BROWSER TERMINATED BY ERROR		*/
 };
 
@@ -847,8 +838,8 @@ enum browser_termination_cause{
  * 8.52 Bearer description
  */
 enum bearer_type{
-	BEARER_CSD = 0x1, /**<	BEARER DESC CSD 		*/
-	BEARER_GPRS = 0x2, /**<	BEARER DESC GPRS 		*/
+	BEARER_CSD = 0x1, /**<	BEARER DESC CSD		*/
+	BEARER_GPRS = 0x2, /**<	BEARER DESC GPRS		*/
 	BEARER_DEFAULT_BEARER_FROM_TRANSPORT_LAYER = 0x3, /**<	BEARER DESC DEFAULT BEARER FROM TRANSPORT LAYER		*/
 	BEARER_LOCAL_LINK_TECHNOLOGY_INDEPENDENT = 0x4, /**<	BEARER DESC LOCAL LINK TECHNOLOGY INDEPENDENT		*/
 	BEARER_BLUETOOTH = 0x5, /**<	BEARER DESC BLUETOOTH	*/
@@ -860,66 +851,66 @@ enum bearer_type{
 
 enum bearer_param_cs_data_rate{
 	BIP_DR_AUTOBAUDING = 0, /**<	CSD data rate - AUTOBAUDING		*/
-	BIP_DR_300BPS_V21 = 1, /**<	CSD data rate -300BPS V21 		*/
+	BIP_DR_300BPS_V21 = 1, /**<	CSD data rate -300BPS V21		*/
 	BIP_DR_1200BPS_V22 = 2, /**<	CSD data rate - 1200BPS V22		*/
-	BIP_DR_1200_75BPS_V23 = 3, /**<	CSD data rate -1200 75BPS V23	 		*/
-	BIP_DR_2400BPS_V22 = 4, /**<	CSD data rate -2400BPS V22 		*/
+	BIP_DR_1200_75BPS_V23 = 3, /**<	CSD data rate -1200 75BPS V23			*/
+	BIP_DR_2400BPS_V22 = 4, /**<	CSD data rate -2400BPS V22		*/
 	BIP_DR_2400BPS_V26 = 5, /**<	CSD data rate - 2400BPS V26			*/
 	BIP_DR_4800BPS_V32 = 6, /**<	CSD data rate - 4800BPS V32		*/
 	BIP_DR_9600BPS_V32 = 7, /**<	CSD data rate - 9600BPS V32		*/
 	BIP_DR_9600BPS_V34 = 12, /**<	CSD data rate - 9600BPS_V34		*/
-	BIP_DR_14400BPS_V34 = 14, /**<	CSD data rate -14400BPS V34 		*/
-	BIP_DR_19200BPS_V34 = 15, /**<	CSD data rate -19200BPS V34 		*/
-	BIP_DR_28800BPS_V34 = 16, /**<	CSD data rate -28800BPS V34 		*/
-	BIP_DR_33600BPS_V34 = 17, /**<	CSD data rate -33600BPS V34 		*/
+	BIP_DR_14400BPS_V34 = 14, /**<	CSD data rate -14400BPS V34		*/
+	BIP_DR_19200BPS_V34 = 15, /**<	CSD data rate -19200BPS V34		*/
+	BIP_DR_28800BPS_V34 = 16, /**<	CSD data rate -28800BPS V34		*/
+	BIP_DR_33600BPS_V34 = 17, /**<	CSD data rate -33600BPS V34		*/
 	BIP_DR_1200BPS_V120 = 34, /**<	CSD data rate -1200BPS V120		*/
-	BIP_DR_2400BPS_V120 = 36, /**<	CSD data rate -2400BPS V120 		*/
-	BIP_DR_4800BPS_V120 = 38, /**<	CSD data rate -4800BPS V120 		*/
-	BIP_DR_9600BPS_V120 = 39, /**<	CSD data rate -9600BPS V120 		*/
-	BIP_DR_14400BPS_V120 = 43, /**<	CSD data rate -14400BPS V120 		*/
-	BIP_DR_19200BPS_V120 = 47, /**<	CSD data rate -19200BPS V120 		*/
-	BIP_DR_28800BPS_V120 = 48, /**<	CSD data rate -28800BPS V120 		*/
-	BIP_DR_38400BPS_V120 = 49, /**<	CSD data rate -38400BPS V120 		*/
-	BIP_DR_48000BPS_V120 = 50, /**<	CSD data rate -48000BPS V120 		*/
-	BIP_DR_56000BPS_V120 = 51, /**<	CSD data rate -56000BPS V120 		*/
+	BIP_DR_2400BPS_V120 = 36, /**<	CSD data rate -2400BPS V120		*/
+	BIP_DR_4800BPS_V120 = 38, /**<	CSD data rate -4800BPS V120		*/
+	BIP_DR_9600BPS_V120 = 39, /**<	CSD data rate -9600BPS V120		*/
+	BIP_DR_14400BPS_V120 = 43, /**<	CSD data rate -14400BPS V120		*/
+	BIP_DR_19200BPS_V120 = 47, /**<	CSD data rate -19200BPS V120		*/
+	BIP_DR_28800BPS_V120 = 48, /**<	CSD data rate -28800BPS V120		*/
+	BIP_DR_38400BPS_V120 = 49, /**<	CSD data rate -38400BPS V120		*/
+	BIP_DR_48000BPS_V120 = 50, /**<	CSD data rate -48000BPS V120		*/
+	BIP_DR_56000BPS_V120 = 51, /**<	CSD data rate -56000BPS V120		*/
 	BIP_DR_300BPS_V110 = 65, /**<	CSD data rate - 300BPS V110		*/
-	BIP_DR_1200BPS_V110 = 66, /**<	CSD data rate -1200BPS V110 		*/
+	BIP_DR_1200BPS_V110 = 66, /**<	CSD data rate -1200BPS V110		*/
 	BIP_DR_2400BPS_V110_OR_X31_FALG_STUFFING = 68, /**<	CSD data rate - 2400BPS V110 OR X31 FALG STUFFING		*/
 	BIP_DR_4800BPS_V110_OR_X31_FALG_STUFFING = 70, /**<	CSD data rate - 4800BPS V110 OR X31 FALG STUFFING		*/
 	BIP_DR_9600BPS_V110_OR_X31_FALG_STUFFING = 71, /**<	CSD data rate - 9600BPS V110 OR X31 FALG STUFFING		*/
 	BIP_DR_14400BPS_V110_OR_X31_FALG_STUFFING = 75, /**<	CSD data rate - 14400BPS V110 OR X31 FALG STUFFING		*/
-	BIP_DR_19200BPS_V110_OR_X31_FALG_STUFFING = 79, /**<	CSD data rate -19200BPS V110 OR X31 FALG STUFFING 		*/
-	BIP_DR_28800BPS_V110_OR_X31_FALG_STUFFING = 80, /**<	CSD data rate -28800BPS V110 OR X31 FALG STUFFING 		*/
-	BIP_DR_38400BPS_V110_OR_X31_FALG_STUFFING = 81, /**<	CSD data rate -38400BPS V110 OR X31 FALG STUFFING 		*/
-	BIP_DR_48000BPS_V110_OR_X31_FALG_STUFFING = 82, /**<	CSD data rate -48000BPS V110 OR X31 FALG STUFFING 		*/
-	BIP_DR_56000BPS_V110_OR_X31_FALG_STUFFING = 83, /**<	CSD data rate -56000BPS V110 OR X31 FALG STUFFING 		*/
-	BIP_DR_64000BPS = 84, /**<	CSD data rate -64000BPS 		*/
-	BIP_DR_56000BPS_BIT_TRANSPERENT = 115, /**<	CSD data rate -56000BPS BIT TRANSPERENT 		*/
-	BIP_DR_64000BPS_BIT_TRANSPERENT = 116, /**<	CSD data rate -64000BPS BIT TRANSPERENT 		*/
+	BIP_DR_19200BPS_V110_OR_X31_FALG_STUFFING = 79, /**<	CSD data rate -19200BPS V110 OR X31 FALG STUFFING		*/
+	BIP_DR_28800BPS_V110_OR_X31_FALG_STUFFING = 80, /**<	CSD data rate -28800BPS V110 OR X31 FALG STUFFING		*/
+	BIP_DR_38400BPS_V110_OR_X31_FALG_STUFFING = 81, /**<	CSD data rate -38400BPS V110 OR X31 FALG STUFFING		*/
+	BIP_DR_48000BPS_V110_OR_X31_FALG_STUFFING = 82, /**<	CSD data rate -48000BPS V110 OR X31 FALG STUFFING		*/
+	BIP_DR_56000BPS_V110_OR_X31_FALG_STUFFING = 83, /**<	CSD data rate -56000BPS V110 OR X31 FALG STUFFING		*/
+	BIP_DR_64000BPS = 84, /**<	CSD data rate -64000BPS		*/
+	BIP_DR_56000BPS_BIT_TRANSPERENT = 115, /**<	CSD data rate -56000BPS BIT TRANSPERENT		*/
+	BIP_DR_64000BPS_BIT_TRANSPERENT = 116, /**<	CSD data rate -64000BPS BIT TRANSPERENT		*/
 	BIP_DR_32000BPS_PIAFS32K = 120, /**<	CSD data rate -32000BPS PIAFS32K		*/
 	BIP_DR_64000BPS_PIAFS64K = 121, /**<	CSD data rate - 64000BPS PIAFS64K		*/
-	BIP_DR_28800BPS_MULTIMEDIA = 130, /**<	CSD data rate -28800BPS MULTIMEDIA 		*/
-	BIP_DR_32000BPS_MULTIMEDIA = 131, /**<	CSD data rate -32000BPS MULTIMEDIA 		*/
+	BIP_DR_28800BPS_MULTIMEDIA = 130, /**<	CSD data rate -28800BPS MULTIMEDIA		*/
+	BIP_DR_32000BPS_MULTIMEDIA = 131, /**<	CSD data rate -32000BPS MULTIMEDIA		*/
 	BIP_DR_33600BPS_MULTIMEDIA = 132, /**<	CSD data rate - 33600BPS MULTIMEDIA		*/
-	BIP_DR_56000BPS_MULTIMEDIA = 133, /**<	CSD data rate -56000BPS MULTIMEDIA 		*/
-	BIP_DR_64000BPS_MULTIMEDIA = 134 /**<	CSD data rate -64000BPS MULTIMEDIA 		*/
+	BIP_DR_56000BPS_MULTIMEDIA = 133, /**<	CSD data rate -56000BPS MULTIMEDIA		*/
+	BIP_DR_64000BPS_MULTIMEDIA = 134 /**<	CSD data rate -64000BPS MULTIMEDIA		*/
 };
 
 enum bearer_param_cs_service_type{
-	BIP_CSD_BS_DATA_CIRCUIT_ASYNC_UDI = 0, /**<	CSD Bearer service - DATA CIRCUIT ASYNCHRONOUS UDI 		*/
-	BIP_CSD_BS_DATA_CIRCUIT_SYNC = 1, /**<	CSD Bearer service - DATA CIRCUIT SYNCHRONOUS UDI 		*/
+	BIP_CSD_BS_DATA_CIRCUIT_ASYNC_UDI = 0, /**<	CSD Bearer service - DATA CIRCUIT ASYNCHRONOUS UDI		*/
+	BIP_CSD_BS_DATA_CIRCUIT_SYNC = 1, /**<	CSD Bearer service - DATA CIRCUIT SYNCHRONOUS UDI		*/
 	BIP_CSD_BS_PAD_ACCESS_ASYNC_UDI = 2, /**<	CSD Bearer service - PAD ACCESS ASYNCHRONOUS UDI			*/
-	BIP_CSD_BS_PACKET_ACCESS_SYNC = 3, /**<	CSD Bearer service - PACKET ACCESS SYNCHRONOUS UDI 		*/
-	BIP_CSD_BS_DATA_CIRCUIT_ASYNC_RDI = 4, /**<	CSD Bearer service - DATA CIRCUIT ASYNCHRONOUS RDI 		*/
-	BIP_CSD_BS_DATA_CIRCUIT_SYNC_RDI = 5, /**<	CSD Bearer service - DATA CIRCUIT SYNCHRONOUS RDI 		*/
-	BIP_CSD_BS_PAD_ACCESS_ASYNC_RDI = 6, /**<	CSD Bearer service - PAD ACCESS ASYNCHRONOUS RDI  		*/
-	BIP_CSD_BS_PACKET_ACCESS_SYNC_RDI = 7 /**<	CSD Bearer service - PACKET ACCESS SYNCHRONOUS RDI 		*/
+	BIP_CSD_BS_PACKET_ACCESS_SYNC = 3, /**<	CSD Bearer service - PACKET ACCESS SYNCHRONOUS UDI		*/
+	BIP_CSD_BS_DATA_CIRCUIT_ASYNC_RDI = 4, /**<	CSD Bearer service - DATA CIRCUIT ASYNCHRONOUS RDI		*/
+	BIP_CSD_BS_DATA_CIRCUIT_SYNC_RDI = 5, /**<	CSD Bearer service - DATA CIRCUIT SYNCHRONOUS RDI		*/
+	BIP_CSD_BS_PAD_ACCESS_ASYNC_RDI = 6, /**<	CSD Bearer service - PAD ACCESS ASYNCHRONOUS RDI		*/
+	BIP_CSD_BS_PACKET_ACCESS_SYNC_RDI = 7 /**<	CSD Bearer service - PACKET ACCESS SYNCHRONOUS RDI		*/
 };
 
 enum bearer_param_cs_connection_element_type{
 	BIP_CSD_CONN_ELEM_TRANSPARENT = 0, /**<	CSD connection element - TRANSPARENT		*/
-	BIP_CSD_CONN_ELEM_NON_TRANSPARENT = 1, /**<	CSD connection element - NON TRANSPARENT  		*/
-	BIP_CSD_CONN_ELEM_BOTH_TRANSPARENT_PREF = 2, /**<	CSD connection element -BOTH TRANSPARENT PREFFERED 		*/
+	BIP_CSD_CONN_ELEM_NON_TRANSPARENT = 1, /**<	CSD connection element - NON TRANSPARENT		*/
+	BIP_CSD_CONN_ELEM_BOTH_TRANSPARENT_PREF = 2, /**<	CSD connection element -BOTH TRANSPARENT PREFFERED		*/
 	BIP_CSD_CONN_ELEM_BOTH_NON_TRANSPARENT_PREF = 3 /**<	CSD connection element -  NON TRANSPARENT PREFFERED		*/
 };
 
@@ -943,10 +934,10 @@ enum bearer_param_ps_delay_class{
 };
 
 enum bearer_param_ps_reliability_class{
-	BIP_GPRS_RELIABILITY_CLASS_1 = 0x01, /**<	GPRS Reliability class -1 		*/
+	BIP_GPRS_RELIABILITY_CLASS_1 = 0x01, /**<	GPRS Reliability class -1		*/
 	BIP_GPRS_RELIABILITY_CLASS_2 = 0x02, /**<	GPRS Reliability class -2		*/
 	BIP_GPRS_RELIABILITY_CLASS_3 = 0x03, /**<	GPRS Reliability class -3		*/
-	BIP_GPRS_RELIABILITY_CLASS_4 = 0x04, /**<	GPRS Reliability class -4 		*/
+	BIP_GPRS_RELIABILITY_CLASS_4 = 0x04, /**<	GPRS Reliability class -4		*/
 	BIP_GPRS_RELIABILITY_CLASS_5 = 0x05 /**<	GPRS Reliability class -5		*/
 };
 
@@ -965,28 +956,28 @@ enum bearer_param_ps_peak_throughput_class{
 enum bearer_param_ps_mean_throughput_class{
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_DOT_22_BPS = 0x01, /**<	GPRS mean throughput class - DOT 22 BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_DOT_44_BPS = 0x02, /**<	GPRS mean throughput class - DOT 44 BPS		*/
-	BIP_GPRS_MEAN_THROUGHPUT_CLASS_1_DOT_11_BPS = 0x03, /**<	GPRS mean throughput class -1 DOT 11 BPS 		*/
+	BIP_GPRS_MEAN_THROUGHPUT_CLASS_1_DOT_11_BPS = 0x03, /**<	GPRS mean throughput class -1 DOT 11 BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_2_DOT_2_BPS = 0x04, /**<	GPRS mean throughput class -2 DOT 2 BPS		*/
-	BIP_GPRS_MEAN_THROUGHPUT_CLASS_2_DOT_4_BPS = 0x05, /**<	GPRS mean throughput class -2 DOT 4 BPS 		*/
+	BIP_GPRS_MEAN_THROUGHPUT_CLASS_2_DOT_4_BPS = 0x05, /**<	GPRS mean throughput class -2 DOT 4 BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_11_DOT_1_BPS = 0x06, /**<	GPRS mean throughput class - 11 DOT 1 BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_22BPS = 0x07, /**<	GPRS mean throughput class -22BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_44BPS = 0x08, /**<	GPRS mean throughput class - 44BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_111BPS = 0x09, /**<	GPRS mean throughput class - 111BPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_DOT_22_KBPS = 0x0A, /**<	GPRS mean throughput class - DOT 22 KBPS		*/
-	BIP_GPRS_MEAN_THROUGHPUT_CLASS_DOT_44_KBPS = 0x0B, /**<	GPRS mean throughput class -DOT 44 KBPS 		*/
-	BIP_GPRS_MEAN_THROUGHPUT_CLASS_1_DOT_11_KBPS = 0x0C, /**<	GPRS mean throughput class -1 DOT 11 KBPS 		*/
+	BIP_GPRS_MEAN_THROUGHPUT_CLASS_DOT_44_KBPS = 0x0B, /**<	GPRS mean throughput class -DOT 44 KBPS		*/
+	BIP_GPRS_MEAN_THROUGHPUT_CLASS_1_DOT_11_KBPS = 0x0C, /**<	GPRS mean throughput class -1 DOT 11 KBPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_2_DOT_2_KBPS = 0x0D, /**<	GPRS mean throughput class -2 DOT 2 KBPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_4_DOT_4_KBPS = 0x0E, /**<	GPRS mean throughput class - 4 DOT 4 KBPS		*/
-	BIP_GPRS_MEAN_THROUGHPUT_CLASS_11_DOT_1_KBPS = 0x0F, /**<	GPRS mean throughput class -11 DOT 1 KBPS 		*/
+	BIP_GPRS_MEAN_THROUGHPUT_CLASS_11_DOT_1_KBPS = 0x0F, /**<	GPRS mean throughput class -11 DOT 1 KBPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_22KBPS = 0x10, /**<	GPRS mean throughput class - 22KBPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_44KBPS = 0x11, /**<	GPRS mean throughput class - 44KBPS		*/
-	BIP_GPRS_MEAN_THROUGHPUT_CLASS_111KBPS = 0x12, /**<	GPRS mean throughput class -111KBPS 		*/
+	BIP_GPRS_MEAN_THROUGHPUT_CLASS_111KBPS = 0x12, /**<	GPRS mean throughput class -111KBPS		*/
 	BIP_GPRS_MEAN_THROUGHPUT_CLASS_BEST_EFFORT = 0x13 /**<	GPRS mean throughput class - BEST EFFORT		*/
 };
 
 enum bearer_param_ps_pdp_type{
-	BIP_GPRS_PDP_TYPE_IP = 0x02, /**<	bearer parameter GPRS pdp type - IP 		*/
-	BIP_GPRS_PDP_TYPE_RESERVED = 0xff /**<	reserved 		*/
+	BIP_GPRS_PDP_TYPE_IP = 0x02, /**<	bearer parameter GPRS pdp type - IP		*/
+	BIP_GPRS_PDP_TYPE_RESERVED = 0xff /**<	reserved		*/
 };
 
 struct tel_sat_bearer_param_ps_bearer{
@@ -999,7 +990,7 @@ struct tel_sat_bearer_param_ps_bearer{
 };
 
 enum bearer_param_local_link_service_type{
-	BIP_LL_SERVICE_IDENT_VALUE_ASSIGNED_BY_USIM = 0x00, /**<	local links service identity - value assigned by USIM 		*/
+	BIP_LL_SERVICE_IDENT_VALUE_ASSIGNED_BY_USIM = 0x00, /**<	local links service identity - value assigned by USIM		*/
 	BIP_LL_SERVICE_IDENT_VALUE_ASSIGNED_BY_REMOTED_DEVICE = 0xFF /**<	local links service identity - value assigned by remote service	*/
 };
 
@@ -1079,7 +1070,7 @@ struct tel_sat_other_address{
  */
 enum transport_protocol_type{
 	TP_TYPE_UDP_UICC_CLIENT = 0x01, /**<	transport protocol type- UDP UICC CLIENT	*/
-	TP_TYPE_TCP_UICC_CLIENT = 0x02, /**<	transport protocol type-TCP UICC CLIENT  	*/
+	TP_TYPE_TCP_UICC_CLIENT = 0x02, /**<	transport protocol type-TCP UICC CLIENT	*/
 	TP_TYPE_TCP_UICC_SERVER = 0x03 /**<	transport protocol type- TCP UICC SERVER	*/
 };
 
@@ -1115,6 +1106,7 @@ struct tel_sat_network_access_name{
  * 8.72 Text attribute
  */
 struct tel_sat_text_attribute{
+	gboolean b_txt_attr;
 	unsigned char text_formatting[4];
 };
 
@@ -1308,7 +1300,6 @@ struct tel_sat_setup_event_list_tlv{
 	struct tel_sat_cmd_detail_info command_detail;
 	struct tel_sat_device_identities device_id;
 	struct tel_sat_event_list event_list;
-	struct tel_sat_event_list modem_event_list;
 };
 
 /*
@@ -1452,6 +1443,14 @@ struct tel_sat_send_channel_tlv{
  * 6.6.31 GET CHANNEL STATUS
  */
 struct tel_sat_get_channel_status_tlv{
+	struct tel_sat_cmd_detail_info command_detail;
+	struct tel_sat_device_identities device_id;
+};
+
+/*
+ * 6.6.XX UNSUPPORTED CMD
+ */
+struct tel_sat_unsupproted_command_tlv{
 	struct tel_sat_cmd_detail_info command_detail;
 	struct tel_sat_device_identities device_id;
 };
@@ -1707,6 +1706,13 @@ struct tel_sat_tr_get_channel_status_tlv{
 	struct tel_sat_channel_status channel_status;
 };
 
+struct tel_sat_tr_unsupport_command_tlv{
+	struct tel_sat_cmd_detail_info command_detail;
+	struct tel_sat_device_identities device_id;
+	enum tel_sat_result_type result_type;
+	enum tel_sat_me_problem_type me_problem_type;
+};
+
 struct treq_sat_terminal_rsp_data{
 	int cmd_number;
 	enum tel_sat_proactive_cmd_type cmd_type;
@@ -1734,7 +1740,13 @@ struct treq_sat_terminal_rsp_data{
 		struct tel_sat_tr_send_data_tlv send_data;
 		struct tel_sat_tr_receive_data_tlv receive_data;
 		struct tel_sat_tr_get_channel_status_tlv get_channel_status;
+		struct tel_sat_tr_unsupport_command_tlv unsupport_cmd;
 	}terminal_rsp_data;
+};
+
+struct treq_sat_user_confirmation_data{
+	int user_conf;
+	int icon_conf; /* Notice: Not being used for now*/
 };
 
 /*
@@ -1755,7 +1767,14 @@ struct tresp_sat_envelop_data{
 /*
  * Define SAT Notification structure
  */
+enum call_control_result{
+	call_control_allowed_no_mod = 0x00,
+	call_control_not_allowed = 0x01,
+	call_control_allowed_with_mod = 0x02
+};
+
 struct tnoti_sat_proactive_ind{
+	int decode_err_code;
 	int cmd_number;
 	enum tel_sat_proactive_cmd_type cmd_type;
 	union{
@@ -1782,8 +1801,31 @@ struct tnoti_sat_proactive_ind{
 		struct tel_sat_receive_channel_tlv receive_data;
 		struct tel_sat_send_channel_tlv send_data;
 		struct tel_sat_get_channel_status_tlv get_channel_status;
+		struct tel_sat_unsupproted_command_tlv unsupport_cmd;
 	}proactive_ind_data;
 };
+
+struct tnoti_sat_call_control_result_ind{
+	enum call_control_result cc_result;
+
+	struct tel_sat_address address;
+	struct tel_sat_ss_string ss_string;
+
+	struct tel_sat_ccp ccp1;
+	struct tel_sat_subaddress sub_address;
+	struct tel_sat_alpha_identifier alpha_id;
+	struct tel_sat_repeat_indicator_type bc_repeat_type;
+	struct tel_sat_ccp ccp2;
+};
+
+struct tnoti_sat_mo_sm_control_result_ind{
+	enum call_control_result cc_result;
+
+	struct tel_sat_address rp_dst_address;
+	struct tel_sat_address tp_dst_address;
+	struct tel_sat_alpha_identifier alpha_id;
+};
+
 __END_DECLS
 
 #endif

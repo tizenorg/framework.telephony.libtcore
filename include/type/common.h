@@ -56,7 +56,7 @@ __BEGIN_DECLS
 enum tcore_return {
 	TCORE_RETURN_SUCCESS = 0,
 	TCORE_RETURN_FAILURE = -1,
-
+	TCORE_RETURN_OPERATION_ABORTED = 1, /**< Operation Aborted */
 	TCORE_RETURN_ENOENT = ENOENT, /* No such file or directory */
 	TCORE_RETURN_EPERM = EPERM, /* Operation not permitted */
 	TCORE_RETURN_ENOMEM = ENOMEM, /* Out of memory */
@@ -80,6 +80,9 @@ enum tcore_return {
 
 	TCORE_RETURN_HOOK_STOP = TCORE_RETURN | TCORE_TYPE_HOOK,
 
+	TCORE_RETURN_SIM = TCORE_RETURN | TCORE_TYPE_SIM,
+	TCORE_RETURN_SIM_DISABLED_IN_SST, /* feature in sst is disabled */
+
 	/* NETTEXT */
 	TCORE_RETURN_SMS = TCORE_RETURN | TCORE_TYPE_SMS,
 	TCORE_RETURN_SMS_DEVICE_NOT_READY, /**<Nettext device not ready */
@@ -88,6 +91,8 @@ enum tcore_return {
 	TCORE_RETURN_SMS_SCADDRESS_NOT_SET, /**<Nettext SCA address not set*/
 
 	TCORE_RETURN_3GPP_ERROR = TCORE_3GPP_RETURN, /**< TCORE_3GPP_RETURN + (0x0000 ~ 0x7FFF) */
+	TCORE_RETURN_3GPP_PLMN_NOT_ALLOWED,    /* 3GPP error cause 11*/
+	TCORE_RETURN_3GPP_ROAMING_NOT_ALLOWED, /* 3GPP error cause 13 */
 
 	TCORE_RETURN_UNKNOWN = TCORE_RETURN | 0x0FFFFFFF
 };

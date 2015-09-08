@@ -39,6 +39,7 @@ enum co_context_type {
 	CONTEXT_TYPE_IHOST,
 	CONTEXT_TYPE_PPP,
 	CONTEXT_TYPE_IPV6,
+	CONTEXT_TYPE_IPV4V6,
 };
 
 enum co_context_role {
@@ -77,8 +78,8 @@ void                     tcore_context_free(CoreObject *o);
 
 TReturn                  tcore_context_set_state(CoreObject *o, enum co_context_state state);
 enum co_context_state    tcore_context_get_state(CoreObject *o);
-TReturn                  tcore_context_set_id(CoreObject *o, unsigned int id);
-unsigned int             tcore_context_get_id(CoreObject *o);
+TReturn                  tcore_context_set_id(CoreObject *o, unsigned char id);
+unsigned char             tcore_context_get_id(CoreObject *o);
 TReturn                  tcore_context_set_role(CoreObject *o, enum co_context_role type);
 enum co_context_role     tcore_context_get_role(CoreObject *o);
 
@@ -119,6 +120,11 @@ char*                    tcore_context_get_ipv4_dns1(CoreObject *o);
 char*                    tcore_context_get_ipv4_dns2(CoreObject *o);
 char*                    tcore_context_get_ipv4_gw(CoreObject *o);
 char*                    tcore_context_get_ipv4_devname(CoreObject *o);
+
+char*                    tcore_context_get_ipv6_addr(CoreObject *o);
+char*                    tcore_context_get_ipv6_dns1(CoreObject *o);
+char*                    tcore_context_get_ipv6_dns2(CoreObject *o);
+char*                    tcore_context_get_ipv6_gw(CoreObject *o);
 
 __END_DECLS
 

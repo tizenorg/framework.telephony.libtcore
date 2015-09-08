@@ -28,37 +28,48 @@ __BEGIN_DECLS
 #define SIM_ICCID_LEN_MAX 20 // 3gpp
 #define SIM_LANG_CNT_MAX 30 //telephony defined
 #define SIM_SST_LEN_MAX 20 //telephony defined
-#define SIM_SST_SERVICE_CNT_MAX 50 //3gpp
+#define SIM_SST_SERVICE_CNT_MAX 56 //3gpp
 #define SIM_UST_BYTE_LEN_MAX 8 //telephony defined
+#define SIM_UST_SERVICE_CNT_MAX 64
+#define SIM_CDMA_ST_SERVICE_LEN_MAX 12
+#define SIM_CDMA_ST_SERVICE_CNT_MAX 47
+#define SIM_CSIM_ST_SERVICE_LEN_MAX 6
+#define SIM_CSIM_ST_SERVICE_CNT_MAX 41
 #define SIM_SPN_LEN_MAX 16 //3gpp
+#define SIM_CDMA_SPN_LEN_MAX 32 //3gpp2
 #define SIM_SPDI_PLMN_MAX 41 //telephony defined
 #define SIM_XDN_ALPHA_ID_LEN_MAX 30 //telephony defined
 #define SIM_XDN_NUMBER_LEN_MAX 20 //telephony defined
+#define SIM_MSISDN_NUMBER_LEN_MAX 26 //telephony defined
 #define SIM_ECC_BYTE_LEN_MAX 3 //3gpp
 #define SIM_ECC_STRING_LEN_MAX 50 //telephony defined
 #define SIM_ECC_RECORD_CNT_MAX 15 //telephony defined
+#define SIM_EXT_RECORD_CNT_MAX 15 //telephony defined
 #define SIM_CF_RECORD_CNT_MAX 2 //telephony defined
 #define SIM_MSISDN_RECORD_CNT_MAX 10 //telephony defined
 #define SIM_GROUP_IDENTIFIER_LEN_MAX 10 //telephony defined
 #define SIM_MAIL_BOX_IDENTIFIER_LEN_MAX 5 //3gpp
-#define SIM_OPL_PNN_RECORD_CNT_MAX 5//85 //telephony defined
+#define SIM_MSP_CNT_MAX 2 //telephony defined
 #define SIM_NW_FULL_NAME_LEN_MAX 40 //telephony defined TODO should be defined one value in all.
 #define SIM_OPLMNWACT_LEN_MAX 100 //telephony defined
 #define SIM_AUTH_REQ_DATA_LEN_MAX 256 //telephony defined
 #define SIM_AUTH_RESP_DATA_LEN_MAX 128 //telephony defined
-#define SIM_CPHS_CALL_FORWARDING_LEN_MAX 2 //telephony defined
+#define SIM_APDU_DATA_LEN_MAX 2048 //telephony defined. (2048 is for QMI definition. (1024 : general length, 1024 : extra length for additional response)).
+#define SIM_CPHS_CALL_FORWARDING_LEN_MIN 2 //telephony defined
 #define SIM_CPHS_CSP_ENTRY_CNT_MAX 11 //telephony defined
 #define SIM_CPHS_CSP_LEN_MAX 22 //telephony defined
 #define SIM_CPHS_VMWF_LEN_MAX 2 //telephony defined
 #define SIM_CPHS_OPERATOR_NAME_LEN_MAX 25 //telephony defined
 #define SIM_CPHS_OPERATOR_NAME_SHORT_FORM_LEN_MAX 10 //CPHS spec
 #define SIM_CPHS_INFO_LEN_MAX 3 //telephony defined
+#define SIM_GID_LEN_MAX 16 //telephony defined
+#define SIM_FILE_ID_LIST_MAX_COUNT 255 //followed SAT_FILE_ID_LIST_MAX_COUNT in sat.h
 
 enum tel_sim_file_id {
 	SIM_EF_DIR = 0x2F00, /**< Root Directory for the USIM */
 	SIM_EF_ICCID = 0x2FE2, /**< the ICC Identification file	*/
-	SIM_EF_IMSI = 0x6F07, /**< the IMSI file                */
-	SIM_EF_SST = 0x6F38, /**< the SIM Service Table file   */
+	SIM_EF_IMSI = 0x6F07, /**< the IMSI file */
+	SIM_EF_SST = 0x6F38, /**< the SIM Service Table file. EF UST has same address */
 	SIM_EF_EST = 0x6F56, /**< the Enabled Service Table file   */
 	SIM_EF_OPLMN_ACT = 0x6F61, /**< the OPLMN List file*/
 	SIM_EF_GID1 = 0x6F3E, /**< the Group Identifier Level 1 */
@@ -73,6 +84,10 @@ enum tel_sim_file_id {
 	SIM_EF_OPL = 0x6FC6, /**< the Operator PLMN List File*/
 	SIM_EF_MBDN = 0x6FC7, /** < SIM Mail Box Dialing Number file */
 	SIM_EF_MSISDN = 0x6F40, /**< MSISDN */
+	SIM_EF_EXT1 = 0x6F4A, /**< Extension File-1 */
+	SIM_EF_EXT5 = 0x6F4E, /**< Extension File-5 */
+	SIM_EF_EXT6 = 0x6FC8, /**< Extension File-6 */
+	SIM_EF_IMG = 0x4F20, /**Image file*/
 
 	SIM_EF_USIM_LI = 0x6A05, /**< USIM: Language Indication */
 	SIM_EF_USIM_PL = 0x2A05, /**< the Language Preference file of USIM */
@@ -94,6 +109,15 @@ enum tel_sim_file_id {
 	SIM_EF_CPHS_DYNAMICFLAGS = 0x6F9F, /** < CPHS Dynamics flags  */
 	SIM_EF_CPHS_DYNAMIC2FLAG = 0x6F92, /** < CPHS Dynamics2 flags  */
 	SIM_EF_CPHS_CUSTOMER_SERVICE_PROFILE_LINE2 = 0x6F98, /** < CPHS CSP2  */
+	SIM_EF_PBR = 0x4F30,
+
+	/* CDMA FILE ID*/
+	SIM_EF_CDMA_IMSI = 0x6F22,				/** < CDMA IMSI_M  */
+	SIM_EF_CST = 0x6F32,					/** < CDMA Service table */
+	SIM_EF_CDMA_SPN = 0x6F41,				/** < CDMA Service Provider Name  */
+	SIM_EF_MDN = 0x6F44,					/** < CDMA Mobile Directory Number  */
+	SIM_EF_CDMA_ECC = 0x6F47,				/** < CDMA Emergency Call Codes  */
+	SIM_EF_CDMA_PL = 0x6F3A,				/** < CDMA Preferred Languages  */
 
 	/* Invalid File ID, All the file ID are less than this Value*/
 	SIM_EF_INVALID = 0xFFFF, /**< Invalid file.*/
@@ -101,11 +125,12 @@ enum tel_sim_file_id {
 };
 
 enum tel_sim_type {
-	SIM_TYPE_UNKNOWN, /**< Unknown card */
-	SIM_TYPE_GSM, /**< 2G GSM card*/
-	SIM_TYPE_USIM, /**< 3G USIM card */
-	SIM_TYPE_RUIM, /** CDMA based card*/
-	SIM_TYPE_ISIM /** IMS based card */
+	SIM_TYPE_UNKNOWN,	/**< Unknown card */
+	SIM_TYPE_GSM,		/**< 2G GSM card*/
+	SIM_TYPE_USIM,		/**< 3G USIM card */
+	SIM_TYPE_RUIM, 		/** CDMA based card*/
+	SIM_TYPE_NVSIM,		/**< CDMA NV SIM */
+	SIM_TYPE_ISIM		/** IMS based card */
 };
 
 enum tel_sim_status {
@@ -122,6 +147,8 @@ enum tel_sim_status {
 	SIM_STATUS_CCK_REQUIRED = 0x0a, /**<  Corporate Control Key required state **/
 	SIM_STATUS_CARD_REMOVED = 0x0b, /**<  Card removed **/
 	SIM_STATUS_LOCK_REQUIRED = 0x0c, /**<  PH-SIM (phone-SIM) locked state **/
+	SIM_STATUS_CARD_CRASHED = 0x0d, /**< Runtime SIM card error **/
+	SIM_STATUS_CARD_POWEROFF = 0x0e, /**< SIM Powered OFF **/
 	SIM_STATUS_UNKNOWN = 0xff /**<  unknown state. not checked yet. **/
 };
 
@@ -144,7 +171,7 @@ enum tel_sim_access_result {
 enum tel_sim_pin_operation_result {
 	SIM_PIN_OPERATION_SUCCESS, /**< Operation involving PIN (verification/change/enable/disable, etc) is successful.  */
 	SIM_BUSY, /**< SIM is busy  */
-	SIM_CARD_ERROR, /**< SIM card error - Permanently blocked and general errors   */
+	SIM_CARD_ERROR, /**< SIM card error - General errors   */
 	SIM_INCOMPATIBLE_PIN_OPERATION, /**< SIM Incompatible pin operation that is in case when invalid SIM command is given or incorrect parameters are supplied to the SIM. */
 	SIM_INCORRECT_PASSWORD, /**< SIM PIN  Incorrect password */
 	SIM_PIN_REQUIRED, /**< PIN Required */
@@ -154,7 +181,8 @@ enum tel_sim_pin_operation_result {
 	SIM_SPCK_REQUIRED, /**< Service Provider Control Key Required */
 	SIM_CCK_REQUIRED, /**< Corporate Control Key Required */
 	SIM_LOCK_REQUIRED, /**<  PH-SIM (phone-SIM) locked state **/
-	SIM_ADM_REQUIRED /**<  Admin key locked state **/
+	SIM_ADM_REQUIRED, /**<  Admin key locked state **/
+	SIM_PERM_BLOCKED /**< Permanently Blocked **/
 };
 
 enum tel_sim_language_type {
@@ -211,12 +239,12 @@ enum tel_sim_facility_type {
 };
 
 enum tel_sim_lock_status {
-	SIM_LOCK_STATUS_UNLOCKED,
-	SIM_LOCK_STATUS_PIN,
-	SIM_LOCK_STATUS_PUK,
-	SIM_LOCK_STATUS_PIN2,
-	SIM_LOCK_STATUS_PUK2,
-	SIM_LOCK_STATUS_PERM_BLOCKED,
+	SIM_LOCK_STATUS_UNLOCKED,		/* 0x00 : Not necessary */
+	SIM_LOCK_STATUS_PIN,			/* 0x01 : PIN required as a password */
+	SIM_LOCK_STATUS_PUK,			/* 0x02 : PUK required as a password */
+	SIM_LOCK_STATUS_PIN2,			/* 0x03 : PIN2 required as a password */
+	SIM_LOCK_STATUS_PUK2,			/* 0x04 : PUK2 required as a password */
+	SIM_LOCK_STATUS_PERM_BLOCKED,	/* 0x05 : PIN Permanent Blocked */
 };
 
 enum tel_sim_cphs_dynamic_flag_selected_line {
@@ -270,6 +298,15 @@ enum tel_sim_emergency_service_type {
 	SIM_ECC_SPARE = 0x00 /**< Spare */
 };
 
+enum tel_sim_mailbox_type {
+	SIM_MAILBOX_VOICE = 0x01, /**< Voicemail*/
+	SIM_MAILBOX_FAX = 0x02, /**< Fax*/
+	SIM_MAILBOX_EMAIL = 0x03, /**< Email*/
+	SIM_MAILBOX_OTHER = 0x04, /**< Other*/
+	SIM_MAILBOX_VIDEO = 0x05, /**< Videomail*/
+	SIM_MAILBOX_DATA = 0x06, /**< Data*/
+};
+
 enum tel_sim_cphs_csp_group {
 	SIM_CPHS_CSP_GROUP_CALL_OFFERING = 0x01, /**< Group CSP offering*/
 	SIM_CPHS_CSP_GROUP_CALL_RESTRICTION = 0x02, /**< Group CSP restriction*/
@@ -292,10 +329,16 @@ enum tel_sim_cphs_index_level {
 };
 
 enum tel_sim_auth_type {
-	SIM_AUTH_TYPE_IMS = 0x00, /**< IMS Authentication */
-	SIM_AUTH_TYPE_GSM, /**< GSM Authentication */
-	SIM_AUTH_TYPE_3G, /**< 3G Authentication */
-	SIM_AUTH_TYPE_MAX /**< TBD */
+	SIM_AUTH_TYPE_IMS = 0x00,	/**< IMS Authentication */
+	SIM_AUTH_TYPE_GSM,		/**< GSM Authentication */
+	SIM_AUTH_TYPE_3G,		/**< 3G Authentication */
+	SIM_AUTH_RUIM_CAVE,		/**< CDMA CAVE Authentication */
+	SIM_AUTH_RUIM_CHAP,		/**< CDMA CHAP Authentication */
+	SIM_AUTH_RUIM_MNHA,		/**< CDMA MNHA Authentication */
+	SIM_AUTH_RUIM_MIPRRQ,		/**< CDMA MIPRRQ Authentication */
+	SIM_AUTH_RUIM_MNAAA,		/**< CDMA MNAAA Authentication */
+	SIM_AUTH_RUIM_HRPD,		/**< CDMA HRPD Authentication */
+	SIM_AUTH_TYPE_MAX		/**< TBD */
 };
 
 enum tel_sim_auth_result {
@@ -309,152 +352,329 @@ enum tel_sim_auth_result {
 	SIM_AUTH_MAX /**< TBD */
 };
 
+enum tel_sim_power_set_result {
+	SIM_POWER_SET_SUCCESS = 0x00, /**< Change Power State Success */
+	SIM_POWER_SET_FAILURE         /**< Change Power State Failure*/
+};
+
+
+enum tel_sim_sst_service {
+	// service 1 ~ 8
+	SIM_SST_CHV1_DISABLE_FUNC = 0,	/**< CHV1 disable function */
+	SIM_SST_ADN,					/**< abbreviated Dialing number */
+	SIM_SST_FDN,					/**< fixed Dialing number */
+	SIM_SST_SMS,					/**< short message storage */
+	SIM_SST_AOC,					/**< advice of charge */
+	SIM_SST_CCP,					/**< capability configuration parameters */
+	SIM_SST_PLMN_SELECTOR,			/**< plmn selector */
+	SIM_SST_RFU1,					/**< rfu */
+
+	// service 9 ~ 16
+	SIM_SST_MSISDN = 8,				/**< msisdn */
+	SIM_SST_EXT1,					/**< extension1	*/
+	SIM_SST_EXT2,					/**< extension2 */
+	SIM_SST_SMS_PARAMS,				/**< sms parameteres */
+	SIM_SST_LND,					/**< last number dialed */
+	SIM_SST_CELL_BROADCAST_MSG_ID,	/**< cell broadcast message identifier */
+	SIM_SST_GID_LV1,				/**< group identifier level 1 */
+	SIM_SST_GID_LV2,				/**< group identifier level 2 */
+
+	// service 17 ~ 24
+	SIM_SST_SPN = 16,				/**< service provider name */
+	SIM_SST_SDN,					/**< service Dialing number */
+	SIM_SST_EXT3,					/**< extension3 */
+	SIM_SST_RFU2,					/**< rfu */
+	SIM_SST_VGCS_GID_LIST,			/**< vgcs group identifier (EF-VGCS, EF-VGCSS) */
+	SIM_SST_VBS_GID_LIST,			/**< vbs group identifier (EF-VBS, EF-VBSS) */
+	SIM_SST_ENHANCED_MULTI_LV_PRECEDENCE_PREEMPTION_SRVC,	/**< enhanced multi-level precedence and pre-emption service */
+	SIM_SST_AUTO_ANSWER_FOR_EMLPP,	/**< automatic answer fro eMLPP */
+
+	// service 25 ~ 32,
+	SIM_SST_DATA_DOWNLOAD_VIA_SMS_CB = 24,	/**< data download via sms-cb */
+	SIM_SST_DATA_DOWNLOAD_VIA_SMS_PP,		/**< data download via sms-pp */
+	SIM_SST_MENU_SELECTION,					/**< menu selection */
+	SIM_SST_CALL_CTRL,						/**< call control */
+	SIM_SST_PROACTIVE_SIM,					/**< proactive sim command */
+	SIM_SST_CELL_BROADCAST_MSG_ID_RANGES,	/**< cell broadcast message identifier ranges */
+	SIM_SST_BDN,							/**< barred Dialing numbers */
+	SIM_SST_EXT4,							/**< extension 4 */
+
+	// service 33 ~ 40
+	SIM_SST_DEPERSONALIZATION_CTRL_KEYS = 32,	/**< de-personalization control keys */
+	SIM_SST_COOPERATIVE_NETWORK_LIST,			/**< co-operative network list */
+	SIM_SST_SMS_STATUS_REPORTS,					/**< short message status reports */
+	SIM_SST_NIA,					/**< network's indication of alerting in the MS (NIA) */
+	SIM_SST_MO_SMS_CTRL_BY_SIM,		/**< mobile-originated short message control by sim */
+	SIM_SST_GPRS,					/**< gprs */
+	SIM_SST_IMG,					/**< image */
+	SIM_SST_SOLSA,					/**< support of local service area */
+
+	// service 41 ~ 48
+	SIM_SST_USSD_STR_DATA_OBJECT_SUPPORTED_IN_CALL_CTRL = 40,	/**< ussd string data object supported in call control */
+	SIM_SST_RUN_AT_CMD_CMD,							/**< RUN AT COMMAND command */
+	SIM_SST_USER_CTRLED_PLMN_SELECTOR_WACT,			/**< user controlled PLMN selector with Access technology */
+	SIM_SST_OPERATOR_CTRLED_PLMN_SELECTOR_WACT,		/**< operator controlled PLMN selector with Access technology */
+	SIM_SST_HPLMN_SELECTOR_WACT,			/**< HPLMN selector with access technology */
+	SIM_SST_CPBCCH_INFO,					/**< CPBCCH information */
+	SIM_SST_INVESTIGATION_SCAN,				/**< investigation scan */
+	SIM_SST_EXTENDED_CAPA_CONF_PARAMS,		/**< extended capability configuration parameters */
+
+	//	service 49 ~ 56
+	SIM_SST_MEXE = 48,				/**< MExE */
+	SIM_SST_RPLMN_LAST_USED_ACCESS_TECH,	/**< RPLMN last used access technology */
+	SIM_SST_PLMN_NETWORK_NAME,		/*PLMN Network Name*/
+	SIM_SST_OPERATOR_PLMN_LIST,		/*Operator PLMN List*/
+	SIM_SST_MBDN,					/*Mailbox Dialling Numbers*/
+	SIM_SST_MWIS,					/*Message Waiting Indication Status*/
+	SIM_SST_CFIS,					/*Call Forwarding Indication Status*/
+	SIM_SST_SPDI,					/*Service Provider Display Information*/
+};
+
+enum tel_sim_ust_service {
+	// service 1 ~ 8
+	SIM_UST_LOCAL_PB = 0,		/**< local phone book */
+	SIM_UST_FDN,				/**< fixed Dialing number */
+	SIM_UST_EXT2,				/**< extension2 */
+	SIM_UST_SDN,				/**< service Dialing number */
+	SIM_UST_EXT3,				/**< extension3 */
+	SIM_UST_BDN,				/**< barred Dialing numbers */
+	SIM_UST_EXT4,				/**< extension 4 */
+	SIM_UST_OUTGOING_CALL_INFO,	/**< outgoing call information */
+
+	// service 9 ~ 16
+	SIM_UST_INCOMING_CALL_INFO = 8,		/**< incoming call information */
+	SIM_UST_SMS,						/**< short message storage */
+	SIM_UST_SMS_STATUS_REPORTS,			/**< short message status reports */
+	SIM_UST_SMS_PARAMS,					/**< sms parameteres */
+	SIM_UST_AOC,						/**< advice of charge */
+	SIM_UST_CCP,						/**< capability configuration parameters */
+	SIM_UST_CELL_BROADCAST_MSG_ID,		/**< cell broadcast message identifier */
+	SIM_UST_CELL_BROADCAST_MSG_ID_RANGES,	/**< cell broadcast message identifier ranges */
+
+	// service 17 ~ 24
+	SIM_UST_GID_LV1 = 16,						/**< group identifier level 1 */
+	SIM_UST_GID_LV2,							/**< group identifier level 2 */
+	SIM_UST_SPN,								/**< service provider name */
+	SIM_UST_USER_CTRLED_PLMN_SELECTOR_WACT,		/**< user controlled PLMN selector with Access technology */
+	SIM_UST_MSISDN,											/**< msisdn */
+	SIM_UST_IMG,											/**< image */
+	SIM_UST_SOLSA,											/**< support of local service area */
+	SIM_UST_ENHANCED_MULTI_LV_PRECEDENCE_PREEMPTION_SRVC,	/**< enhanced multi-level precedence and pre-emption service */
+
+	// service 25 ~ 32
+	SIM_UST_AUTO_ANSWER_FOR_EMLPP = 24,	/**< automatic answer fro eMLPP */
+	SIM_UST_RFU1,						/**< rfu */
+	SIM_UST_GSM_ACCESS,					/**< gsm access */
+	SIM_UST_DATA_DOWNLOAD_VIA_SMS_PP,	/**< data download via sms-pp */
+	SIM_UST_DATA_DOWNLOAD_VIA_SMS_CB,	/**< data download via sms-cb */
+	SIM_UST_CALL_CTRL,					/**< call control by usim*/
+	SIM_UST_MO_SMS_CTRL,				/**< mobile-originated short message control by usim */
+	SIM_UST_RUN_AT_CMD_CMD,				/**< RUN AT COMMAND command */
+
+	// service 33 ~ 40
+	SIM_UST_SHALL_BE_SET_TO_ONE = 32,	/**< shall be set to 1 */
+	SIM_UST_ENABLED_SRVC_TABLE,			/**< enabled service table */
+	SIM_UST_ACL,						/**< APN control list */
+	SIM_UST_DEPERSONALIZATION_CTRL_KEYS,	/**< de-personalization control keys */
+	SIM_UST_COOPERATIVE_NETWORK_LIST,		/**< co-operative network list */
+	SIM_UST_GSM_SEC_CONTEXT,				/**< gsm security context */
+	SIM_UST_CPBCCH_INFO,					/**< CPBCCH information */
+	SIM_UST_INVESTIGATION_SCAN,				/**< investigation scan */
+
+	// service 41 ~ 48
+	SIM_UST_MEXE = 40,								/**< MExE */
+	SIM_UST_OPERATOR_CTRLED_PLMN_SELECTOR_WACT,		/**< operator controlled PLMN selector with Access technology */
+	SIM_UST_HPLMN_SELECTOR_WACT,	/**< HPLMN selector with access technology */
+	SIM_UST_EXT5,					/**< extension 5 */
+	SIM_UST_PLMN_NETWORK_NAME,		/*PLMN Network Name*/
+	SIM_UST_OPERATOR_PLMN_LIST,		/*Operator PLMN List*/
+	SIM_UST_MBDN,					/*Mailbox Dialling Numbers*/
+	SIM_UST_MWIS,					/*Message Waiting Indication Status*/
+
+	// service 49 ~ 56
+	SIM_UST_CFIS = 48,						/*Call Forwarding Indication Status*/
+	SIM_UST_RPLMN_LAST_USED_ACCESS_TECH,	/**< RPLMN last used access technology */
+	SIM_UST_SPDI,							/*Service Provider Display Information*/
+	SIM_UST_MMS,							/**< multi media messaging service */
+	SIM_UST_EXT8,							/**< extension 8 */
+	SIM_UST_CALL_CTRL_ON_GPRS,				/**< call control on gprs by usim */
+	SIM_UST_MMS_USER_CONNECTIVITY_PARAMS,	/**< mms user connectivity parameters */
+	SIM_UST_NIA,							/**< network's indication of alerting in the MS (NIA) */
+
+	// service 57 ~ 64
+	SIM_UST_VGCS_GID_LIST,			/**< vgcs group identifier List (EF-VGCS, EF-VGCSS) */
+	SIM_UST_VBS_GID_LIST,			/**< vbs group identifier List (EF-VBS, EF-VBSS) */
+	SIM_UST_PSEUDONYM,
+	SIM_UST_USER_CTRLED_PLMN_SELECTOR_IWLAN,		/**< user controlled PLMN selector for I-WLAN access */
+	SIM_UST_OPERATOR_CTRLED_PLMN_SELECTOR_IWLAN,		/**< operator controlled PLMN selector for I-WLAN access */
+	SIM_UST_USER_CTRLED_WSID_LIST,
+	SIM_UST_OPERATOR_CTRLED_WSID_LIST,
+	SIM_UST_VGCS_SEC,
+};
+
+/**
+ * @enum tel_sim_cdma_service
+ *  This enumeration defines the list of CST services in CDMA Service Table.
+ */
+enum tel_sim_cdma_service {
+	// service 1 ~ 8
+	SIM_CDMA_ST_CHV_DISABLE = 0,	/**< CHV Disable Option*/
+	SIM_CDMA_ST_ADN,		/**< Abbreviated Dialing number */
+	SIM_CDMA_ST_FDN,		/**< Fixed Dialing number */
+	SIM_CDMA_ST_SMS,		/**< short message storage  */
+	SIM_CDMA_ST_HRPD,		/**< HRPD*/
+	SIM_CDMA_ST_EPB,		/**< Enhanced Phone Book */
+	SIM_CDMA_ST_MMD,		/**< Multimedia domain */
+	SIM_CDMA_ST_EUIMID,		/**< SF_EUIMID- based  EUIMID*/
+
+	// service 9 ~ 16
+	SIM_CDMA_ST_MEID = 8,		/**< MEID */
+	SIM_CDMA_ST_EXT1,		/**< Extension1 */
+	SIM_CDMA_ST_EXT2,		/**< Extension2 */
+	SIM_CDMA_ST_SMSP,		/**< sms parameteres */
+	SIM_CDMA_ST_LND,		/**< Last number dialled */
+	SIM_CDMA_ST_SCP,		/**< Service Category Program for BC-SMS */
+	SIM_CDMA_ST_RFU1,		/**< RFU */
+	SIM_CDMA_ST_RFU2,		/**< RFU */
+
+	// service 17 ~ 24
+	SIM_CDMA_ST_HSPN = 16,		/**< CDMA Home Service Provider Name */
+	SIM_CDMA_ST_SDN,		/**< Service Dialing number */
+	SIM_CDMA_ST_EXT3,		/**< Extension3 */
+	SIM_CDMA_ST_3GPDSIP,		/**< 3GPD-SIP */
+	SIM_CDMA_ST_RFU3,		/**< RFU */
+	SIM_CDMA_ST_RFU4,		/**< RFU */
+	SIM_CDMA_ST_RFU5,		/**< RFU */
+	SIM_CDMA_ST_RFU6,		/**< RFU */
+
+	// service 25 ~ 32
+	SIM_CDMA_ST_DDSMSB = 24,	/**< Data download by SMS broadcast */
+	SIM_CDMA_ST_DDSMSPP,		/**< Data download by SMS PP */
+	SIM_CDMA_ST_MENU,		/**< Menu Selection */
+	SIM_CDMA_ST_CALLC,		/**< Call Control */
+	SIM_CDMA_ST_PROACTIVE,		/**< Proactive RUIM */
+	SIM_CDMA_ST_AKA,		/**< AKA*/
+	SIM_CDMA_ST_RFU7,		/**< RFU */
+	SIM_CDMA_ST_RFU8,		/**< RFU */
+
+	// service 33 ~ 40
+	SIM_CDMA_ST_RFU9 = 32,		/**< RFU */
+	SIM_CDMA_ST_RFU10,		/**< RFU */
+	SIM_CDMA_ST_RFU11,		/**< RFU */
+	SIM_CDMA_ST_RFU12,		/**< RFU */
+	SIM_CDMA_ST_RFU13,		/**< RFU */
+	SIM_CDMA_ST_3GPDMIP,		/**< 3GPD- MIP */
+	SIM_CDMA_ST_BCMCS,		/**< BCMCS */
+	SIM_CDMA_ST_MMS,		/**< Multimedia messaging service */
+
+	// service 41 ~ 48
+	SIM_CDMA_ST_EXT8 = 40,		/**< Extension 8 */
+	SIM_CDMA_ST_MMSUCP,		/**< MMS User Connectivity Parameters */
+	SIM_CDMA_ST_AA,			/**< Application Authentication */
+	SIM_CDMA_ST_GIL1,		/**< Group Identifier Level 1 */
+	SIM_CDMA_ST_GIL2,		/**< Group Identifier Level 2 */
+	SIM_CDMA_ST_DEPERSO,		/**< Depersonalisation control keys */
+	SIM_CDMA_ST_CNL			/**< Co-operative Network List */
+};
+
+/**
+ * @enum tel_sim_csim_service
+ *  This enumeration defines the list of CST services in CSIM Service Table. (CSIM)
+ */
+enum tel_sim_csim_service {
+	// service 1 ~ 8
+	SIM_CSIM_ST_LOCAL_PHONEBOOK = 0,	/**< Local Phone book */
+	SIM_CSIM_ST_FDN,			/**< Fixed Dialing Numbers (FDN) */
+	SIM_CSIM_ST_EXT2,			/**< Extension 2 */
+	SIM_CSIM_ST_SDN,			/**< Service Dialing Numbers (SDN)  */
+	SIM_CSIM_ST_EXT3,			/**< Extension 3 */
+	SIM_CSIM_ST_SMS,			/**< Short Message Storage (SMS) */
+	SIM_CSIM_ST_SMSP,			/**< Short Message Parameters */
+	SIM_CSIM_ST_HRPD,			/**< HRPD */
+
+	// service 9 ~ 16
+	SIM_CSIM_ST_SCP = 8,			/**< Service Category Program for BC-SMS */
+	SIM_CSIM_ST_HSPN,			/**< CDMA Home Service Provider Name */
+	SIM_CSIM_ST_DDSMSB,			/**< Data Download via SMS Broadcast */
+	SIM_CSIM_ST_DDSMSPP,			/**< Data Download via SMS-PP */
+	SIM_CSIM_ST_CALLC,			/**< Call Control */
+	SIM_CSIM_ST_3GPDSIP,			/**< 3GPD-SIP */
+	SIM_CSIM_ST_3GPDMIP,			/**< 3GPD-MIP */
+	SIM_CSIM_ST_AKA,			/**< AKA */
+
+	// service 17 ~ 24
+	SIM_CSIM_ST_IP_LCS = 16,		/**< IP-based Location Services (LCS) */
+	SIM_CSIM_ST_BCMCS,			/**< BCMCS */
+	SIM_CSIM_ST_MMS,			/**< Multimedia Messaging Service (MMS) */
+	SIM_CSIM_ST_EXT8,			/**< Extension 8 */
+	SIM_CSIM_ST_MMSUCP,			/**< MMS User Connectivity Parameters */
+	SIM_CSIM_ST_AA,				/**< Application Authentication */
+	SIM_CSIM_ST_GIL1,			/**< Group Identifier Level 1 */
+	SIM_CSIM_ST_GIL2,			/**< Group Identifier Level 2 */
+
+	// service 25 ~ 32
+	SIM_CSIM_ST_DEPERSO = 24,		/**< De-Personalization Control Keys */
+	SIM_CSIM_ST_CNL,			/**< Cooperative Network List */
+	SIM_CSIM_ST_OCI,			/**< Outgoing Call Information (OCI) */
+	SIM_CSIM_ST_ICI,			/**< Incoming Call Information (ICI) */
+	SIM_CSIM_ST_EXT5,			/**< Extension 5 */
+	SIM_CSIM_ST_MM_STORAGE,			/**< Multimedia Storage */
+	SIM_CSIM_ST_IMG,			/**< Image (EFIMG) */
+	SIM_CSIM_ST_EST,			/**< Enabled Services Table */
+
+	// service 33 ~ 41
+	SIM_CSIM_ST_CCP = 32,			/**< Capability Configuration Parameters (CCP) */
+	SIM_CSIM_ST_EUIMIDl,			/**< SF_EUIMID-based EUIMID */
+	SIM_CSIM_ST_3GPD_EXT,			/**< Messaging and 3GPD Extensions */
+	SIM_CSIM_ST_ROOT_CERTI,			/**< Root Certificates */
+	SIM_CSIM_ST_WAP,			/**< WAP Browser */
+	SIM_CSIM_ST_JAVA,			/**< Java */
+	SIM_CSIM_ST_RSVD_CDG1,			/**< Reserved for CDG */
+	SIM_CSIM_ST_RSVD_CDG2,			/**< Reserved for CDG */
+	SIM_CSIM_ST_IPV6 = 40,			/**< IPv6 */
+};
+
+
+enum tel_sim_refresh_command{
+	SIM_REFRESH_CMD_INIT_AND_FULL_FCN = 0, /**<	command qualifier for REFRESH SIM INIT AND FULL FILE CHANGE_NOTIFICATION		*/
+	SIM_REFRESH_CMD_FCN = 1, /**<	command qualifier for REFRESH FILE CHANGE NOTIFICATION		*/
+	SIM_REFRESH_CMD_INIT_AND_FCN = 2, /**<	command qualifier for REFRESH SIM INIT AND FILE CHANGE NOTIFICATION		*/
+	SIM_REFRESH_CMD_INIT = 3, /**<	command qualifier for REFRESH SIM INIT		*/
+	SIM_REFRESH_CMD_RESET = 4, /**<	command qualifier for REFRESH SIM RESET		*/
+	SIM_REFRESH_CMD_3G_APPLICATION_RESET = 5, /**<	command qualifier for REFRESH 3G APPLICATION RESET		*/
+	SIM_REFRESH_CMD_3G_SESSION_RESET = 6, /**<	command qualifier for REFRESH 3G SESSION RESET		*/
+	SIM_REFRESH_CMD_RESERVED = 0xFF /**<	command qualifier for REFRESH RESERVED		*/
+};
+
+enum tel_sim_cst_type {
+	SIM_CDMA_SVC_TABLE = 0,
+	SIM_CSIM_SVC_TABLE,
+	SIM_MAX_SVC_TABLE
+};
+
 struct tel_sim_sst {
-	// service 1
-	char bPIN1DisableFunction; /**< PIN1 disable function */
-	char bAdn; /**< abbreviated Dialing number */
-	char bFdn; /**< fixed Dialing number */
-	char bSms; /**< short message storage */
-	char bAoc; /**< advice of charge */
-	char bCcp; /**< capability configuration parameters */
-	char bPlmnSelector; /**< plmn selector */
-	char bRfu1; /**< rfu */
-
-	// service 9
-	char bMsisdn; /**< msisdn */
-	char bExtension1; /**< extension1	*/
-	char bExtension2; /**< extension2 */
-	char bSmsParams; /**< sms parameteres */
-	char blnd; /**< last number dialed */
-	char bCellBroadCastMsgId; /**< cell broadcast message identifier */
-	char bGroupIdLevel1; /**< group identifier level 1 */
-	char bGroupIdLevel2; /**< group identifier level 2 */
-
-	// service 17
-	char bSpn; /**< service provider name */
-	char bSdn; /**< service Dialing number */
-	char bExtension3; /**< extension3 */
-	char bRfu2; /**< rfu */
-	char bVgcsGroupIdList; /**< vgcs group identifier (EF-VGCS, EF-VGCSS) */
-	char bVbsGroupIDList; /**< vbs group identifier (EF-VBS, EF-VBSS) */
-	char bEnhancedMultilevelPrecedencePreemptionService; /**< enhanced multi-level precedence and pre-emption service */
-	char bAutoAnswerForeMLPP; /**< automatic answer fro eMLPP */
-
-	// service 25
-	char bSmsCbdDataDownload; /**< data download via sms-cb */
-	char bSmsPpDataDownload; /**< data download via sms-pp */
-	char bMenuSelection; /**< menu selection */
-	char bCallControl; /**< call control */
-	char bProactiveSimCommand; /**< proactive sim command */
-	char bCellBroadcastMsgIdRanges; /**< cell broadcast message identifier ranges */
-	char bBdn; /**< barred Dialing numbers */
-	char bExtension4; /**< extension 4 */
-
-	// service 33
-	char bDePersonalizedControlKeys; /**< de-personalization control keys */
-	char bCoOperativeNetworkList; /**< co-operative network list */
-	char bSmsr; /**< short message status reports */
-	char bNetworkAlertIndInMS; /**< network's indication of alerting in the MS */
-	char bMoSMSControl; /**< mobile-originated short message control by sim */
-	char bGPRS; /**< gprs */
-	char bImage; /**< image */
-	char bSolsa; /**< support of local service area */
-
-	//	service 41
-	char bUSSDSupportedInCallControl; /**< ussd string data object supported in call control */
-	char bRunAtCommand; /**< RUN AT COMMAND command */
-	char bUserControlledPLMNSelectorAccessTech; /**< user controlled PLMN selector with Access technology */
-	char bOperatorControlledPlmnSelectorAccessTech; /**< operator controlled PLMN selector with Access technology */
-	char bHplmnSelectorAccessTech; /**< HPLMN selector with access technology */
-	char bCPBCCHInfo; /**< CPBCCH information */
-	char bInvestigationScan; /**< investigation scan */
-	char bExtenedCapaConfigParams; /**< extended capability configuration parameters */
-
-	//	service 49
-	char bMexe; /**< MExE */
-	char bRplmnLastUsedAccessTech; /**< RPLMN last used access technology */
+	char service[SIM_SST_SERVICE_CNT_MAX];	// should accessed with 'enum tel_sim_sst_service' as index
 };
 
 struct tel_sim_ust {
-	// service 1
-	char bLocalPhoneBook; /**< local phone book */
-	char bFdn; /**< fixed Dialing number */
-	char bExtension2; /**< extension 2 */
-	char bSdn; /**< service Dialing number */
-	char bExtension3; /**< extension 3 */
-	char bBdn; /**< barred Dialing numbers */
-	char bExtension4; /**< extension 4 */
-	char bOCIOCT; /**< outgoing call information */
+	char service[SIM_UST_SERVICE_CNT_MAX];	// should accessed with 'enum tel_sim_ust_service' as index
+};
 
-	//	service 9
-	char bIciIct; /**< incoming call information */
-	char bSms; /**< short message storage */
-	char bSmsr; /**< short message status reports */
-	char bSMSP; /**< short message service parameters */
-	char bAoc; /**< advice of charge */
-	char bCcp; /**< capability config parameters */
-	char bCellBroadcastMsgId; /**< cell broadcast message identifier */
-	char bCellBroadcastMsgIdRanges; /**< cell broadcast message identifier charge */
+struct tel_sim_cst {
+	enum tel_sim_cst_type cdma_svc_table;
+	union {
+		char cdma_service[SIM_CDMA_ST_SERVICE_CNT_MAX];	/**< should accessed with 'enum tel_sim_cdma_service' as index */
+		char csim_service[SIM_CSIM_ST_SERVICE_CNT_MAX];	/**< should accessed with 'enum tel_sim_csim_service' as index */
+	} service;
+};
 
-	//	sevice 17
-	char bGroupIdLevel1; /**< group identifier level 1 */
-	char bGroupIdLevel2; /**< group identifier level 2 */
-	char bSpn; /**< service provide name */
-	char bUserControlledPLMNSelectorAccessTech; /**< user controlled plmn selector with access technology */
-	char bMsisdn; /**< msisdn */
-	char bImage; /**< image */
-	char bSolsa;
-	char bEnhancedMultilevelPrecedencePreemptionService; /**< enhanced multi-level precedence and pre-emption service */
-
-	//	service 25
-	char bAutoAnswerForeMLPP; /**< automatic answer fro eMLPP */
-	char bRfu1;
-	char bGsmAccess; /**< gsm access */
-	char bSmsPpDataDownload; /**< data download via sms-pp */
-	char bSmsCbdDataDownload; /**< data download via sms-cb */
-	char bUsimCallControl; /**< usim call control */
-	char bUsimMoSmsControl; /**< mo-sms control by usim */
-	char bRunAtCommand; /**< RUN AT COMMAND command */
-
-	//	service 33
-	char bShallBeSetToOne; /**< shall be set to 1 */
-	char bEnabledServiceTable; /**< enabled service table */
-	char bAcl; /**< APN control list */
-	char bDePersonalizedControlKeys; /**< de-personalization control keys */
-	char bCoOperativeNetworkList; /**< co-operative network list */
-	char bGsmSecurityContext; /**< gsm security context */
-	char bCpbcchiInformation; /**< cpbcch information */
-	char bInvestigationScan; /**< investigation scan */
-
-	//	service 41
-	char bMexe; /**< mexe */
-	char bOperatorControlledPlmnSelectorAccessTech; /**< Operator controlled PLMN selector with Access Technology */
-	char bHplmnSelectorAccessTech; /**< HPLMN selector with access technology */
-	char bExtension5; /**< extension 5 */
-	char bPlmnNetworkName; /**< plmn network name */
-	char bOperatorPlmnList; /**< operator plmn list */
-	char bMailBoxDiallingNumbers; /**< mailbox Dialing numbers */
-	char bMsgWaitingIndStatus; /**< message waiting indication status */
-
-	//	service 49
-	char bCallForwardingIndicationStatus; /**< call forwarding indication status */
-	char bRplmnLastUsedAccessTech; /**< RPLMN last used access technology */
-	char bServiceProviderDisplayInfo; /**< service provider display information */
-	char bMms; /**< multimedia messaging service */
-	char bExtension8; /**< extension 8 */
-	char bUsimGpsCallControl; /**< call control on gprs by usim */
-	char bMmsUserConnectivityParameters; /**< mms user connectivity parameters */
-	char bNia; /**< Network's indication of alerting in the MS (NIA) */
-
-	//service 57
-	char bVgcsIdList; /**< VGCS Group Identifier List (EFVGCS and EFVGCSS) */
-	char bVbsGroupId; /**< VBS Group Identifier List (EFVBS and EFVBSS)*/
-	char bPseudonym;
-	char bUserCtrlPlmnSelectorForWlan;
-	char bOperatorCtrlPlmnSelectorForWlan;
-	char bUserCtrlWsidList;
-	char bOperatorCtrlWsidList;
-	char bVgcsSecurity;
+struct tel_sim_service_table {
+	enum tel_sim_type sim_type;
+	union {
+		struct tel_sim_sst sst;
+		struct tel_sim_ust ust;
+		struct tel_sim_cst cst;
+	} table;
 };
 
 struct tel_sim_est {
@@ -469,176 +689,127 @@ struct tel_sim_imsi {
 };
 
 struct tel_sim_dialing_number {
-	int AlphaIDMaxLength; /**< alpha max length in SIM - READ ONLY*/
-	int AlphaIdLength; /**< length of alpha identifier */
-	char AlphaId[SIM_XDN_ALPHA_ID_LEN_MAX + 1]; /**< Alpha Identifier */
-	int DiallingNumMaxLength; /**< max length of dialing number filed in SIM - READ ONLY */
-	int DiallingnumLength; /**< Length of BCD number/SSC contents */
-	enum tel_sim_ton TypeOfNumber; /**< TON */
-	enum tel_sim_npi NumberingPlanIdent; /**< NPI */
-	char DiallingNum[SIM_XDN_NUMBER_LEN_MAX + 1]; /**< Dialing Number/SSC String */
-	unsigned char CapaConfigId; /**< Capability/Configuration Identifier */
-	unsigned char Ext1RecordId; /**< Extensiion1 Record Identifier */
+	int alpha_id_max_len; /**< alpha max length in SIM - READ ONLY*/
+	char alpha_id[SIM_XDN_ALPHA_ID_LEN_MAX + 1]; /**< Alpha Identifier */
+	enum tel_sim_ton ton; /**< Type Of Number */
+	enum tel_sim_npi npi; /**< Number Plan Identity */
+	char num[SIM_XDN_NUMBER_LEN_MAX + 1]; /**< Dialing Number/SSC String */
+	unsigned char cc_id; /**< Capability/Configuration Identifier */
+	unsigned char ext1_id; /**< Extensiion1 Record Identifier */
 };
 
 struct tel_sim_gid {
 	int GroupIdentifierLen; /**< Group identifier length */
-	char szGroupIdentifier[SIM_GROUP_IDENTIFIER_LEN_MAX]; /**< Group identifier */
-};
-
-struct tel_sim_mbi {
-	/*	'00' - no mailbox dialing number associated with message waiting indication group type.
-	 'xx' - record number in EFMBDN associated with message waiting indication group type.
-	 */
-	unsigned char VoiceMailBoxIdentifier; /**< voice mailbox identifier*/
-	unsigned char FaxMailBoxIdentifier; /**< FAX mailbox identifier*/
-	unsigned char EmailMailBoxIdentifier; /**< email mailbox identifier*/
-	unsigned char VideoMailBoxIdentifier; /**< video mailbox identifier*/
-	unsigned char OtherMailBoxIdentifier; /**< other mailbox identifier*/
-};
-
-struct tel_sim_cphs_mailbox {
-	struct tel_sim_dialing_number voice_line1; /**< the array of mailbox number */
-	struct tel_sim_dialing_number voice_line2; /**< the array of mailbox number */
-	struct tel_sim_dialing_number video; /**< the array of mailbox number */
-	struct tel_sim_dialing_number fax; /**< the array of mailbox number */
-};
-
-struct tel_sim_cfis {
-	unsigned char MspNumber; /**< MSP number*/
-	unsigned char Status; /**< call forwarding indication status*/
-	int DiallingnumLen; /**< Length of BCD number/SSC contents*/
-	enum tel_sim_ton TypeOfNumber; /**< TON*/
-	enum tel_sim_npi NumberingPlanIdent; /**< NPI*/
-	char DiallingNum[SIM_XDN_NUMBER_LEN_MAX + 1];/**< Dialing Number/SSC String*/
-};
-
-struct tel_sim_cphs_cf {
-	int bCallForwardUnconditionalLine1; /**< CallForwardUnconditionalLine 1 */
-	int bCallForwardUnconditionalLine2; /**< CallForwardUnconditionalLine 2 */
-	int bCallForwardUnconditionalFax; /**< CallForwardUnconditional FAX */
-	int bCallForwardUnconditionalData; /**<CallForwardUnconditional data*/
-	int bCallForwardUnconditionalSms; /**< CallForwardUnconditional SMS */
-	int bCallForwardUnconditionalBearer; /**< CallForwardUnconditional bearer*/
-};
-
-struct tel_sim_mw {
-	unsigned char IndicatorType; /**< Indicator Type*/
-	int voice_count; /**< VoiceMail Count*/
-	int fax_count; /**< FAX Count*/
-	int email_count; /**< Email Count*/
-	int other_count; /**< Other Count*/
-	int video_count; /**< VideoMail Count*/
-};
-
-struct tel_sim_cphs_mw {
-	gboolean b_voice1; /**< VoiceMsgLine1 message waiting flag */
-	gboolean b_voice2; /**< VoiceMsgLine2 message waiting flag */
-	gboolean b_fax; /**< FAX message waiting flag */
-	gboolean b_data; /**< Data message waiting flag */
+	unsigned char szGroupIdentifier[SIM_GROUP_IDENTIFIER_LEN_MAX]; /**< Group identifier */
 };
 
 struct tel_sim_cphs_svc_call_offering_s {
-	int bCallForwardingUnconditional; /**< CallForwarding Unconditional */
-	int bCallForwardingOnUserBusy; /**< CallForwarding On UserBusy */
-	int bCallForwardingOnNoReply; /**< CallForwarding On NoReply */
-	int bCallForwardingOnUserNotReachable; /**< CallForwarding On User Not Reachable */
-	int bCallTransfer; /**< Call Transfer */
+	int b_call_forwarding_unconditional; /**< CallForwarding Unconditional */
+	int b_call_forwarding_on_user_busy; /**< CallForwarding On UserBusy */
+	int b_call_forwarding_on_no_reply; /**< CallForwarding On NoReply */
+	int b_call_forwarding_on_user_not_reachable; /**< CallForwarding On User Not Reachable */
+	int b_call_transfer; /**< Call Transfer */
 };
 
 struct tel_sim_cphs_svc_call_restriction_s {
-	int bBarringOfAllOutgoingCalls; /**< Barring Of All Outgoing Calls*/
-	int bBarringOfOutgoingInternationalCalls; /**< Barring Of Outgoing International Calls */
-	int bBarringOfOutgoingInternationalCallsExceptHplmn; /**< Barring Of Outgoing International Calls Except HPLMN */
-	int bBarringOfAllIncomingCallsRoamingOutsideHplmn; /**< Barring Of All Incoming Calls Roaming Outside HPLMN */
-	int bBarringOfIncomingCallsWhenRoaming; /**< Barring Of IncomingCalls When Roaming */
+	int b_barring_of_all_outgoing_calls; /**< Barring Of All Outgoing Calls*/
+	int b_barring_of_outgoing_international_calls; /**< Barring Of Outgoing International Calls */
+	int b_barring_of_outgoing_international_calls_except_hplmn; /**< Barring Of Outgoing International Calls Except HPLMN */
+	int b_barring_of_all_incoming_calls_roaming_outside_hplmn; /**< Barring Of All Incoming Calls Roaming Outside HPLMN */
+	int b_barring_of_incoming_calls_when_roaming; /**< Barring Of IncomingCalls When Roaming */
 };
 
 struct tel_sim_cphs_svc_other_ss_s {
-	int bMultiPartyService; /**< MultiPartyService*/
-	int bClosedUserGroup; /**< ClosedUserGroup*/
-	int bAdviceOfCharge; /**< AdviceOfCharge*/
-	int bPreferentialClosedUserGroup; /**< PreferentialClosedUserGroup*/
-	int bClosedUserGroupOutgoingAccess; /**< ClosedUserGroupOutgoingAccess*/
+	int b_multi_party_service; /**< MultiPartyService*/
+	int b_closed_user_group; /**< ClosedUserGroup*/
+	int b_advice_of_charge; /**< AdviceOfCharge*/
+	int b_preferential_closed_user_group; /**< PreferentialClosedUserGroup*/
+	int b_closed_user_group_outgoing_access; /**< ClosedUserGroupOutgoingAccess*/
 };
 
 struct tel_sim_cphs_svc_call_complete_s {
-	int bCallHold; /**< Call Hold*/
-	int bCallWaiting; /**< Call Waiting*/
-	int bCompletionOfCallToBusySubscriber; /**< Completion Of Call To Busy Subscriber*/
-	int bUserUserSignalling; /**< User User Signaling*/
+	int b_call_hold; /**< Call Hold*/
+	int b_call_waiting; /**< Call Waiting*/
+	int b_completion_of_call_to_busy_subscriber; /**< Completion Of Call To Busy Subscriber*/
+	int b_user_user_signalling; /**< User User Signaling*/
 };
 
 struct tel_sim_cphs_svc_teleservices_s {
-	int bShortMessageMobileOriginated; /**< Short Message Mobile Originated*/
-	int bShortMessageMobileTerminated; /**< Short Message Mobile Terminated*/
-	int bShortMessageCellBroadcast; /**< Short Message Cell Broadcast*/
-	int bShortMessageReplyPath; /**< Short  Message Reply Path*/
-	int bShortMessageDeliveryConf; /**< Short Message Delivery Conf*/
-	int bShortMessageProtocolIdentifier; /**< Short Message Protocol Identifier*/
-	int bShortMessageValidityPeriod; /**< Short Message Validity Period*/
+	int b_short_message_mobile_originated; /**< Short Message Mobile Originated*/
+	int b_short_message_mobile_terminated; /**< Short Message Mobile Terminated*/
+	int b_short_message_cell_broadcast; /**< Short Message Cell Broadcast*/
+	int b_short_message_reply_path; /**< Short	Message Reply Path*/
+	int b_short_message_delivery_conf; /**< Short Message Delivery Conf*/
+	int b_short_message_protocol_identifier; /**< Short Message Protocol Identifier*/
+	int b_short_message_validity_period; /**< Short Message Validity Period*/
 };
 
 struct tel_sim_cphs_svc_cphs_teleservices_s {
-	int bAlternativeLineService; /**< Alternative Line Service*/
+	int b_alternative_line_service; /**< Alternative Line Service*/
 };
 
 struct tel_sim_cphs_svc_cphs_features_s {
-	int bStringServiceTable; /**< String Service Table*/
+	int b_string_service_table; /**< String Service Table*/
 };
 
 struct tel_sim_cphs_svc_number_identifier_s {
-	int bCallingLineIdentificationPresent; /**< Calling Line Identification Present*/
-	int bConnectedLineIdentificationRestrict; /**< Connected Line Identification Restrict*/
-	int bConnectedLineIdentificationPresent; /**< Connected Line Identification Present*/
-	int bMaliciousCallIdentifier; /**< Malicious Call Identifier*/
-	int bCallingLineIdentificationSend; /**< Calling Line Identification Send*/
-	int bCallingLineIdentificationBlock; /**< Calling Line Identification Block*/
+	int b_calling_line_identification_present; /**< Calling Line Identification Present*/
+	int b_connected_line_identification_restrict; /**< Connected Line Identification Restrict*/
+	int b_connected_line_identification_present; /**< Connected Line Identification Present*/
+	int b_malicious_call_identifier; /**< Malicious Call Identifier*/
+	int b_calling_line_identification_send; /**< Calling Line Identification Send*/
+	int b_calling_line_identification_block; /**< Calling Line Identification Block*/
 };
 
 struct tel_sim_cphs_svc_phase_services_s {
-	int bMenuForGprs; /**< Menu For group*/
-	int bMenuForHighSpeedCsd; /**< Menu For HighSpeedCsd*/
-	int bMenuForVoiceGroupCall; /**< Menu For VoiceGroupCall*/
-	int bMenuForVoiceBroadcastService; /**< Menu For VoiceBroadcastService*/
-	int bMenuForMultipleSubscriberProfile; /**< Menu For MultipleSubscriberProfile*/
-	int bMenuForMultipleBand; /**< Menu For MultipleBand*/
+	int b_menu_for_gprs; /**< Menu For GPRS*/
+	int b_menu_for_high_speed_csd; /**< Menu For HighSpeedCsd*/
+	int b_menu_for_voice_group_call; /**< Menu For VoiceGroupCall*/
+	int b_menu_for_voice_broadcast_service; /**< Menu For VoiceBroadcastService*/
+	int b_menu_for_multiple_subscriber_profile; /**< Menu For MultipleSubscriberProfile*/
+	int b_menu_for_multiple_band; /**< Menu For MultipleBand*/
 };
 
 struct tel_sim_cphs_svc_value_added_services_s {
-	int bRestrictMenuForManualSelection; /**< RestrictMenu For ManualSelection*/
-	int bRestrictMenuForVoiceMail; /**< RestrictMenu For VoiceMail*/
-	int bRestrictMenuForMoSmsAndPaging; /**< RestrictMenu For MoSmsAndPaging*/
-	int bRestrictMenuForMoSmsWithEmialType; /**< RestrictMenu For MoSmsWithEmialType*/
-	int bRestrictMenuForFaxCalls; /**< RestrictMenu For FaxCalls*/
-	int bRestrictMenuForDataCalls; /**< RestrictMenu For DataCalls*/
-	int bRestrictMenuForChangeLanguage; /**< RestrictMenu For ChangeLanguage*/
+	int b_restrict_menu_for_manual_selection; /**< RestrictMenu For ManualSelection*/
+	int b_restrict_menu_for_voice_mail; /**< RestrictMenu For VoiceMail*/
+	int b_restrict_menu_for_mo_sms_and_paging; /**< RestrictMenu For MoSmsAndPaging*/
+	int b_restrict_menu_for_mo_sms_with_emial_type; /**< RestrictMenu For MoSmsWithEmialType*/
+	int b_restrict_menu_for_fax_calls; /**< RestrictMenu For FaxCalls*/
+	int b_restrict_menu_for_data_calls; /**< RestrictMenu For DataCalls*/
+	int b_restrict_menu_for_change_language; /**< RestrictMenu For ChangeLanguage*/
 };
 
 struct tel_sim_cphs_svc_information_numbers_s {
-	int bInformationNumbers; /**< Information Numbers*/
+	int b_information_numbers; 	/**< Information Numbers*/
 };
 
 struct tel_sim_cphs_csp_entry_s {
-	enum tel_sim_cphs_csp_group CustomerServiceGroup; /**< customer service group*/
+	enum tel_sim_cphs_csp_group customer_service_group; /**< customer service group*/
 	union {
-		struct tel_sim_cphs_svc_call_offering_s CallOffering; /**< call offering*/
-		struct tel_sim_cphs_svc_call_restriction_s CallRestriction; /**< call restriction*/
-		struct tel_sim_cphs_svc_other_ss_s OtherSuppServices; /**< other SS services*/
-		struct tel_sim_cphs_svc_call_complete_s CallComplete; /**< call complete*/
-		struct tel_sim_cphs_svc_teleservices_s Teleservices; /**< teleservices*/
-		struct tel_sim_cphs_svc_cphs_teleservices_s CphsTeleservices; /**< CPHS teleservices*/
-		struct tel_sim_cphs_svc_cphs_features_s CphsFeatures; /**< CPHS features*/
-		struct tel_sim_cphs_svc_number_identifier_s NumberIdentifiers; /**< number identifiers*/
-		struct tel_sim_cphs_svc_phase_services_s PhaseServices; /**< phase services*/
-		struct tel_sim_cphs_svc_value_added_services_s ValueAddedServices; /**< value added services*/
-		struct tel_sim_cphs_svc_information_numbers_s InformationNumbers; /**< information numbers*/
-	} u;
+		struct tel_sim_cphs_svc_call_offering_s call_offering;			/**< call offering*/
+		struct tel_sim_cphs_svc_call_restriction_s call_restriction;		/**< call restriction*/
+		struct tel_sim_cphs_svc_other_ss_s other_supp_services;			/**< other SS services*/
+		struct tel_sim_cphs_svc_call_complete_s call_complete;			/**< call complete*/
+		struct tel_sim_cphs_svc_teleservices_s teleservices;			/**< teleservices*/
+		struct tel_sim_cphs_svc_cphs_teleservices_s cphs_teleservices;		/**< CPHS teleservices*/
+		struct tel_sim_cphs_svc_cphs_features_s cphs_features;			/**< CPHS features*/
+		struct tel_sim_cphs_svc_number_identifier_s number_identifiers;		/**< number identifiers*/
+		struct tel_sim_cphs_svc_phase_services_s phase_services;			/**< phase services*/
+		struct tel_sim_cphs_svc_value_added_services_s value_added_services;	/**< value added services*/
+		struct tel_sim_cphs_svc_information_numbers_s information_numbers;	/**< information numbers*/
+	} service;
 };
 
 struct tel_sim_cphs_csp {
-	struct tel_sim_cphs_csp_entry_s ServiceProfileEntry[SIM_CPHS_CSP_ENTRY_CNT_MAX]; /**< service profile entry*/
+	struct tel_sim_cphs_csp_entry_s service_profile_entry[SIM_CPHS_CSP_ENTRY_CNT_MAX];	/**< service profile entry*/
 };
+
+#if defined TIZEN_GLOBALCONFIG_ENABLE_CSP
+struct treq_sim_set_cphs_csp_info {
+	struct tel_sim_cphs_csp cphs_csp_info;
+};
+#endif
 
 struct tel_sim_cphs_dflag {
 	enum tel_sim_cphs_dynamic_flag_selected_line DynamicFlags; /**< Dynamic flags information */
@@ -677,6 +848,12 @@ struct tel_sim_cphs_info_number {
 	enum tel_sim_npi NumberingPlanIdentity; /**< NPI */
 	char DiallingNum[SIM_XDN_NUMBER_LEN_MAX + 1]; /**< Dialing Number/SSC String */
 	unsigned char Ext1RecordId; /**< Extensiion1 Record Identifier */
+};
+
+enum tel_sim_powerstate {
+	SIM_POWER_OFF = 0x00, /**< OFF */
+	SIM_POWER_ON = 0x01, /**< ON */
+	SIM_POWER_UNSPECIFIED = 0xFF /**< Unspecified */
 };
 
 
@@ -724,80 +901,11 @@ struct treq_sim_get_lock_info {
 
 struct treq_sim_transmit_apdu {
 	unsigned int apdu_length;
-	unsigned char apdu[256];
-};
-
-struct treq_sim_get_atr {
-
-};
-
-struct treq_sim_get_ecc {
-
-};
-
-struct treq_sim_get_language {
-
+	unsigned char apdu[SIM_APDU_DATA_LEN_MAX];
 };
 
 struct treq_sim_set_language {
 	enum tel_sim_language_type language;
-};
-
-struct treq_sim_set_callforwarding {
-	gboolean voice1;
-	gboolean voice2;
-	gboolean fax;
-	gboolean data;
-	gboolean sms;
-	gboolean allbearer;
-};
-
-struct treq_ssim_get_imsi {
-
-};
-
-struct treq_sim_get_iccid {
-
-};
-
-struct treq_sim_get_mailbox {
-
-};
-
-struct treq_sim_get_callforwarding {
-
-};
-
-struct treq_sim_get_messagewaiting {
-
-};
-
-struct treq_sim_get_cphs_info {
-
-};
-
-struct treq_sim_get_msisdn {
-
-};
-
-struct treq_sim_get_spn {
-
-};
-
-struct treq_sim_get_spdi {
-
-};
-
-struct treq_sim_get_opl {
-
-};
-
-struct treq_sim_get_pnn {
-
-};
-
-struct treq_sim_get_cphs_netname {
-
 };
 
 struct treq_sim_req_authentication {
@@ -807,6 +915,16 @@ struct treq_sim_req_authentication {
 	char rand_data[SIM_AUTH_REQ_DATA_LEN_MAX + 1]; /**< RAND data */
 	char autn_data[SIM_AUTH_REQ_DATA_LEN_MAX + 1]; /**< AUTN data. it is not used in case of GSM AUTH */
 };
+
+struct treq_sim_set_powerstate {
+	enum tel_sim_powerstate state;
+};
+
+struct tresp_sim_set_powerstate {
+	enum tel_sim_power_set_result result;
+};
+
+
 
 struct tresp_sim_verify_pins {
 	enum tel_sim_pin_operation_result result;
@@ -854,7 +972,7 @@ struct tresp_sim_get_lock_info {
 struct tresp_sim_transmit_apdu {
 	enum tel_sim_access_result result;
 	unsigned int apdu_resp_length;
-	unsigned char apdu_resp[256 + 2];
+	unsigned char *apdu_resp;
 };
 
 struct tresp_sim_get_atr {
@@ -874,16 +992,18 @@ struct tel_sim_ecc_list {
 	struct tel_sim_ecc ecc[SIM_ECC_RECORD_CNT_MAX];
 };
 
+struct tel_sim_ext {
+	int ext_len;
+	char ext[SIM_EXT_RECORD_CNT_MAX + 1];
+	unsigned short next_record;
+};
+
 struct tel_sim_language {
 	int language_count;
 	enum tel_sim_language_type language[SIM_LANG_CNT_MAX];
 };
 
-struct tresp_sim_set_language {
-	enum tel_sim_access_result result;
-};
-
-struct tresp_sim_set_callforwarding {
+struct tresp_sim_set_data {
 	enum tel_sim_access_result result;
 };
 
@@ -891,35 +1011,114 @@ struct tel_sim_iccid {
 	char iccid[SIM_ICCID_LEN_MAX + 1];
 };
 
+struct tel_sim_mbi {
+	/*	'00' - no mailbox dialing number associated with message waiting indication group type.
+	 'xx' - record number in EFMBDN associated with message waiting indication group type.
+	 */
+	int voice_index;	/**< voice mailbox identifier*/
+	int fax_index;	/**< FAX mailbox identifier*/
+	int email_index;	/**< email mailbox identifier*/
+	int other_index;	/**< other mailbox identifier*/
+	int video_index;	/**< video mailbox identifier*/
+};
+
+struct tel_sim_mbi_list {
+	int profile_count;
+	struct tel_sim_mbi mbi[SIM_MSP_CNT_MAX];
+};
+
+struct tel_sim_mb_number{
+	int rec_index; // SIM record index;
+	int profile_number; // Subscriber profile number(ex: line1, line2, lineX)
+	enum tel_sim_mailbox_type mb_type;
+	struct tel_sim_dialing_number number_info;
+};
+
 struct tel_sim_mailbox {
 	gboolean b_cphs;
-	struct tel_sim_dialing_number voice1; /**< voice1 mailbox */
-	struct tel_sim_dialing_number voice2; /**< voice2 mailbox */
-	struct tel_sim_dialing_number fax; /**< FAX mailbox */
-	struct tel_sim_dialing_number video; /**< video mailbox */
+	int count;
+	struct tel_sim_mb_number mb[SIM_MSP_CNT_MAX*5]; //each profile mailbox number can exist 5 numbers
+};
+
+struct treq_sim_set_mailbox {
+	gboolean b_cphs;
+	struct tel_sim_mb_number mb_info;
+};
+
+struct tel_sim_cfis {
+	int rec_index;
+	unsigned char msp_num; /**< MSP number*/
+	unsigned char cfu_status; /**< call forwarding unconditional indication status*/
+	enum tel_sim_ton ton; /**< TON*/
+	enum tel_sim_npi npi; /**< NPI*/
+	char cfu_num[SIM_XDN_NUMBER_LEN_MAX + 1];/**< Dialing Number/SSC String*/
+	unsigned char cc2_id; /**< Capability/Configuration2 Record Identifier */
+	unsigned char ext7_id; /**< Extension 7 Record Identifier */
+};
+
+struct tel_sim_cf_list {
+	int profile_count;
+	struct tel_sim_cfis cf[SIM_MSP_CNT_MAX];
+};
+
+struct tel_sim_cphs_cf {
+	gboolean b_line1; /**< CallForwardUnconditionalLine 1 */
+	gboolean b_line2; /**< CallForwardUnconditionalLine 2 */
+	gboolean b_fax; /**< CallForwardUnconditional FAX */
+	gboolean b_data; /**<CallForwardUnconditional data*/
 };
 
 struct tel_sim_callforwarding {
-	gboolean voice1; /**< voice1 cf status */
-	gboolean voice2; /**< voice2 cf status */
-	gboolean fax; /**< fax cf status */
-	gboolean data; /**< data cf status */
-	gboolean sms; /**< sms cf status */
-	gboolean allbearer; /**< allbearer cf status */
+	gboolean b_cphs;
+	struct tel_sim_cf_list cf_list;
+	struct tel_sim_cphs_cf cphs_cf;
+};
+
+struct treq_sim_set_callforwarding {
+	gboolean b_cphs;
+	struct tel_sim_cfis cf;
+	struct tel_sim_cphs_cf cphs_cf;
+};
+
+struct tel_sim_mw {
+	int rec_index;
+	unsigned char indicator_status; /**< Indicator status*/
+	int voice_count; /**< VoiceMail Count*/
+	int fax_count; /**< FAX Count*/
+	int email_count; /**< Email Count*/
+	int other_count; /**< Other Count*/
+	int video_count; /**< VideoMail Count*/
+};
+
+struct tel_sim_mw_list {
+	int profile_count;
+	struct tel_sim_mw mw[SIM_MSP_CNT_MAX];
+};
+
+struct tel_sim_cphs_mw {
+	gboolean b_voice1; /**< VoiceMsgLine1 message waiting flag */
+	gboolean b_voice2; /**< VoiceMsgLine2 message waiting flag */
+	gboolean b_fax; /**< FAX message waiting flag */
+	gboolean b_data; /**< Data message waiting flag */
 };
 
 struct tel_sim_messagewaiting {
 	gboolean b_cphs;
-	union {
-		struct tel_sim_mw mw;
-		struct tel_sim_cphs_mw cphs_mw;
-	} mw_data_u;
+	struct tel_sim_mw_list mw_list;
+	struct tel_sim_cphs_mw cphs_mw;
+};
+
+struct treq_sim_set_messagewaiting {
+	gboolean b_cphs;
+	struct tel_sim_mw mw;
+	struct tel_sim_cphs_mw cphs_mw;
 };
 
 struct tel_sim_msisdn {
-	unsigned char num[SIM_XDN_NUMBER_LEN_MAX + 1];
+	unsigned char num[SIM_MSISDN_NUMBER_LEN_MAX + 1];
 	enum tel_sim_ton ton;
 	unsigned char name[SIM_XDN_ALPHA_ID_LEN_MAX + 1];
+	unsigned short next_record;
 };
 
 struct tel_sim_msisdn_list {
@@ -929,7 +1128,7 @@ struct tel_sim_msisdn_list {
 
 struct tel_sim_spn {
 	unsigned char display_condition; /**< display condition (1 byte) */
-	unsigned char spn[SIM_SPN_LEN_MAX + 1]; /**< SPN */
+	unsigned char spn[SIM_CDMA_SPN_LEN_MAX + 1]; /**< SPN */
 };
 
 struct tel_sim_spdi {
@@ -948,7 +1147,7 @@ struct tel_sim_opl {
 
 struct tel_sim_opl_list {
 	int opl_count;
-	struct tel_sim_opl opl[SIM_OPL_PNN_RECORD_CNT_MAX];
+	struct tel_sim_opl *list;
 };
 
 struct tel_sim_pnn{
@@ -958,7 +1157,7 @@ struct tel_sim_pnn{
 
 struct tel_sim_pnn_list {
 	int pnn_count;
-	struct tel_sim_pnn pnn[SIM_OPL_PNN_RECORD_CNT_MAX];
+	struct tel_sim_pnn *list;
 };
 
 struct tel_sim_cphs_netname {
@@ -977,16 +1176,38 @@ struct tel_sim_oplmnwact_list {
 	struct tel_sim_oplmnwact opwa[SIM_OPLMNWACT_LEN_MAX];
 };
 
+struct tel_sim_file_list{
+	int file_count;
+	enum tel_sim_file_id file_id[SIM_FILE_ID_LIST_MAX_COUNT];
+};
+
+enum img_coding_scheme{
+	IMAGE_CODING_SCHEME_BASIC = 0x11,
+	IMAGE_CODING_SCHEME_COLOUR = 0x21,
+	IMAGE_CODING_SCHEME_RESERVED = 0xFF
+};
+
+struct tel_sim_img{
+	unsigned char width;
+	unsigned char height;
+	enum img_coding_scheme ics;
+	unsigned short iidf_fileid;
+	unsigned short offset;
+	unsigned short length;
+	unsigned char icon_data[1000];/*Data length should be telephony defined as no restriction as per spec - Need to decide*/
+};
+
 struct tresp_sim_read {
 	enum tel_sim_access_result result;
 	union {
 		struct tel_sim_ecc_list ecc;
 		struct tel_sim_language language;
 		struct tel_sim_iccid iccid;
-		struct tel_sim_mailbox mailbox;
+		struct tel_sim_mailbox mb;
 		struct tel_sim_callforwarding cf;
 		struct tel_sim_messagewaiting mw;
 		struct tel_sim_cphs_info cphs;
+		struct tel_sim_service_table svct;
 		struct tel_sim_msisdn_list msisdn_list;
 		struct tel_sim_spn spn;
 		struct tel_sim_spdi spdi;
@@ -994,6 +1215,8 @@ struct tresp_sim_read {
 		struct tel_sim_pnn_list pnn;
 		struct tel_sim_cphs_netname cphs_net;
 		struct tel_sim_oplmnwact_list opwa;
+		struct tel_sim_img img;
+		struct tel_sim_gid gid;
 	} data;
 };
 
@@ -1014,6 +1237,16 @@ struct tresp_sim_req_authentication {
 struct tnoti_sim_status {
 	enum tel_sim_status sim_status;
 	gboolean b_changed;
+};
+
+struct tnoti_sim_refreshed {
+	struct tel_sim_file_list file_list;
+	gboolean b_full_file_changed;
+	enum tel_sim_refresh_command cmd_type;
+};
+
+struct tnoti_sim_call_forward_state {
+	gboolean b_forward;
 };
 
 __END_DECLS

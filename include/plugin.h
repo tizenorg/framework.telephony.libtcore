@@ -30,7 +30,7 @@ enum tcore_plugin_priority {
 };
 
 struct tcore_plugin_define_desc {
-	gchar *name;
+	const gchar *name;
 	enum tcore_plugin_priority priority;
 	int version;
 	gboolean (*load)();
@@ -48,14 +48,17 @@ const struct tcore_plugin_define_desc*
              tcore_plugin_get_description(TcorePlugin *plugin);
 
 char*        tcore_plugin_get_filename(TcorePlugin *plugin);
-char*        tcore_plugin_ref_plugin_name(TcorePlugin *plugin);
+const char*        tcore_plugin_ref_plugin_name(TcorePlugin *plugin);
 Server*      tcore_plugin_ref_server(TcorePlugin *plugin);
 
 TReturn      tcore_plugin_link_user_data(TcorePlugin *plugin, void *user_data);
 void*        tcore_plugin_ref_user_data(TcorePlugin *plugin);
 
 TReturn      tcore_plugin_add_core_object(TcorePlugin *plugin, CoreObject *co);
-CoreObject*  tcore_plugin_ref_core_object(TcorePlugin *plugin, const char *name);
+TReturn      tcore_plugin_remove_core_object(TcorePlugin *plugin, CoreObject *co);
+
+CoreObject *tcore_plugin_ref_core_object(TcorePlugin *plugin, unsigned int type);
+GSList*      tcore_plugin_get_core_objects(TcorePlugin *plugin);
 GSList*      tcore_plugin_get_core_objects_bytype(TcorePlugin *plugin,
                  unsigned int type);
 

@@ -25,6 +25,10 @@
 
 __BEGIN_DECLS
 
+#define CONVERT_HEXCHAR_TO_INT(h, i) if ((h) >= '0' && (h) <= '9') (i) = (h) - '0'; \
+	else if ((h) >= 'A' && (h) <= 'F') (i) = (h) - 'A' + 10; \
+	else if ((h) >= 'a' && (h) <= 'f') (i) = (h) - 'a' + 10; \
+	else (i) = 0;
 
 enum tcore_util_marshal_data_type {
 	TCORE_UTIL_MARSHAL_DATA_CHAR_TYPE = G_TYPE_CHAR,
@@ -54,6 +58,8 @@ TReturn     tcore_util_netif_up(const char *name);
 TReturn     tcore_util_netif_down(const char *name);
 TReturn     tcore_util_netif_set(const char *name, const char *ipaddr,
                 const char *gateway, const char *netmask);
+TReturn     tcore_util_reset_ipv4_socket(const char *name, const char *ipaddr);
+TReturn tcore_util_netif_set_mtu(const char *name, unsigned int mtu);
 
 char*       tcore_util_get_string_by_ip4type(union tcore_ip4_type ip);
 
@@ -75,11 +81,25 @@ GHashTable* tcore_util_marshal_get_object(GHashTable *ht, const gchar *key);
 enum tcore_dcs_type
             tcore_util_get_cbs_coding_scheme(unsigned char encode);
 
-unsigned char* tcore_util_decode_hex(const char *src, int len);
+unsigned char*      tcore_util_decode_hex(const char *src, int len);
+void                tcore_util_hex_dump(const char *pad, int size, const void *data);
 
-unsigned char* tcore_util_unpack_gsm7bit(const unsigned char *src, unsigned int src_len);
-unsigned char* tcore_util_pack_gsm7bit(const unsigned char *src, unsigned int src_len);
-char*       tcore_util_convert_bcd2ascii(const char *src, int src_len, int max_len);
+unsigned char*		tcore_util_unpack_gsm7bit(const unsigned char *src, unsigned int src_len);
+unsigned char*		tcore_util_pack_gsm7bit(const unsigned char *src, unsigned int src_len);
+char*				tcore_util_convert_bcd_str_2_ascii_str(const char* src, int src_len);
+char*				tcore_util_convert_bcd2ascii(const char *src, int src_len, int max_len);
+char* 				tcore_util_convert_digit2ascii(const char* src, int src_len);
+gboolean			tcore_util_convert_utf8_to_gsm(unsigned char *dest, int *dest_len, unsigned char* src, int src_len);
+gboolean			tcore_util_convert_utf8_to_ucs2(char **dest, int *dest_len, unsigned char *src, int src_len);
+gboolean			tcore_util_convert_string_to_utf8(unsigned char *dest, unsigned short *dest_len,
+						enum alphabet_format dcs, const unsigned char *src, unsigned short src_len);
+gboolean			tcore_util_convert_ascii_to_utf8(unsigned char **dest, int *dest_len, unsigned char *src, int src_len);
+int					tcore_util_convert_ucs2_to_utf8(char *out, unsigned short *out_len, char *in, unsigned short in_len);
+
+void				tcore_util_swap_byte_order(unsigned char* dest, const unsigned char* src, int src_len);
+
+char*          tcore_util_get_version(void);
+void           tcore_util_set_log(gboolean enable);
 
 __END_DECLS
 

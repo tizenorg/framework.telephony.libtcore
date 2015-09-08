@@ -31,6 +31,8 @@
 #include "co_call.h"
 
 
+#define MAX_CALL_OBJECTS		6
+
 #define _check_null( name, value, err ) { \
 	if ( !value ) { \
 		dbg("[error] %s : NULL", name ); \
@@ -40,6 +42,7 @@
 
 struct call_cli_info {
 	enum tcore_call_cli_mode mode;
+	enum tcore_call_no_cli_cause no_cli_cause;
 	char number[MAX_CALL_NUMBER_LEN];
 	int number_len;
 };
@@ -82,7 +85,7 @@ static void _clone_hook(CoreObject *src, CoreObject *dest)
 	if (!src || !dest)
 		return;
 
-	dest_po = calloc(sizeof(struct private_object_data), 1);
+	dest_po = g_try_new0(struct private_object_data, 1);
 	if (!dest_po) {
 		tcore_object_link_object(dest, NULL);
 		return;
@@ -120,55 +123,96 @@ static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 			return po->ops->end(o, ur);
 
 		case TREQ_CALL_HOLD:
+			_check_null( "po->ops->hold", po->ops->hold, TCORE_RETURN_FAILURE);
 			return po->ops->hold(o, ur);
 
 		case TREQ_CALL_ACTIVE:
+			_check_null( "po->ops->active", po->ops->active, TCORE_RETURN_FAILURE);
 			return po->ops->active(o, ur);
 
 		case TREQ_CALL_SWAP:
+			_check_null( "po->ops->swap", po->ops->swap, TCORE_RETURN_FAILURE);
 			return po->ops->swap(o, ur);
 
 		case TREQ_CALL_JOIN:
+			_check_null( "po->ops->join", po->ops->join, TCORE_RETURN_FAILURE);
 			return po->ops->join(o, ur);
 
 		case TREQ_CALL_SPLIT:
+			_check_null( "po->ops->split", po->ops->split, TCORE_RETURN_FAILURE);
 			return po->ops->split(o, ur);
 
 		case TREQ_CALL_DEFLECT:
+			_check_null( "po->ops->deflect", po->ops->deflect, TCORE_RETURN_FAILURE);
 			return po->ops->deflect(o, ur);
 
 		case TREQ_CALL_TRANSFER:
+			_check_null( "po->ops->transfer", po->ops->transfer, TCORE_RETURN_FAILURE);
 			return po->ops->transfer(o, ur);
 
-		case TREQ_CALL_SEND_DTMF:
-			return po->ops->send_dtmf(o, ur);
+		case TREQ_CALL_START_CONT_DTMF:
+			_check_null( "po->ops->start_cont_dtmf", po->ops->start_cont_dtmf, TCORE_RETURN_FAILURE);
+			return po->ops->start_cont_dtmf(o, ur);
+
+		case TREQ_CALL_STOP_CONT_DTMF:
+			_check_null( "po->ops->stop_cont_dtmf", po->ops->stop_cont_dtmf, TCORE_RETURN_FAILURE);
+			return po->ops->stop_cont_dtmf(o, ur);
+
+		case TREQ_CALL_SEND_BURST_DTMF:
+			_check_null( "po->ops->send_burst_dtmf", po->ops->send_burst_dtmf, TCORE_RETURN_FAILURE);
+			return po->ops->send_burst_dtmf(o, ur);
+
+		case TREQ_CALL_GET_PRIVACY_MODE:
+			_check_null( "po->ops->get_privacy_mode", po->ops->get_privacy_mode, TCORE_RETURN_FAILURE);
+			return po->ops->get_privacy_mode(o, ur);
+
+		case TREQ_CALL_SET_PRIVACY_MODE:
+			_check_null( "po->ops->set_privacy_mode", po->ops->set_privacy_mode, TCORE_RETURN_FAILURE);
+			return po->ops->set_privacy_mode(o, ur);
 
 		case TREQ_CALL_SET_SOUND_PATH:
+			_check_null( "po->ops->set_sound_path", po->ops->set_sound_path, TCORE_RETURN_FAILURE);
 			return po->ops->set_sound_path(o, ur);
 
 		case TREQ_CALL_GET_SOUND_VOLUME_LEVEL:
+			_check_null( "po->ops->get_sound_volume_level", po->ops->get_sound_volume_level, TCORE_RETURN_FAILURE);
 			return po->ops->get_sound_volume_level(o, ur);
 
 		case TREQ_CALL_SET_SOUND_VOLUME_LEVEL:
+			_check_null( "po->ops->set_sound_volume_level", po->ops->set_sound_volume_level, TCORE_RETURN_FAILURE);
 			return po->ops->set_sound_volume_level(o, ur);
 
-		case TREQ_CALL_MUTE:
-			return po->ops->mute(o, ur);
+		case TREQ_CALL_SET_SOUND_MUTE_STATUS:
+			_check_null( "po->ops->set_sound_mute_status", po->ops->set_sound_mute_status, TCORE_RETURN_FAILURE);
+			return po->ops->set_sound_mute_status(o, ur);
 
-		case TREQ_CALL_UNMUTE:
-			return po->ops->unmute(o, ur);
-
-		case TREQ_CALL_GET_MUTE_STATUS:
-			return po->ops->get_mute_status(o, ur);
+		case TREQ_CALL_GET_SOUND_MUTE_STATUS:
+			_check_null( "po->ops->get_sound_mute_status", po->ops->get_sound_mute_status, TCORE_RETURN_FAILURE);
+			return po->ops->get_sound_mute_status(o, ur);
 
 		case TREQ_CALL_SET_SOUND_RECORDING:
+			_check_null( "po->ops->set_sound_recording", po->ops->set_sound_recording, TCORE_RETURN_FAILURE);
 			return po->ops->set_sound_recording(o, ur);
 
 		case TREQ_CALL_SET_SOUND_EQUALIZATION:
+			_check_null( "po->ops->set_sound_equalization", po->ops->set_sound_equalization, TCORE_RETURN_FAILURE);
 			return po->ops->set_sound_equalization(o, ur);
 
 		case TREQ_CALL_SET_SOUND_NOISE_REDUCTION:
+			_check_null( "po->ops->set_sound_noise_reduction", po->ops->set_sound_noise_reduction, TCORE_RETURN_FAILURE);
 			return po->ops->set_sound_noise_reduction(o, ur);
+
+		case TREQ_CALL_SET_SOUND_CLOCK_STATUS:
+			_check_null( "po->ops->set_sound_clock_status", po->ops->set_sound_clock_status, TCORE_RETURN_FAILURE);
+			return po->ops->set_sound_clock_status(o, ur);
+
+		case TREQ_CALL_SET_PREFERRED_VOICE_SUBSCRIPTION:
+			_check_null( "po->ops->set_preferred_voice_subscription", po->ops->set_preferred_voice_subscription, TCORE_RETURN_FAILURE);
+			return po->ops->set_preferred_voice_subscription(o, ur);
+
+		case TREQ_CALL_GET_PREFERRED_VOICE_SUBSCRIPTION:
+			_check_null( "po->ops->get_preferred_voice_subscription", po->ops->get_preferred_voice_subscription, TCORE_RETURN_FAILURE);
+			return po->ops->get_preferred_voice_subscription(o, ur);
 
 		default:
 			break;
@@ -180,28 +224,14 @@ static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
 static void _free_hook(CoreObject *o)
 {
 	struct private_object_data *po = NULL;
-	GSList *list;
 
 	po = tcore_object_ref_object(o);
 	if (!po)
 		return;
 
-	if (po->cobjs) {
-		for (list = po->cobjs; list; list = list->next) {
-			if (!list)
-				continue;
+	g_slist_free_full(po->cobjs, g_free);
+	g_free(po);
 
-			if (list->data)
-				free(list->data);
-
-			list->data = NULL;
-		}
-
-		g_slist_free(po->cobjs);
-		po->cobjs = NULL;
-	}
-
-	free(po);
 	tcore_object_link_object(o, NULL);
 }
 
@@ -321,18 +351,24 @@ struct call_object *tcore_call_object_new(CoreObject *o, int id)
 		else {
 			dbg("[ error ] call object exist already. [ %d ]", id);
 			g_free(co);
-			return 0;
+			return NULL;
 		}
 	}
 	else {
 		int i = 0;
 
-		for (i = 1; i < 6; i++) {
-			// 6 is MAX call count
+		for (i = 1; i <= MAX_CALL_OBJECTS; i++) {	/* 6 is MAX call count */
 			if (!_find_object(po->cobjs, (void*) &i, (void*) _compare_by_id)) {
 				co->id = i;
 				break;
 			}
+		}
+
+		 /* Free the allocated Core Object if ID is not allocated */
+		if (i > MAX_CALL_OBJECTS) {
+			err("[ error ] failed to assign call id");
+			g_free(co);
+			return NULL;
 		}
 	}
 
@@ -353,24 +389,29 @@ gboolean tcore_call_object_free(CoreObject *o, struct call_object *co)
 	_check_null( "co", co, FALSE);
 
 	po->cobjs = g_slist_remove(po->cobjs, co);
-
-	if (!co) {
-		dbg("co is not free");
-		g_free(co);
-	}
-	else
-		dbg("co is also free");
+	g_free(co);
 
 	return TRUE;
+}
+
+int tcore_call_object_total_length( CoreObject *o )
+{
+	struct private_object_data *po = NULL;
+	po = tcore_object_ref_object(o);
+
+	_check_null( "po", po, FALSE);
+	_check_null( "po->cobjs", po->cobjs, FALSE);
+
+	return (int)g_slist_length(po->cobjs);
 }
 
 struct call_object *tcore_call_object_current_on_mt_processing(CoreObject *o)
 {
 	struct private_object_data *po = NULL;
+	struct call_object *call_obj = NULL;
 	GSList *l = 0;
 
 	enum tcore_call_status cs = CALL_STATUS_INCOMING;
-
 	po = tcore_object_ref_object(o);
 
 	_check_null( "po", po, 0);
@@ -384,16 +425,18 @@ struct call_object *tcore_call_object_current_on_mt_processing(CoreObject *o)
 			return 0;
 	}
 
-	return (struct call_object*) l->data;
+	call_obj = (struct call_object*) l ->data;
+	g_slist_free(l);
+	return call_obj;
 }
 
 struct call_object *tcore_call_object_current_on_mo_processing(CoreObject *o)
 {
 	struct private_object_data *po = NULL;
+	struct call_object *call_obj = NULL;
 	GSList *l = 0;
 
 	enum tcore_call_status cs = CALL_STATUS_DIALING;
-
 	po = tcore_object_ref_object(o);
 
 	_check_null( "po", po, 0);
@@ -407,7 +450,9 @@ struct call_object *tcore_call_object_current_on_mo_processing(CoreObject *o)
 			return 0;
 	}
 
-	return (struct call_object*) l->data;
+	call_obj = (struct call_object*) l ->data;
+	g_slist_free(l);
+	return call_obj;
 }
 
 struct call_object *tcore_call_object_find_by_id(CoreObject *o, int id)
@@ -499,38 +544,53 @@ enum tcore_call_status tcore_call_object_get_status(struct call_object *co)
 	return co->status;
 }
 
-gboolean tcore_call_object_set_cli_info(struct call_object *co, enum tcore_call_cli_mode mode, char *num)
+gboolean tcore_call_object_set_cli_info(struct call_object *co,
+						enum tcore_call_cli_mode mode, enum tcore_call_no_cli_cause cause,
+						char *num, int num_len)
 {
 	char *pos = 0;
 
 	_check_null( "co", co, FALSE);
 
-	if (!num) {
-		co->cli.mode = mode;
-		return TRUE;
-	}
-
 	dbg("num  : %s", num);
 	dbg("mode : 0x%x", mode);
 
+	if (!num) {
+		co->cli.mode = mode;
+		if (mode == TCORE_CALL_CLI_MODE_RESTRICT)
+			co->cli.no_cli_cause = cause;
+		else
+			co->cli.no_cli_cause = TCORE_CALL_NO_CLI_CAUSE_NONE;
+
+		co->cli.number_len = num_len ;
+		co->cli.number [0] = '\0';
+
+		return TRUE;
+	}
+
 	pos = num;
 
-	if (!mode) {
+	if (mode == TCORE_CALL_CLI_MODE_DEFAULT) {
 		co->cli.mode = _check_cli_mode_by_number(num);
 
-		if (co->cli.mode)
+		if (co->cli.mode != TCORE_CALL_CLI_MODE_DEFAULT)
 			pos = (num + 4);
 	}
 	else {
 		co->cli.mode = mode;
+		if (mode == TCORE_CALL_CLI_MODE_RESTRICT)
+			co->cli.no_cli_cause = cause;
+		else
+			co->cli.no_cli_cause = TCORE_CALL_NO_CLI_CAUSE_NONE;
 	}
 
-	strncpy(co->cli.number, pos, (strlen(pos) + 1));
+	strncpy(co->cli.number, pos, ((num_len - (pos - num)) + 1));
 	co->cli.number_len = strlen(co->cli.number);
 
-	dbg("co->cli.mode   : 0x%x", co->cli.mode);
-	dbg("co->cli.number : %s", co->cli.number);
-	dbg("co->cli.number_len : %d", co->cli.number_len);
+	dbg("co->cli.mode: [0x%x]", co->cli.mode);
+	dbg("co->cli.no_cli_cause: [0x%x]", co->cli.no_cli_cause);
+	dbg("co->cli.number: [%s]", co->cli.number);
+	dbg("co->cli.number_len: [%d]", co->cli.number_len);
 
 	return TRUE;
 }
@@ -550,13 +610,28 @@ enum tcore_call_cli_mode tcore_call_object_get_cli_mode(struct call_object *co)
 	return co->cli.mode;
 }
 
+enum tcore_call_no_cli_cause tcore_call_object_get_no_cli_cause(struct call_object *co)
+{
+	_check_null( "co", co, -1);
+	return co->cli.no_cli_cause;
+}
+
+
 gboolean tcore_call_object_set_cna_info(struct call_object *co, enum tcore_call_cna_mode mode, char *name, int dcs)
 {
+	int len;
 	_check_null( "co", co, FALSE);
 	_check_null( "name", name, FALSE);
 
+	len = strlen(name);
+	if (len >= MAX_CALL_NAME_LEN)
+		return FALSE;
+
+	strncpy(co->cna.name, name, len);
+	co->cna.name[len] = '\0';
+
 	co->cna.mode = mode;
-	strncpy(co->cna.name, name, MAX_CALL_NAME_LEN);
+
 	return TRUE;
 }
 
@@ -611,8 +686,8 @@ TReturn tcore_call_control_answer_hold_and_accept(CoreObject* o, UserRequest* ur
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->answer_hold_and_accept(o, ur, cb, user_data);
 }
@@ -622,8 +697,8 @@ TReturn tcore_call_control_answer_replace(CoreObject* o, UserRequest* ur, Confir
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->answer_replace(o, ur, cb, user_data);
 }
@@ -633,8 +708,8 @@ TReturn tcore_call_control_answer_reject(CoreObject* o, UserRequest* ur, Confirm
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->answer_reject(o, ur, cb, user_data);
 }
@@ -645,8 +720,8 @@ TReturn tcore_call_control_end_specific(CoreObject* o, UserRequest* ur, const in
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->end_specific(o, ur, id, cb, user_data);
 }
@@ -656,8 +731,8 @@ TReturn tcore_call_control_end_all_active(CoreObject* o, UserRequest* ur, Confir
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->end_all_active(o, ur, cb, user_data);
 }
@@ -667,8 +742,8 @@ TReturn tcore_call_control_end_all_held(CoreObject* o, UserRequest* ur, ConfirmC
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->end_all_held(o, ur, cb, user_data);
 }
@@ -678,8 +753,8 @@ TReturn tcore_call_control_active(CoreObject* o, UserRequest* ur, ConfirmCallbac
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->active(o, ur, cb, user_data);
 }
@@ -689,8 +764,8 @@ TReturn tcore_call_control_hold(CoreObject* o, UserRequest* ur, ConfirmCallback 
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->hold(o, ur, cb, user_data);
 }
@@ -700,8 +775,8 @@ TReturn tcore_call_control_swap(CoreObject* o, UserRequest* ur, ConfirmCallback 
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->swap(o, ur, cb, user_data);
 }
@@ -711,8 +786,8 @@ TReturn tcore_call_control_join(CoreObject* o, UserRequest* ur, ConfirmCallback 
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->join(o, ur, cb, user_data);
 }
@@ -722,8 +797,8 @@ TReturn tcore_call_control_split(CoreObject* o, UserRequest* ur, const int id, C
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->split(o, ur, id, cb, user_data);
 }
@@ -733,8 +808,8 @@ TReturn tcore_call_control_transfer(CoreObject* o, UserRequest* ur, ConfirmCallb
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->transfer(o, ur, cb, user_data);
 }
@@ -745,8 +820,8 @@ TReturn tcore_call_control_deflect(CoreObject* o, UserRequest* ur, const char* n
 	struct private_object_data *po = NULL;
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->cops)
-		return TCORE_RETURN_FAILURE;
+	_check_null( "po", po, TCORE_RETURN_FAILURE);
+	_check_null( "po->cops", po->cops, TCORE_RETURN_FAILURE);
 
 	return po->cops->deflect(o, ur, number, cb, user_data);
 }
@@ -772,8 +847,8 @@ void tcore_call_information_mo_col(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po, );
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_col(o, number);
 }
@@ -786,8 +861,8 @@ void tcore_call_information_mo_waiting(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po, );
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_waiting(o);
 }
@@ -800,8 +875,8 @@ void tcore_call_information_mo_cug(CoreObject *o, int cug_index)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po, );
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_cug(o, cug_index);
 }
@@ -814,8 +889,8 @@ void tcore_call_information_mo_forwarded(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_forwarded(o);
 }
@@ -828,8 +903,8 @@ void tcore_call_information_mo_barred_incoming(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_barred_incoming(o);
 }
@@ -842,8 +917,8 @@ void tcore_call_information_mo_barred_outgoing(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_barred_outgoing(o);
 }
@@ -856,8 +931,8 @@ void tcore_call_information_mo_deflected(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_deflected(o);
 }
@@ -870,8 +945,8 @@ void tcore_call_information_mo_clir_suppression_reject(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_clir_suppression_reject(o);
 }
@@ -884,8 +959,8 @@ void tcore_call_information_mo_cfu(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_cfu(o);
 }
@@ -898,8 +973,8 @@ void tcore_call_information_mo_cfc(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mo_call_cfc(o);
 }
@@ -912,8 +987,8 @@ void tcore_call_information_mt_cli(CoreObject *o, enum tcore_call_cli_mode mode,
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po, );
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mt_call_cli(o, mode, number);
 }
@@ -926,8 +1001,8 @@ void tcore_call_information_mt_cna(CoreObject *o, enum tcore_call_cna_mode mode,
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mt_call_cna(o, mode, name, dcs);
 }
@@ -940,8 +1015,8 @@ void tcore_call_information_mt_forwarded_call(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mt_call_forwarded_call(o, number);
 }
@@ -954,8 +1029,8 @@ void tcore_call_information_mt_cug_call(CoreObject *o, int cug_index, char* numb
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mt_call_cug_call(o, cug_index, number);
 }
@@ -968,8 +1043,8 @@ void tcore_call_information_mt_deflected_call(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mt_call_deflected_call(o, number);
 }
@@ -982,8 +1057,8 @@ void tcore_call_information_mt_transfered(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->mt_call_transfered(o, number);
 }
@@ -996,8 +1071,8 @@ void tcore_call_information_held(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_held(o, number);
 }
@@ -1010,8 +1085,8 @@ void tcore_call_information_active(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_active(o, number);
 }
@@ -1024,8 +1099,8 @@ void tcore_call_information_joined(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_joined(o, number);
 }
@@ -1038,8 +1113,8 @@ void tcore_call_information_released_on_hold(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_released_on_hold(o, number);
 }
@@ -1052,8 +1127,8 @@ void tcore_call_information_transfer_alert(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_transfer_alert(o, number);
 }
@@ -1066,8 +1141,8 @@ void tcore_call_information_transfered(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_transfered(o, number);
 }
@@ -1080,8 +1155,8 @@ void tcore_call_information_cf_check_ss_message(CoreObject *o, char* number)
 
 	po = tcore_object_ref_object(o);
 
-	if (!po && !po->iops)
-		return;
+	_check_null( "po", po,);
+	_check_null( "po->iops", po->iops,);
 
 	po->iops->call_cf_check_message(o, number);
 }
@@ -1111,8 +1186,8 @@ CoreObject *tcore_call_new(TcorePlugin *p, const char *name, struct tcore_call_o
 	if (!o)
 		return NULL;
 
-	po = calloc(sizeof(struct private_object_data), 1);
-	if (!po) {
+	po = g_try_new0(struct private_object_data, 1);
+	if (po == NULL) {
 		tcore_object_free(o);
 		return NULL;
 	}
@@ -1130,14 +1205,20 @@ CoreObject *tcore_call_new(TcorePlugin *p, const char *name, struct tcore_call_o
 
 void tcore_call_free(CoreObject *o)
 {
+	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_CALL);
+	tcore_object_free(o);
+}
+
+void tcore_call_set_ops(CoreObject *o, struct tcore_call_operations *ops)
+{
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_CALL);
 
-	po = tcore_object_ref_object(o);
-	if (!po)
+	po = (struct private_object_data *)tcore_object_ref_object(o);
+	if (!po) {
 		return;
+	}
 
-	free(po);
-	tcore_object_free(o);
+	po->ops = ops;
 }
