@@ -514,6 +514,21 @@ enum telephony_call_dtmf_pulse_width{
 	CALL_DTMF_ONLENGTH_SMS
 };
 
+enum telephony_call_srvcc_ho_state {
+	CALL_SRVCC_HANDOVER_STATE_START,
+	CALL_SRVCC_HANDOVER_STATE_COMPLETE,
+	CALL_SRVCC_HANDOVER_STATE_CANCEL_OR_FAIL
+};
+
+enum telephony_call_confirm_type {
+	CALL_CONFIRM_TYPE_ACCEPT,
+	CALL_CONFIRM_TYPE_REJECT,
+};
+
+enum telephony_call_fallback_type{
+	CALL_FALLBACK_TO_IMS,
+	CALL_FALLBACK_TO_CS
+};
 
 /**********
   Struct
@@ -544,7 +559,7 @@ struct telephony_call_cna_info {
 };
 
 struct telephony_call_rec_info {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_rec_type type;
 	union {
 		char name[ MAX_ALPHA_INFO_LEN ];
@@ -556,15 +571,16 @@ struct treq_call_dial {
 	enum telephony_call_type type;
 	enum telephony_call_emergency_category ecc;
 	char number[ MAX_CALL_DIAL_NUM_LEN ];
+	int handle; /*used only for silent redial & setup pending call*/
 };
 
 struct treq_call_answer {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_answer_type type;
 };
 
 struct treq_call_end {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_end_type type;
 };
 
@@ -579,31 +595,31 @@ struct treq_call_send_burst_dtmf {
 };
 
 struct treq_call_active {
-	unsigned int id;
+	unsigned int handle;
 };
 
 struct treq_call_hold {
-	unsigned int id;
+	unsigned int handle;
 };
 
 struct treq_call_swap {
-	unsigned int id;
+	unsigned int handle;
 };
 
 struct treq_call_join {
-	unsigned int id;
+	unsigned int handle;
 };
 
 struct treq_call_split {
-	unsigned int id;
+	unsigned int handle;
 };
 
 struct treq_call_transfer {
-	unsigned int id;
+	unsigned int handle;
 };
 
 struct treq_call_deflect {
-	unsigned int id;
+	unsigned int handle;
 	char number[MAX_CALL_NUMBER_LEN];
 };
 
@@ -658,6 +674,17 @@ struct treq_call_set_preferred_voice_subscription {
 struct treq_call_get_preferred_voice_subscription {
 };
 
+/* IMS specific */
+struct treq_call_modify {
+	unsigned int handle;
+	enum telephony_call_type call_type;
+};
+
+/* IMS specific */
+struct treq_call_confirm_modify {
+	unsigned int handle;
+	enum telephony_call_confirm_type confirm_type;
+};
 
 // Response
 
@@ -666,48 +693,48 @@ struct tresp_call_dial {
 };
 
 struct tresp_call_answer {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_end {
 	enum telephony_call_end_type type;
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_hold {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_active {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_swap {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_join {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_split {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_deflect {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
 struct tresp_call_transfer {
-	unsigned int id;
+	unsigned int handle;
 	enum telephony_call_error err;
 };
 
@@ -776,46 +803,57 @@ struct tresp_call_get_voice_privacy_mode {
 	enum telephony_call_voice_privacy_mode privacy_mode;
 };
 
+/* IMS specific */
+struct tresp_call_modify {
+	enum telephony_call_error err;
+};
+
+/* IMS specific */
+struct tresp_call_confirm_modify {
+	enum telephony_call_error err;
+};
+
 // Notification
 
 struct tnoti_call_status_idle {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 	enum telephony_call_end_cause cause;
 };
 
 struct tnoti_call_status_active {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 };
 
 struct tnoti_call_status_held {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 };
 
 struct tnoti_call_status_dialing {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 };
 
 struct tnoti_call_status_alert {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 };
 
 struct tnoti_call_status_incoming {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 	struct telephony_call_cli_info cli;
 	struct telephony_call_cna_info cna;
 	gboolean		forward;
 	unsigned int	active_line;
+	char number_plus[MAX_CALL_NUMBER_LEN];
 };
 
 struct tnoti_call_status_waiting {
 	enum telephony_call_type type;
-	unsigned int	id;
+	unsigned int	handle;
 };
 
 struct tnoti_call_sound_path {
@@ -857,6 +895,10 @@ struct tnoti_call_info_voice_privacy_mode {
 	enum telephony_call_voice_privacy_mode privacy_mode;
 };
 
+struct tnoti_call_srvcc_handover {
+	enum telephony_call_srvcc_ho_state srvcc_ho_status;
+};
+
 struct tnoti_call_signal_info {
 	enum telephony_call_alert_signal_type signal_type;
 	enum telephony_call_alert_pitch_type pitch_type;
@@ -886,6 +928,18 @@ struct tnoti_call_display_information {
 struct tnoti_call_info_rec {
 	struct telephony_call_rec_info rec_info;
 };
+
+/* IMS specific */
+struct tnoti_call_modify_request {
+	unsigned int handle;
+	enum telephony_call_type call_type;
+};
+
+struct tnoti_call_fallback{
+	unsigned int handle;
+	enum telephony_call_fallback_type fallback_to;
+};
+
 __END_DECLS
 
 #endif

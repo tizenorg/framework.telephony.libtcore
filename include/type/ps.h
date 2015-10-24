@@ -23,6 +23,11 @@
 
 __BEGIN_DECLS
 
+#define IPV6_ADDR_LEN 16
+#define IPV4_ADDR_LEN 4
+
+#define MAX_NUM_DEDICATED_BEARER 8
+
 enum telephony_ps_pdp_err {
 	PDP_FAILURE_CAUSE_NORMAL						= 0x00,			  // 0x00 : Normal Process ( no problem )
 	PDP_FAILURE_CAUSE_REL_BY_USER					= 0x01,			  // Call Released by User
@@ -69,6 +74,21 @@ enum telephony_ps_state {
 	TELEPHONY_PS_RESTRICTED_SERVICE
 };
 
+struct qos_parameter {
+	char profile_type;
+	char qci;
+	unsigned int gbr_dl;
+	unsigned int gbr_ul;
+	unsigned int max_br_dl;
+	unsigned int max_br_ul;
+};
+
+struct dedicated_bearer_info {
+	int secondary_context_id;
+	unsigned char num_dedicated_bearer;
+	struct qos_parameter qos[MAX_NUM_DEDICATED_BEARER];
+};
+
 struct treq_ps_pdp_activate {
 	int context_id;
 	int secondary_context_id;
@@ -110,7 +130,7 @@ struct tresp_ps_set_pdp_deactivate {
 struct tnoti_ps_call_status {
 	int context_id;
 	int state;
-	int result;
+	int result; /* specified in 3GPP TS 24.008 10.5.6.6. */
 };
 
 struct tnoti_ps_pdp_ipconfiguration {
@@ -121,17 +141,24 @@ struct tnoti_ps_pdp_ipconfiguration {
 	unsigned short field_flag;
 
 	char devname[16];
+	unsigned long mtu; 
 
-	unsigned char ip_address[4];
-	unsigned char primary_dns[4];
-	unsigned char secondary_dns[4];
-	unsigned char gateway[4];
-	unsigned char subnet_mask[4];
+	unsigned char ip_address[IPV4_ADDR_LEN];
+	unsigned char primary_dns[IPV4_ADDR_LEN];
+	unsigned char secondary_dns[IPV4_ADDR_LEN];
+	unsigned char gateway[IPV4_ADDR_LEN];
+	unsigned char subnet_mask[IPV4_ADDR_LEN];
 
-	unsigned char ipv6_address[128];
-	unsigned char ipv6_primary_dns[128];
-	unsigned char ipv6_secondary_dns[128];
-	unsigned char ipv6_gateway[128];
+	char *ipv6_address;
+	char *ipv6_primary_dns;
+	char *ipv6_secondary_dns;
+	char *ipv6_gateway;
+
+	unsigned int pcscf_ipv4_count;
+	char **pcscf_ipv4;
+
+	unsigned int pcscf_ipv6_count;
+	char **pcscf_ipv6;
 };
 
 struct tnoti_ps_external_call {
@@ -141,6 +168,14 @@ struct tnoti_ps_protocol_status {
 	enum telephony_ps_protocol_status status;
 };
 
+struct tnoti_MIP_status {
+	int result;
+};
+
+struct tnoti_ps_dedicated_bearer_info {
+	int primary_context_id;
+	struct dedicated_bearer_info dedicated_bearer;
+};
 __END_DECLS
 
 #endif

@@ -25,11 +25,13 @@
 #include <glib.h>
 
 #include "tcore.h"
+#include "internal/tcore_types.h"
 #include "plugin.h"
 #include "user_request.h"
 #include "co_ps.h"
+#include "co_network.h"
 
-struct p_callid_type{
+struct p_callid_type {
 	unsigned int cid;
 	gboolean active;
 	gboolean connected;
@@ -38,57 +40,39 @@ struct p_callid_type{
 };
 
 struct private_object_data {
-	struct tcore_ps_operations *ops;
+	struct tcore_ps_operations *ops[TCORE_OPS_TYPE_MAX];
 
 	gboolean online;
 	gint num_of_pdn;
 
 	/* 1 ~ UMTS_PS_MAX_CID */
 	struct p_callid_type cid[PS_MAX_CID + 1];
-	//CoreObject *cid[PS_MAX_CID + 1];
 
 	GSList *context_list;
 };
 
-static TReturn _dispatcher(CoreObject *o, UserRequest *ur)
+static TReturn _dispatcher(CoreObject *o, UserRequest *ur, enum tcore_ops_type ops_type)
 {
 	enum tcore_request_command command;
-	struct private_object_data *po = NULL;
+	struct private_object_data *po = tcore_object_ref_object(o);
+	struct tcore_ps_operations *ops = NULL;
 
-	if (!o || !ur)
-		return TCORE_RETURN_EINVAL;
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_MODEM, TCORE_RETURN_EINVAL);
+	CORE_OBJECT_VALIDATE_OPS_RETURN_VAL(ops_type, TCORE_RETURN_EINVAL);
 
-	po = tcore_object_ref_object(o);
-	if (!po || !po->ops)
-		return TCORE_RETURN_ENOSYS;
+	tcore_check_null_ret_err("po", po, TCORE_RETURN_EINVAL);
+	tcore_check_null_ret_err("ur", ur, TCORE_RETURN_EINVAL);
+
+	ops = po->ops[ops_type];
+	tcore_check_null_ret_err("ops", ops, TCORE_RETURN_FAILURE);
 
 	command = tcore_user_request_get_command(ur);
 	switch (command) {
-		default:
-			break;
+	default:
+		break;
 	}
 
 	return TCORE_RETURN_SUCCESS;
-}
-
-static void _clone_hook(CoreObject *src, CoreObject *dest)
-{
-	struct private_object_data *src_po = NULL;
-	struct private_object_data *dest_po = NULL;
-
-	if (!src || !dest)
-		return;
-
-	dest_po = calloc(1, sizeof(struct private_object_data));
-	if (!dest_po) {
-		tcore_object_link_object(dest, NULL);
-		return;
-	}
-
-	src_po = tcore_object_ref_object(src);
-	dest_po->ops = src_po->ops;
-
-	tcore_object_link_object(dest, dest_po);
 }
 
 static void _free_hook(CoreObject *o)
@@ -112,7 +96,7 @@ static void _free_hook(CoreObject *o)
 		po->context_list = NULL;
 	}
 
-	free(po);
+	g_free(po);
 	tcore_object_link_object(o, NULL);
 }
 
@@ -197,9 +181,10 @@ static gboolean _ps_is_duplicated_apn(CoreObject *o, CoreObject *ps_context)
 				tcore_context_cp_service_info(ps_context, s_context);
 				g_free(t_apn);
 				g_free(s_apn);
+
 				return TRUE;
 			}
-			g_free (s_apn);
+			g_free(s_apn);
 
 			contexts = contexts->next;
 		}
@@ -209,7 +194,7 @@ static gboolean _ps_is_duplicated_apn(CoreObject *o, CoreObject *ps_context)
 	return FALSE;
 }
 
-static void _deactivate_context (gpointer context, gpointer user_data)
+static void _deactivate_context(gpointer context, gpointer user_data)
 {
 	if (!context || !user_data)
 		return;
@@ -218,7 +203,7 @@ static void _deactivate_context (gpointer context, gpointer user_data)
 }
 
 CoreObject *tcore_ps_new(TcorePlugin *p, const char *name,
-		struct tcore_ps_operations *ops, TcoreHal *hal)
+	struct tcore_ps_operations *ops, TcoreHal *hal)
 {
 	CoreObject *o = NULL;
 	struct private_object_data *po = NULL;
@@ -230,18 +215,18 @@ CoreObject *tcore_ps_new(TcorePlugin *p, const char *name,
 	if (!o)
 		return NULL;
 
-	po = calloc(1, sizeof(struct private_object_data));
+	po = g_try_malloc0(sizeof(struct private_object_data));
 	if (!po) {
 		tcore_object_free(o);
 		return NULL;
 	}
 
-	po->ops = ops;
+	/* set ops to default type when core object is created. */
+	po->ops[TCORE_OPS_TYPE_CP] = ops;
 
 	tcore_object_set_type(o, CORE_OBJECT_TYPE_PS);
 	tcore_object_link_object(o, po);
 	tcore_object_set_free_hook(o, _free_hook);
-	tcore_object_set_clone_hook(o, _clone_hook);
 	tcore_object_set_dispatcher(o, _dispatcher);
 
 	return o;
@@ -253,23 +238,27 @@ void tcore_ps_free(CoreObject *o)
 	tcore_object_free(o);
 }
 
-void tcore_ps_set_ops(CoreObject *o, struct tcore_ps_operations *ops)
+void tcore_ps_set_ops(CoreObject *o,
+	struct tcore_ps_operations *ops, enum tcore_ops_type ops_type)
 {
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK(o, CORE_OBJECT_TYPE_PS);
+	CORE_OBJECT_VALIDATE_OPS_RETURN(ops_type);
 
 	po = (struct private_object_data *)tcore_object_ref_object(o);
 	if (!po) {
+		err("po is NULL");
 		return;
 	}
 
-	po->ops = ops;
+	po->ops[ops_type] = ops;
 }
 
 TReturn tcore_ps_add_context(CoreObject *o, CoreObject *ctx_o)
 {
 	struct private_object_data *po = NULL;
+	unsigned int count;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, TCORE_RETURN_EINVAL);
 	CORE_OBJECT_CHECK_RETURN(ctx_o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
@@ -278,7 +267,9 @@ TReturn tcore_ps_add_context(CoreObject *o, CoreObject *ctx_o)
 	if (!po)
 		return TCORE_RETURN_EINVAL;
 
+	count = g_slist_length(po->context_list);
 	po->context_list = g_slist_insert(po->context_list, ctx_o, 0);
+	dbg("num. of contexts: %d -> %d", count, g_slist_length(po->context_list));
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -286,6 +277,7 @@ TReturn tcore_ps_add_context(CoreObject *o, CoreObject *ctx_o)
 TReturn tcore_ps_remove_context(CoreObject *o, CoreObject *ctx_o)
 {
 	struct private_object_data *po = NULL;
+	unsigned int count;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, TCORE_RETURN_EINVAL);
 	CORE_OBJECT_CHECK_RETURN(ctx_o, CORE_OBJECT_TYPE_PS_CONTEXT, TCORE_RETURN_EINVAL);
@@ -295,7 +287,9 @@ TReturn tcore_ps_remove_context(CoreObject *o, CoreObject *ctx_o)
 		return TCORE_RETURN_EINVAL;
 
 	tcore_ps_clear_context_id(o, ctx_o);
+	count = g_slist_length(po->context_list);
 	po->context_list = g_slist_remove(po->context_list, ctx_o);
+	dbg("num. of contexts: %d -> %d", count, g_slist_length(po->context_list));
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -311,7 +305,7 @@ TReturn tcore_ps_set_online(CoreObject *o, gboolean state)
 		return TCORE_RETURN_EINVAL;
 
 	po->online = state;
-	dbg("ps status = %d", po->online);
+	dbg("PS Status: [%s]", (po->online ? "ONLINE" : "OFFLINE"));
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -326,8 +320,12 @@ TReturn tcore_ps_set_num_of_pdn(CoreObject *o, gint numbers)
 	if (!po)
 		return TCORE_RETURN_EINVAL;
 
-	po->num_of_pdn = numbers;
-	dbg("ps num of pdn = %d", po->num_of_pdn);
+	if (numbers <= 0 || numbers > PS_MAX_CID)
+		po->num_of_pdn = PS_MAX_CID;
+	else
+		po->num_of_pdn = numbers;
+
+	dbg("ps num of pdn = %d, numbers = %d", po->num_of_pdn, numbers);
 
 	return TCORE_RETURN_SUCCESS;
 }
@@ -351,13 +349,12 @@ unsigned int tcore_ps_set_cid_active(CoreObject *o, unsigned int cid, unsigned i
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, 0);
-	if(cid == 0){
+	if (cid == 0)
 		return 0;
-	}
 
 	po = tcore_object_ref_object(o);
 	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
-		if (po->cid[idx_cid].cid == cid){
+		if (po->cid[idx_cid].cid == cid) {
 			po->cid[idx_cid].active = enable;
 			return 1;
 		}
@@ -372,21 +369,18 @@ unsigned int tcore_ps_get_cid_active(CoreObject *o, unsigned int cid)
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, 0);
-	if(cid == 0){
+	if (cid == 0)
 		return 0;
-	}
 
 	po = tcore_object_ref_object(o);
-	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
-		if (po->cid[idx_cid].cid == cid){
+	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++)
+		if (po->cid[idx_cid].cid == cid)
 			return po->cid[idx_cid].active;
-		}
-	}
 
 	return 0;
 }
 
-GSList* tcore_ps_get_active_cids(CoreObject *o)
+GSList *tcore_ps_get_active_cids(CoreObject *o)
 {
 	int idx_cid = 0;
 	GSList *active_list = NULL;
@@ -396,11 +390,9 @@ GSList* tcore_ps_get_active_cids(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
-		if (po->cid[idx_cid].active){
+	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++)
+		if (po->cid[idx_cid].active)
 			active_list = g_slist_append(active_list, &po->cid[idx_cid].cid);
-		}
-	}
 
 	return active_list;
 }
@@ -411,13 +403,12 @@ unsigned int tcore_ps_set_cid_connected(CoreObject *o, unsigned int cid, unsigne
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, 0);
-	if(cid == 0){
+	if (cid == 0)
 		return 0;
-	}
 
 	po = tcore_object_ref_object(o);
 	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
-		if (po->cid[idx_cid].cid == cid){
+		if (po->cid[idx_cid].cid == cid) {
 			po->cid[idx_cid].connected = connected;
 			return 1;
 		}
@@ -432,21 +423,18 @@ unsigned int tcore_ps_get_cid_connected(CoreObject *o, unsigned int cid)
 	struct private_object_data *po = NULL;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, 0);
-	if(cid == 0){
+	if (cid == 0)
 		return 0;
-	}
 
 	po = tcore_object_ref_object(o);
-	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
-		if (po->cid[idx_cid].cid == cid){
+	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++)
+		if (po->cid[idx_cid].cid == cid)
 			return po->cid[idx_cid].connected;
-		}
-	}
 
 	return 0;
 }
 
-GSList* tcore_ps_get_connected_cids(CoreObject *o)
+GSList *tcore_ps_get_connected_cids(CoreObject *o)
 {
 	int idx_cid = 0;
 	GSList *active_list = NULL;
@@ -456,16 +444,14 @@ GSList* tcore_ps_get_connected_cids(CoreObject *o)
 
 	po = tcore_object_ref_object(o);
 
-	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
-		if (po->cid[idx_cid].connected){
+	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++)
+		if (po->cid[idx_cid].connected)
 			active_list = g_slist_append(active_list, &po->cid[idx_cid].cid);
-		}
-	}
 
 	return active_list;
 }
 
-unsigned int tcore_ps_is_active_apn(CoreObject *o, const char* apn)
+unsigned int tcore_ps_is_active_apn(CoreObject *o, const char *apn)
 {
 	int idx_cid = 0;
 	struct private_object_data *po = NULL;
@@ -474,13 +460,12 @@ unsigned int tcore_ps_is_active_apn(CoreObject *o, const char* apn)
 
 	po = tcore_object_ref_object(o);
 
-	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++){
+	for (idx_cid = 1; idx_cid <= po->num_of_pdn; idx_cid++) {
 		if (po->cid[idx_cid].cid == 0)
 			continue;
 
-		if (g_strcmp0((const char*)po->cid[idx_cid].apn, apn) == 0 && po->cid[idx_cid].active) {
+		if (g_strcmp0((const char *)po->cid[idx_cid].apn, apn) == 0 && po->cid[idx_cid].active)
 			return 1;
-		}
 	}
 
 	return 0;
@@ -566,22 +551,21 @@ gboolean tcore_ps_any_context_activating_activated(CoreObject *o, int * state)
 
 			context_state = tcore_context_get_state(pdp_o);
 
-			if(CONTEXT_STATE_ACTIVATED == context_state) {
+			if (CONTEXT_STATE_ACTIVATED == context_state) {
 				*state = CONTEXT_STATE_ACTIVATED;
 				return  TRUE;
-			}
-			else if (CONTEXT_STATE_ACTIVATING == context_state){
+			} else if (CONTEXT_STATE_ACTIVATING == context_state) {
 				*state = CONTEXT_STATE_ACTIVATING;
 				ret = TRUE;
 				continue;
-			}
-			else if (CONTEXT_STATE_DEACTIVATING == context_state){
+			} else if (CONTEXT_STATE_DEACTIVATING == context_state) {
 				*state = CONTEXT_STATE_DEACTIVATING;
 				ret = TRUE;
 				continue;
 			}
 		}
 	}
+
 	return ret;
 }
 
@@ -598,6 +582,9 @@ TReturn tcore_ps_assign_context_id(CoreObject *o, CoreObject *context, unsigned 
 	if (!po)
 		return TCORE_RETURN_EINVAL;
 
+	if (cid > (unsigned int)po->num_of_pdn)
+		return TCORE_RETURN_PS_CID_ERROR;
+
 	if (cid == 0) {
 		/* Automatic assign */
 		for (idx = 1; idx <= po->num_of_pdn; idx++) {
@@ -605,28 +592,44 @@ TReturn tcore_ps_assign_context_id(CoreObject *o, CoreObject *context, unsigned 
 				po->cid[idx].cid = idx;
 				po->cid[idx].contexts = g_slist_append(po->cid[idx].contexts, context);
 				po->cid[idx].apn = tcore_context_get_apn(context);
+
 				dbg("assign contexts(%p) in cid(%d), apn(%s)", context, idx, po->cid[idx].apn);
+
 				return tcore_context_set_id(context, idx);
-			}
-			else {
+			} else
 				dbg("cid[%d] is not null", idx);
-			}
 		}
 
 		dbg("can't find empty cid");
-	}
-	else {
+	} else {
 		/* Manual assign */
 		if (po->cid[cid].cid == cid) {
 			po->cid[cid].contexts = g_slist_append(po->cid[cid].contexts, context);
 			return tcore_context_set_id(context, cid);
-		}
-		else {
+		} else
 			dbg("cid[%d] is not null", cid);
-		}
 	}
 
 	return TCORE_RETURN_PS_CID_ERROR;
+}
+
+TReturn tcore_ps_send_dormant_request(CoreObject *o, void *user_data)
+{
+	struct private_object_data *po = NULL;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	if (!po->online) {
+		dbg("ps network is not online !");
+		return TCORE_RETURN_PS_NETWORK_NOT_READY;
+	}
+
+	/* By 'default' considering Modem/CP opearations */
+	return po->ops[TCORE_OPS_TYPE_CP]->send_dormant_request(o, user_data);
 }
 
 TReturn tcore_ps_clear_context_id(CoreObject *o, CoreObject *context)
@@ -642,16 +645,15 @@ TReturn tcore_ps_clear_context_id(CoreObject *o, CoreObject *context)
 		return TCORE_RETURN_EINVAL;
 
 	i = tcore_context_get_id(context);
-	if (i == 0) {
+	if (i == 0)
 		return TCORE_RETURN_PS_CID_ERROR;
-	}
 
 	if (i > po->num_of_pdn)
 		return TCORE_RETURN_PS_CID_ERROR;
 
 	po->cid[i].contexts = g_slist_remove(po->cid[i].contexts, context);
 	cnt = g_slist_length(po->cid[i].contexts);
-	if (cnt <= 0){
+	if (cnt <= 0) {
 		po->cid[i].cid = 0;
 		po->cid[i].active = FALSE;
 		po->cid[i].connected = FALSE;
@@ -666,6 +668,8 @@ TReturn tcore_ps_define_context(CoreObject *o, CoreObject *ps_context, void *use
 {
 	int rv;
 	struct private_object_data *po = NULL;
+	CoreObject *co_nw = NULL;
+	enum telephony_network_access_technology act = NETWORK_ACT_UNKNOWN;
 
 	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, TCORE_RETURN_EINVAL);
 
@@ -680,6 +684,15 @@ TReturn tcore_ps_define_context(CoreObject *o, CoreObject *ps_context, void *use
 	if (rv)
 		return TCORE_RETURN_SUCCESS;
 
+	co_nw = tcore_plugin_ref_core_object(tcore_object_ref_plugin(o), CORE_OBJECT_TYPE_NETWORK);
+	tcore_network_get_access_technology(co_nw, &act);
+	if (act >= NETWORK_ACT_IS95A && act <= NETWORK_ACT_EHRPD)
+		tcore_context_set_tech_preference(ps_context, CONTEXT_TECH_3GPP2);
+	else {
+		tcore_context_set_tech_preference(ps_context, CONTEXT_TECH_3GPP);
+		dbg("3GPP preference by default");
+	}
+
 	rv = _ps_is_duplicated_apn(o, ps_context);
 	if (rv) {
 		unsigned char cid = 0;
@@ -688,76 +701,17 @@ TReturn tcore_ps_define_context(CoreObject *o, CoreObject *ps_context, void *use
 		return TCORE_RETURN_SUCCESS;
 	}
 
-	if (tcore_context_get_id(ps_context) == 0) {
+	if (tcore_context_get_id(ps_context) == 0)
 		if (tcore_ps_assign_context_id(o, ps_context, 0) != TCORE_RETURN_SUCCESS)
 			return TCORE_RETURN_PS_CID_ERROR;
-	}
 
 	dbg("contexts(%p), cid = %d", ps_context, tcore_context_get_id(ps_context));
 
-	return po->ops->define_context(o, ps_context, user_data);
+	/* By 'default' considering Modem/CP opearations */
+	return po->ops[TCORE_OPS_TYPE_CP]->define_context(o, ps_context, user_data);
 }
 
 TReturn tcore_ps_activate_context(CoreObject *o, CoreObject *ps_context, void *user_data)
-{
-	int rv;
-	struct private_object_data *po = NULL;
-	enum co_context_state context_state = CONTEXT_STATE_DEACTIVATED;
-
-	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, TCORE_RETURN_EINVAL);
-
-	po = tcore_object_ref_object(o);
-	if (!po)
-		return TCORE_RETURN_EINVAL;
-
- 	if (!po->online) {
-		dbg("ps network is not online !");
-		return TCORE_RETURN_PS_NETWORK_NOT_READY;
-	}
-
-	if (!ps_context)
-		return TCORE_RETURN_EINVAL;
-
-	rv = _ps_is_active_context(o, ps_context);
-	if (!rv)
-	{
-		dbg("it is not defined context");
-		return TCORE_RETURN_EINVAL;
-	}
-
-	rv = _ps_is_duplicated_apn(o, ps_context);
-	if (rv) {
-		dbg("context activation is already requested for the same apn(%s)",
-			tcore_context_get_apn(ps_context));
-		return TCORE_RETURN_SUCCESS;
-	}
-
-	context_state = tcore_context_get_state(ps_context);
-
-	if (context_state == CONTEXT_STATE_ACTIVATED){
-		dbg("Context state : CONTEXT_STATE_ACTIVATED");
-		return TCORE_RETURN_SUCCESS;
-	}
-	else if (context_state == CONTEXT_STATE_ACTIVATING){
-		dbg("Context state : CONTEXT_STATE_ACTIVATING");
-		return TCORE_RETURN_SUCCESS;
-	}
-	else if (context_state == CONTEXT_STATE_DEACTIVATING){
-		dbg("Context state : CONTEXT_STATE_DEACTIVATING");
-		return TCORE_RETURN_PS_DEACTIVATING;
-	}
-
-	dbg("cid = %d", tcore_context_get_id(ps_context));
-
-	tcore_context_set_state(ps_context, CONTEXT_STATE_ACTIVATING);
-	rv = po->ops->activate_context(o, ps_context, user_data);
-	if(rv != TCORE_RETURN_SUCCESS)
-		tcore_context_set_state(ps_context, CONTEXT_STATE_DEACTIVATED);
-
-	return rv;
-}
-
-TReturn tcore_ps_deactivate_context(CoreObject *o, CoreObject *ps_context, void *user_data)
 {
 	int rv;
 	struct private_object_data *po = NULL;
@@ -778,6 +732,59 @@ TReturn tcore_ps_deactivate_context(CoreObject *o, CoreObject *ps_context, void 
 		return TCORE_RETURN_EINVAL;
 
 	rv = _ps_is_active_context(o, ps_context);
+	if (!rv) {
+		dbg("it is not defined context");
+		return TCORE_RETURN_EINVAL;
+	}
+
+	rv = _ps_is_duplicated_apn(o, ps_context);
+	if (rv) {
+		dbg("context activation is already requested for the same apn(%s)",
+			tcore_context_get_apn(ps_context));
+		return TCORE_RETURN_SUCCESS;
+	}
+
+	context_state = tcore_context_get_state(ps_context);
+
+	if (context_state == CONTEXT_STATE_ACTIVATED) {
+		dbg("Context state : CONTEXT_STATE_ACTIVATED");
+		return TCORE_RETURN_SUCCESS;
+	} else if (context_state == CONTEXT_STATE_ACTIVATING) {
+		dbg("Context state : CONTEXT_STATE_ACTIVATING");
+		return TCORE_RETURN_SUCCESS;
+	} else if (context_state == CONTEXT_STATE_DEACTIVATING) {
+		dbg("Context state : CONTEXT_STATE_DEACTIVATING");
+		return TCORE_RETURN_PS_DEACTIVATING;
+	}
+
+	dbg("cid = %d", tcore_context_get_id(ps_context));
+
+	tcore_context_set_state(ps_context, CONTEXT_STATE_ACTIVATING);
+
+	/* By 'default' considering Modem/CP opearations */
+	rv = po->ops[TCORE_OPS_TYPE_CP]->activate_context(o, ps_context, user_data);
+	if (rv != TCORE_RETURN_SUCCESS)
+		tcore_context_set_state(ps_context, CONTEXT_STATE_DEACTIVATED);
+
+	return rv;
+}
+
+TReturn tcore_ps_deactivate_context(CoreObject *o, CoreObject *ps_context, void *user_data)
+{
+	int rv;
+	struct private_object_data *po = NULL;
+	enum co_context_state context_state = CONTEXT_STATE_DEACTIVATED;
+
+	CORE_OBJECT_CHECK_RETURN(o, CORE_OBJECT_TYPE_PS, TCORE_RETURN_EINVAL);
+
+	po = tcore_object_ref_object(o);
+	if (!po)
+		return TCORE_RETURN_EINVAL;
+
+	if (!ps_context)
+		return TCORE_RETURN_EINVAL;
+
+	rv = _ps_is_active_context(o, ps_context);
 	if (!rv)
 		return TCORE_RETURN_EINVAL;
 
@@ -791,22 +798,23 @@ TReturn tcore_ps_deactivate_context(CoreObject *o, CoreObject *ps_context, void 
 	}
 
 	context_state = tcore_context_get_state(ps_context);
-	if (context_state == CONTEXT_STATE_DEACTIVATED){
-		dbg("Context State : CONTEXT_STATE_DEACTIVATED");
+	if (context_state == CONTEXT_STATE_DEACTIVATED) {
+		warn("Context State : CONTEXT_STATE_DEACTIVATED");
+		tcore_ps_clear_context_id(o, ps_context);
 		return TCORE_RETURN_SUCCESS;
-	}
-	else if (context_state == CONTEXT_STATE_DEACTIVATING){
+	} else if (context_state == CONTEXT_STATE_DEACTIVATING) {
 		dbg("Context State : CONTEXT_STATE_DEACTIVATING");
 		return TCORE_RETURN_SUCCESS;
-	}
-	else if (context_state == CONTEXT_STATE_ACTIVATING){
+	} else if (context_state == CONTEXT_STATE_ACTIVATING) {
 		dbg("Context State :CONTEXT_STATE_ACTIVATING");
 		return TCORE_RETURN_PS_ACTIVATING;
 	}
+
 	tcore_context_set_state(ps_context, CONTEXT_STATE_DEACTIVATING);
 
-	rv = po->ops->deactivate_context(o, ps_context, user_data);
-	if(rv != TCORE_RETURN_SUCCESS)
+	/* By 'default' considering Modem/CP opearations */
+	rv = po->ops[TCORE_OPS_TYPE_CP]->deactivate_context(o, ps_context, user_data);
+	if (rv != TCORE_RETURN_SUCCESS)
 		tcore_context_set_state(ps_context, CONTEXT_STATE_ACTIVATED);
 
 	return rv;
@@ -832,10 +840,10 @@ TReturn tcore_ps_deactivate_contexts(CoreObject *o)
 	for (temp_index = 1; temp_index <= po->num_of_pdn; temp_index++) {
 		if (po->cid[temp_index].cid != 0) {
 			contexts = po->cid[temp_index].contexts;
-			if(!contexts)
+			if (!contexts)
 				continue;
 
-			g_slist_foreach (contexts, _deactivate_context, o);
+			g_slist_foreach(contexts, _deactivate_context, o);
 		}
 	}
 
@@ -862,10 +870,10 @@ TReturn tcore_ps_deactivate_cid(CoreObject *o, unsigned int cid)
 	for (temp_index = 1; temp_index <= po->num_of_pdn; temp_index++) {
 		if (po->cid[temp_index].cid != 0 && po->cid[temp_index].cid == cid) {
 			contexts = po->cid[temp_index].contexts;
-			if(!contexts)
+			if (!contexts)
 				continue;
 
-			g_slist_foreach (contexts, _deactivate_context, o);
+			g_slist_foreach(contexts, _deactivate_context, o);
 		}
 	}
 

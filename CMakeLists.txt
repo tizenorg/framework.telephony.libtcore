@@ -5,7 +5,7 @@ PROJECT(libtcore C)
 
 SET(PREFIX ${CMAKE_INSTALL_PREFIX})
 SET(EXEC_PREFIX "\${prefix}")
-SET(LIBDIR "\${prefix}/lib")
+SET(LIBDIR ${LIB_INSTALL_DIR})
 SET(INCLUDEDIR "\${prefix}/include")
 
 # Set required packages
@@ -31,31 +31,31 @@ IF (ARCH_EMUL)
 ENDIF (ARCH_EMUL)
 
 SET(SRCS
-		src/server.c
-		src/plugin.c
-		src/hal.c
-		src/at.c
-		src/udev.c
-		src/communicator.c
-		src/storage.c
-		src/queue.c
-		src/user_request.c
-		src/util.c
-		src/core_object.c
-		src/co_modem.c
-		src/co_network.c
-		src/co_ps.c
-		src/co_context.c
-		src/co_sim.c
-		src/co_sat.c
-		src/co_sap.c
-		src/co_call.c
-		src/co_ss.c
-		src/co_sms.c
-		src/co_phonebook.c
-		src/co_gps.c
-		src/co_custom.c
-		src/mux.c
+	src/server.c
+	src/manager.c
+	src/plugin.c
+	src/hal.c
+	src/at.c
+	src/communicator.c
+	src/storage.c
+	src/queue.c
+	src/user_request.c
+	src/util.c
+	src/core_object/core_object.c
+	src/core_object/co_modem.c
+	src/core_object/co_sim.c
+	src/core_object/co_network.c
+	src/core_object/co_call.c
+	src/core_object/co_sms.c
+	src/core_object/co_ss.c
+	src/core_object/co_phonebook.c
+	src/core_object/co_ps.c
+	src/core_object/co_context.c
+	src/core_object/co_sat.c
+	src/core_object/co_sap.c
+	src/core_object/co_gps.c
+	src/core_object/co_custom.c
+	src/mux.c
 )
 
 
@@ -73,8 +73,8 @@ CONFIGURE_FILE(tcore.pc.in tcore.pc @ONLY)
 # install
 INSTALL(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/ DESTINATION include/tcore)
 INSTALL(TARGETS tcore
-		LIBRARY DESTINATION lib)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tcore.pc DESTINATION lib/pkgconfig)
+		LIBRARY DESTINATION ${LIBDIR})
+INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/tcore.pc DESTINATION ${LIBDIR}/pkgconfig)
 INSTALL(FILES ${CMAKE_SOURCE_DIR}/LICENSE DESTINATION /usr/share/license RENAME libtcore)
 
 #ADD_SUBDIRECTORY(unit-test)
